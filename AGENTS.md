@@ -23,6 +23,14 @@
 - formatterはoxfmt、linterはoxlintを使う。
 - Secretと個人情報をコード、fixture、ログへ含めない。
 
+## 操作監査
+
+production環境、外部service、Secret、database、永続dataへ影響する操作と、意図的な障害試験は`audit.md`へ追記する。
+
+実施日時、対象、操作、危険性、保護策、結果、cleanup、関連issueまたはPRを記録する。
+
+Secretの値と個人情報は監査ログへ記録しない。
+
 ## 完了条件
 
 ```sh

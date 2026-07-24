@@ -2,7 +2,7 @@
 id: 046
 title: WAL-G physical backupのmemory上限を是正する
 type: quality
-status: open
+status: done
 priority: P0
 depends_on: [006]
 umbrella: 001
@@ -47,6 +47,22 @@ PostgreSQL clusterが成長しても、定期physical backupをOOMなしで完�
 - Podの終了理由とmemory使用量。
 - WAL-Gの`backup-list`。
 - `BackupJobFailed` alert。
+
+## 実施記録
+
+2026年7月25日の作業前backupでは、512MiBを上限とするPodがtar part 6の処理中に`OOMKilled`となった。
+
+memory requestを256MiB、limitを1GiBにしたone-off backupは5分17秒で完了した。
+
+同じ値をmanifest PR #132でproduction CronJobへ反映した。
+
+反映後のCronJobから作成したbackupは4分44秒で完了し、5秒間隔の最大memory観測値は127MiB、終了理由は`Completed`だった。
+
+R2の`backup-list`で`base_000000010000015300000009`を確認した。
+
+名前patternがproduction backupと一致する制御された失敗Jobを作成し、Prometheusの`BackupJobFailed`が`firing`になることを確認した。
+
+検証用Jobと失敗Podは確認後に削除した。
 
 ## 対象外
 
