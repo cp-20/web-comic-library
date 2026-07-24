@@ -41,6 +41,7 @@ issueの書式と状態管理は[docs/issues.md](../docs/issues.md)に従う。
       +-> 043 運用baselineと定期drill
       +-> 044 PostgreSQL collation更新
       +-> 045 database同期Jobの接続待機
+      +-> 046 WAL-G physical backupのmemory上限
 
 {008 catalog model, 021 読書進捗, 022 follow方式, 038 WXT基盤}
   -> 039 お気に入りimport
