@@ -10,6 +10,7 @@
 - データベース：[docs/database.md](./docs/database.md)
 - 巡回処理：[docs/connectors.md](./docs/connectors.md)
 - テスト：[docs/testing.md](./docs/testing.md)
+- 配備：[docs/deployment.md](./docs/deployment.md)
 - issue管理：[docs/issues.md](./docs/issues.md)
 
 ## リポジトリ全体の規則

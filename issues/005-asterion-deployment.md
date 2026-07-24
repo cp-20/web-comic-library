@@ -2,7 +2,7 @@
 id: 005
 title: Web、API、workerをAsterionへ配備する
 type: platform
-status: open
+status: in_progress
 priority: P0
 depends_on: [002, 003, 004]
 umbrella: 001
