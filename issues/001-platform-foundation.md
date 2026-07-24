@@ -21,6 +21,8 @@ Bun monorepoを継続的に検証し、Asterionへ安全に配備して復旧で
 - [005 Asterionへの配備](./005-asterion-deployment.md)
 - [006 バックアップと監視](./006-backup-observability.md)
 - [043 運用baselineと定期drill](./043-operational-baseline-drills.md)
+- [044 PostgreSQL collation更新](./044-postgresql-collation-refresh.md)
+- [045 database同期Jobの接続待機](./045-database-hook-readiness.md)
 
 ## 完了条件
 

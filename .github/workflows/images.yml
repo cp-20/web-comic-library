@@ -58,6 +58,7 @@ jobs:
       - name: Check backup image and missing credentials
         run: |
           docker run --rm --entrypoint wal-g web-comic-library-database --version
+          docker run --rm --entrypoint test web-comic-library-database -r /etc/ssl/certs/ca-certificates.crt
           if docker run --rm --read-only --tmpfs /tmp --entrypoint logical-backup web-comic-library-database; then
             echo 'logical backup unexpectedly accepted missing credentials'
             exit 1
