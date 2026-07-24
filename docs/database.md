@@ -47,3 +47,15 @@ applicationは`TransactionPort`でtransaction境界を定め、同じ`Transactio
 `PostgresFoundation`は業務状態とoutbox eventを同じtransactionへ保存し、rollback時はcommit後処理を実行しない。
 outbox eventとGraphile Worker jobは呼び出し側が安定した冪等性keyを指定する。
 同じ冪等性keyを再登録した場合は既存データを変更せず`duplicate`を返す。
+
+## catalog storage
+
+媒体横断の`Work`、サイト単位の`Publication`、論理話の`ContentUnit`、閲覧ページの`PublicationEntry`を別tableで保持する。
+
+`Publication`はsource内のexternal IDとnormalized URLをそれぞれ一意にする。
+
+`PublicationEntry`と`ContentUnit`はwork IDを含むcomposite foreign keyで関連付け、別作品間のmappingをdatabaseでも拒否する。
+
+一括掲載と分割掲載は`EntryContentMapping`の多対多関係で保持し、確認状態をmappingごとに記録する。
+
+既読や通知履歴から参照される`Work`、`Publication`、`ContentUnit`、`PublicationEntry`は物理削除せず、`retired_at`で廃止状態にする。

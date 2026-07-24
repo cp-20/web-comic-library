@@ -42,3 +42,13 @@ Secretの値と個人情報は記録しない。
 - **保護策**：database、PVC、SecretをmountしないJobを使い、対象名へ`alert-test-046`を含めた。
 - **結果**：Prometheusで対象Jobのalertが`firing`になった。
 - **cleanup**：確認後に失敗JobとPodを削除した。
+
+## 2026-07-25 catalog migration統合試験
+
+- **対象**：local Docker ComposeのPostgreSQL 16 test database。
+- **操作**：#008のmigrationを2回適用し、domain、constraint、repository、query port、多対多mappingの統合テストを実行した。
+- **危険性**：localのTCP port 55432、Docker container、network、匿名volumeを一時的に使用し、cleanupではtest dataを削除する。
+- **保護策**：production接続情報を渡さず、repository専用のCompose projectだけを対象にした。
+- **結果**：13 testが成功し、migrationの再適用も成功した。
+- **cleanup**：対象container、network、匿名test volumeを`docker compose down --volumes`で削除した。
+- **関連**：issue #008。

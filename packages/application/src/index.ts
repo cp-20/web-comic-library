@@ -1,4 +1,14 @@
 export {
+  type CatalogCreatorReadModel,
+  type CatalogQueryPort,
+  type CatalogRepository,
+  type ContentUnitReadModel,
+  type EntryContentMappingReadModel,
+  type PublicationEntryReadModel,
+  type PublicationReadModel,
+  type WorkCatalogReadModel,
+} from './catalog';
+export {
   type JobInput,
   type JobQueuePort,
   type JobQueueResult,

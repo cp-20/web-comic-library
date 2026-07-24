@@ -2,7 +2,7 @@
 id: 008
 title: 作品、掲載先、話のdomain modelとstorageを作る
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [004]
 umbrella: 007
