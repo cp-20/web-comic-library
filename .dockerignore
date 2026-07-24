@@ -1,0 +1,4 @@
+.git
+apps/web/.next
+node_modules
+*.tsbuildinfo

@@ -2,7 +2,7 @@
 id: 003
 title: 採用ライブラリのBun互換性を固定する
 type: platform
-status: open
+status: done
 priority: P0
 depends_on: [002]
 umbrella: 001

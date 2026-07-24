@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "@web-comic-library/application": "workspace:*",
-    "@web-comic-library/domain": "workspace:*"
+    "@web-comic-library/domain": "workspace:*",
+    "web-push": "3.6.7"
+  },
+  "devDependencies": {
+    "@types/web-push": "3.6.4"
   }
 }

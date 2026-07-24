@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@web-comic-library/application": "workspace:*",
-    "@web-comic-library/domain": "workspace:*"
+    "@web-comic-library/domain": "workspace:*",
+    "better-auth": "1.6.25"
   }
 }
