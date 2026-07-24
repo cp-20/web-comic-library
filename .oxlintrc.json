@@ -1,0 +1,123 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "perf": "warn",
+    "suspicious": "error"
+  },
+  "ignorePatterns": [".next/**", "coverage/**", "dist/**", "node_modules/**"],
+  "plugins": ["import", "jsx-a11y", "nextjs", "oxc", "react", "typescript", "unicorn"],
+  "rules": {
+    "import/no-cycle": "error",
+    "import/no-duplicates": "error",
+    "import/no-self-import": "error",
+    "no-debugger": "error",
+    "typescript/no-explicit-any": "error"
+  },
+  "overrides": [
+    {
+      "files": ["apps/worker/src/index.ts", "packages/*/src/index.ts"],
+      "rules": {
+        "unicorn/no-empty-file": "off"
+      }
+    },
+    {
+      "files": ["apps/web/**/*.{ts,tsx}"],
+      "rules": {
+        "import/no-unassigned-import": "off",
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^@web-comic-library/(api|application|auth|connectors|db|domain|notifications)(/|$)",
+                "message": "webはbackend実装へ依存せず、Hono RPCのapi-clientを使ってください"
+              }
+            ]
+          }
+        ],
+        "react/react-in-jsx-scope": "off"
+      }
+    },
+    {
+      "files": ["apps/api/**/*.{ts,tsx}", "apps/worker/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^@web-comic-library/api-client(/|$)",
+                "message": "backendとworkerはfrontend向けHono RPC clientへ依存できません"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/domain/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^(@web-comic-library/(application|auth|connectors|contracts|db|notifications)(/|$)|drizzle-orm(/|$)|graphile-worker(/|$)|next(/|$)|react(/|$)|valibot(/|$))",
+                "message": "domainは外側の層、framework、I/O、Valibotへ依存できません"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/application/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^(@web-comic-library/(auth|connectors|contracts|db|notifications)(/|$)|drizzle-orm(/|$)|graphile-worker(/|$)|next(/|$)|react(/|$)|valibot(/|$))",
+                "message": "applicationはinfrastructure、delivery、transport schemaへ依存できません"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/contracts/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^@web-comic-library/(application|auth|connectors|db|domain|notifications)(/|$)",
+                "message": "contractsは内部のdomain、application、infrastructureへ依存できません"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["packages/api-client/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^@web-comic-library/(application|auth|connectors|contracts|db|domain|notifications)(/|$)",
+                "message": "api-clientはHono RPC型以外の内部実装へ依存できません"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

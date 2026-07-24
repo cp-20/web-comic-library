@@ -1,0 +1,16 @@
+{
+  "name": "@web-comic-library/notifications",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@web-comic-library/application": "workspace:*",
+    "@web-comic-library/domain": "workspace:*"
+  }
+}

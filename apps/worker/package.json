@@ -1,0 +1,15 @@
+{
+  "name": "@web-comic-library/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@web-comic-library/application": "workspace:*",
+    "@web-comic-library/connectors": "workspace:*",
+    "@web-comic-library/db": "workspace:*",
+    "@web-comic-library/notifications": "workspace:*"
+  }
+}

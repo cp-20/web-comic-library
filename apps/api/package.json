@@ -1,0 +1,24 @@
+{
+  "name": "@web-comic-library/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./rpc": "./src/rpc.ts"
+  },
+  "scripts": {
+    "dev": "PORT=3001 bun run --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/valibot-validator": "0.6.1",
+    "@web-comic-library/application": "workspace:*",
+    "@web-comic-library/auth": "workspace:*",
+    "@web-comic-library/contracts": "workspace:*",
+    "@web-comic-library/db": "workspace:*",
+    "@web-comic-library/notifications": "workspace:*",
+    "hono": "4.12.31",
+    "valibot": "1.4.2"
+  }
+}
