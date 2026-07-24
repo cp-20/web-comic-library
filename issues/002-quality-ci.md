@@ -2,7 +2,7 @@
 id: 002
 title: 品質検査をGitHub Actionsで必須化する
 type: platform
-status: in_progress
+status: done
 priority: P0
 depends_on: []
 umbrella: 001
