@@ -2,6 +2,8 @@ import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
+import { migrateDatabase } from './migrate';
+
 const databaseUrl = process.env.DATABASE_URL;
 const mode = process.argv[2];
 const id = process.argv[3];
@@ -15,6 +17,7 @@ const database = drizzle(client);
 
 try {
   if (mode === 'setup') {
+    await migrateDatabase(databaseUrl);
     const result = await database.execute<{ value: number }>(sql`select 1::int as value`);
 
     if (result[0]?.value !== 1) {

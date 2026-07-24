@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: web_comic_library
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d web_comic_library']
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    ports:
+      - '55432:5432'

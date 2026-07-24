@@ -16,16 +16,25 @@ versionの正本は各`package.json`、`bun.lock`、rootの`packageManager`と�
 
 ## 自動検証
 
-`Dockerfile.compatibility`はBunだけをJavaScript runtimeとして含むimageで、次を実行する。
+`Dockerfile.compatibility`はBunだけをJavaScript runtimeとして含むimageである。
+image build時は次を実行する。
 
 ```sh
 bun install --frozen-lockfile
 bun run check
 bun test
 bun run build:web
+```
+
+image実行時は次を実行する。
+
+```sh
+bun test
 bun run smoke:compatibility
 ```
 
+image build中の`bun test`はDB統合テストをskipする。
+image実行時は`ALLOW_DATABASE_INTEGRATION_TESTS=1`と`DATABASE_URL`を渡し、DB統合テストを実行してからsmoke testを実行する。
 smoke testはPostgreSQL 16へ接続し、Web、API、workerを別processで同時起動する。
 Hono RPC、Drizzle query、Graphile Worker job、web-push payloadを確認し、全processへSIGTERMを送る。
 worker終了後に投入したjobが実行されないことも確認する。

@@ -7,12 +7,14 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "migrate": "bun run src/migrate-cli.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@web-comic-library/application": "workspace:*",
     "@web-comic-library/domain": "workspace:*",
     "drizzle-orm": "0.45.2",
+    "graphile-worker": "0.17.3",
     "postgres": "3.4.9"
   }
 }

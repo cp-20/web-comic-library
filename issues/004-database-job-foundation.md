@@ -2,7 +2,7 @@
 id: 004
 title: PostgreSQL migrationとjob基盤を作る
 type: platform
-status: open
+status: done
 priority: P0
 depends_on: [003]
 umbrella: 001
