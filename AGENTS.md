@@ -11,6 +11,7 @@
 - 巡回処理：[docs/connectors.md](./docs/connectors.md)
 - テスト：[docs/testing.md](./docs/testing.md)
 - 配備：[docs/deployment.md](./docs/deployment.md)
+- 運用と復旧：[docs/operations.md](./docs/operations.md)
 - issue管理：[docs/issues.md](./docs/issues.md)
 
 ## リポジトリ全体の規則

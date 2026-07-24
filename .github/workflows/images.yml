@@ -34,14 +34,16 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/web_comic_library
       IMAGE_TAG: ${{ github.event.pull_request.head.sha || github.sha }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
     steps:
       - uses: actions/checkout@v6
       - name: Build images
         run: |
-          docker build --target web --tag web-comic-library-web .
+          docker build --build-arg SENTRY_DSN --target web --tag web-comic-library-web .
           docker build --target api --tag web-comic-library-api .
           docker build --target worker --tag web-comic-library-worker .
           docker build --target migration --tag web-comic-library-migration .
+          docker build --target database --tag web-comic-library-database .
       - name: Check production dependencies and user
         run: >-
           docker run --rm --entrypoint sh web-comic-library-web
@@ -53,6 +55,13 @@ jobs:
           docker run --rm --read-only --tmpfs /tmp
           --network host --env DATABASE_URL
           web-comic-library-migration
+      - name: Check backup image and missing credentials
+        run: |
+          docker run --rm --entrypoint wal-g web-comic-library-database --version
+          if docker run --rm --read-only --tmpfs /tmp --entrypoint logical-backup web-comic-library-database; then
+            echo 'logical backup unexpectedly accepted missing credentials'
+            exit 1
+          fi
       - name: Start services read-only
         run: |
           docker run --detach --name web --read-only --tmpfs /tmp --network host web-comic-library-web
@@ -63,6 +72,8 @@ jobs:
           for attempt in {1..30}; do
             if curl --fail --silent http://127.0.0.1:3000/ >/dev/null &&
               curl --fail --silent http://127.0.0.1:3001/api/health >/dev/null &&
+              curl --fail --silent http://127.0.0.1:3001/metrics | grep -q web_comic_library_api_requests_total &&
+              curl --fail --silent http://127.0.0.1:3002/metrics | grep -q web_comic_library_jobs_available &&
               docker logs worker 2>&1 | grep -q 'worker ready'; then
               exit 0
             fi
@@ -82,7 +93,7 @@ jobs:
       - name: Push images
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          for component in web api worker; do
+          for component in web api worker database; do
             image="ghcr.io/${GITHUB_REPOSITORY}-${component}:${IMAGE_TAG}"
             docker tag "web-comic-library-${component}" "$image"
             docker push "$image"
