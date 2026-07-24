@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@sentry/nextjs": "10.68.0",
     "@web-comic-library/api-client": "workspace:*",
     "next": "16.2.11",
     "react": "19.2.8",

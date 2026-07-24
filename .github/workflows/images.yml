@@ -34,11 +34,12 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/web_comic_library
       IMAGE_TAG: ${{ github.event.pull_request.head.sha || github.sha }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
     steps:
       - uses: actions/checkout@v6
       - name: Build images
         run: |
-          docker build --target web --tag web-comic-library-web .
+          docker build --build-arg SENTRY_DSN --target web --tag web-comic-library-web .
           docker build --target api --tag web-comic-library-api .
           docker build --target worker --tag web-comic-library-worker .
           docker build --target migration --tag web-comic-library-migration .

@@ -6,7 +6,10 @@ COPY . .
 
 FROM source AS build
 RUN bun install --frozen-lockfile
+ARG SENTRY_DSN
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_PUBLIC_SENTRY_DSN=${SENTRY_DSN}
+ENV SENTRY_DSN=${SENTRY_DSN}
 RUN bun run build:web
 
 FROM source AS production
