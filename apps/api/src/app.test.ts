@@ -14,4 +14,14 @@ describe('health endpoint', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ status: 'ok' });
   });
+
+  test('exposes Prometheus metrics without request data labels', async () => {
+    const client = hc<ApiType>('http://api.test', { fetch: app.request });
+    const response = await client.metrics.$get();
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(body).toContain('web_comic_library_api_requests_total');
+    expect(body).not.toContain('url=');
+  });
 });

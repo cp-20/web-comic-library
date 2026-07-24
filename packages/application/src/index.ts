@@ -9,3 +9,4 @@ export {
   TransactionContext,
   type TransactionPort,
 } from './persistence';
+export { type JobQueueMetrics, type JobQueueMetricsPort } from './observability';
