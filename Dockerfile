@@ -12,6 +12,7 @@ RUN bun run build:web
 FROM source AS production
 RUN bun install --frozen-lockfile --production
 ENV NODE_ENV=production
+LABEL org.opencontainers.image.source="https://github.com/cp-20/web-comic-library"
 USER bun
 
 FROM production AS web

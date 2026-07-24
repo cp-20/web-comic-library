@@ -14,7 +14,7 @@ GitHub Actionsはpull requestと`main`へのpushでtargetをbuildし、non-root�
 - `ghcr.io/cp-20/web-comic-library-worker:<commit-sha>`
 
 `migration` targetはworker imageと同じproduction dependencyを使うため、配備時はworker imageのcommandをmigration commandへ置き換える。
-初回package作成後はGitHubのpackage settingsでvisibilityを`public`へ変更する。
+imageはpublic repositoryへ関連付け、認証情報のない環境からpullできる公開packageとして配布する。
 
 ## Asterion
 
