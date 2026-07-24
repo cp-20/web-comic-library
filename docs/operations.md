@@ -62,6 +62,54 @@ sudo kubectl -n postgresql exec statefulset/postgresql -- \
 
 `failed_count`が増加中の場合、R2 credential、network、PostgreSQL logの順に調べる。
 
+## PostgreSQL collation更新
+
+PostgreSQL imageのOSを更新した後は、databaseに記録されたcollation versionと現在のversionを比較する。
+
+```sql
+select
+  datname,
+  datcollversion,
+  pg_database_collation_actual_version(oid) as actual_version
+from pg_database
+order by datname;
+```
+
+versionが異なる場合は、復元試験済みの経路でfresh physical backupとlogical backupを取得する。
+
+次のqueryでcollation依存indexの件数と規模をdatabaseごとに記録する。
+
+```sql
+select
+  count(*) as indexes,
+  pg_size_pretty(coalesce(sum(pg_relation_size(i.indexrelid)), 0)) as size
+from pg_index i
+where exists (
+  select 1
+  from unnest(i.indcollation::oid[]) as c(oid)
+  where c.oid <> 0
+);
+```
+
+databaseを一つずつ再構築し、再構築後にmetadataを更新する。
+
+```sql
+REINDEX DATABASE database_name;
+ALTER DATABASE database_name REFRESH COLLATION VERSION;
+```
+
+実行中は`pg_stat_progress_create_index`で進捗を確認する。
+
+完了後はversion比較、invalid index数、日本語文字列のindex検索とsort、API health、worker jobを確認する。
+
+```sql
+select count(*)
+from pg_index
+where not indisvalid or not indisready;
+```
+
+新しい接続でversion mismatch警告が出ないことと、WAL archiveが更新されていることも確認する。
+
 ## 月次restore drill
 
 restore drillは本番PostgreSQLと別のNamespace、PVC、Serviceで実行する。

@@ -2,7 +2,7 @@
 id: 044
 title: PostgreSQLのcollation versionを更新する
 type: quality
-status: open
+status: done
 priority: P0
 depends_on: [006]
 umbrella: 001
@@ -49,6 +49,28 @@ PostgreSQLは接続時にversion mismatchを警告し、影響を受けるobject
 - 主要な日本語titleの検索とsort。
 - API health checkとworker job実行。
 - backupからの復旧可能性確認。
+
+## 実施記録
+
+2026年7月25日にAsterionのPostgreSQL 16で更新した。
+
+`postgres`、`template1`、`traqing`、`web_comic_library`の記録値は2.36、glibcの実値は2.41だった。
+
+collation依存indexは`postgres`が36個と952KiB、`template1`が36個と936KiB、`traqing`が47個と365MiB、`web_comic_library`が42個と1,032KiBだった。
+
+作業前にWCLのlogical backupと、復元試験済みの経路によるcluster全体のphysical backup `base_000000010000015200000046`をR2で確認した。
+
+`REINDEX DATABASE`とmetadata更新は`postgres`、`template1`、`web_comic_library`が各1秒以下、`traqing`が約9分27秒だった。
+
+更新後は四つのdatabaseで記録値と実値が2.41で一致し、invalid indexは0個だった。
+
+一時tableとB-tree indexを使った日本語titleの完全一致検索はIndex Only Scanとなり、prefix検索とsortも成功した。
+
+公開WebとAPIは200を返し、production workerはprobe jobを1件処理した。
+
+更新後の接続ではversion mismatch警告がなく、WAL archiveの最終成功時刻も更新された。
+
+作業前physical backupの512MiB Podが`OOMKilled`となった問題は#046へ分離した。
 
 ## 対象外
 
