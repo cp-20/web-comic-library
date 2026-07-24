@@ -16,6 +16,22 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: web_comic_library
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres -d web_comic_library"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/web_comic_library
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -28,3 +44,8 @@ jobs:
       - run: bun run check
       - run: bun test
       - run: bun run build:web
+      - run: docker build --file Dockerfile.compatibility --tag web-comic-library-compatibility .
+      - run: >-
+          docker run --rm --network host
+          --env DATABASE_URL
+          web-comic-library-compatibility
