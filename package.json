@@ -15,6 +15,7 @@
     "fmt:check": "oxfmt --check .",
     "lint": "oxlint . --deny-warnings --no-error-on-unmatched-pattern",
     "lint:fix": "oxlint . --fix",
+    "monitor:uptime": "bun run scripts/uptime-monitor.ts",
     "smoke:compatibility": "bun run --cwd apps/worker smoke",
     "test": "bun test",
     "test:integration": "ALLOW_DATABASE_INTEGRATION_TESTS=1 DATABASE_URL=postgres://postgres:postgres@127.0.0.1:55432/web_comic_library bun test",
