@@ -2,7 +2,7 @@
 id: 006
 title: バックアップ、監視、障害通知を整備する
 type: platform
-status: in_progress
+status: done
 priority: P0
 depends_on: [005]
 umbrella: 001
@@ -44,6 +44,32 @@ umbrella: 001
 - 初回のrestore drill。
 - Web、API、worker、cloudflaredを個別停止する障害試験。
 - R2 credentialがない環境でbackup jobが安全に失敗する試験。
+
+## 実施記録
+
+2026年7月25日にAsterionとCloudflare R2を使って初回drillを実施した。
+
+logical backup `logical/20260724T163639Z.dump.lz4`を暗号化して保存し、別databaseへ復元した。
+
+physical backup `base_00000001000001520000003E`と必要なWALを暗号化して保存した。
+
+本番と別のNamespace、32Gi PVC、PostgreSQLへLSN `152/3F000078`をtargetとして復元し、timeline 2へpromoteした。
+
+成功したphysical restoreはbase backup選択からread/write受付まで3分42秒だった。
+
+`drizzle_migrations=1`、`graphile_migrations=19`、`job_idempotency_keys=0`、`outbox_events=0`が本番、physical restore、logical restoreで一致した。
+
+restore先のAPIはhealth check 200、workerはmetrics 200とdatabase接続を確認した。
+
+Web、API、cloudflaredの停止は外部監視workflowがそれぞれ検出した。
+
+worker停止ではPrometheusの`ScrapeTargetDown`がfiringになり、復旧後に解消した。
+
+node、memory、disk、PVC、Pod restart、Argo CDのmetricをPrometheusから取得できた。
+
+PIIを含まないcontrolled errorをSentryへ送信し、SDKのflush成功を確認した。
+
+collation mismatchは#044へ、database同期Jobの接続待機は#045へ分離した。
 
 ## 対象外
 

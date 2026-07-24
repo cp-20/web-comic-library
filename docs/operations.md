@@ -74,15 +74,23 @@ restore drillは本番PostgreSQLと別のNamespace、PVC、Serviceで実行す�
 sudo kubectl -n postgresql exec statefulset/postgresql -- \
   psql --username postgres --dbname web_comic_library --tuples-only --no-align \
   --command "
-    select 'outbox_events', count(*) from outbox_events
+    select 'drizzle_migrations', count(*) from drizzle.__drizzle_migrations
+    union all
+    select 'graphile_migrations', count(*) from graphile_worker.migrations
     union all
     select 'job_idempotency_keys', count(*) from job_idempotency_keys
     union all
-    select 'compatibility_probe', count(*) from compatibility_probe;
+    select 'outbox_events', count(*) from outbox_events;
   "
 ```
 
+低write環境では指定時刻以後のcommit recordがなく、`recovery_target_time`へ到達できない場合がある。
+
+復旧対象を確定する前に`pg_switch_wal()`の返すLSNを記録し、そのWALがR2へ保存されたことを確認する。
+
 空のPostgreSQL 16 data directoryへbase backupを取得する。
+
+PVCのmount rootではなく所有者が作成した子directoryへ復元し、起動前にownerをPostgreSQLのUID、modeを`0700`にする。
 
 次の環境変数はSOPS Secretから一時Secretへ渡し、shell履歴へ値を書かない。
 
@@ -90,18 +98,26 @@ sudo kubectl -n postgresql exec statefulset/postgresql -- \
 export AWS_ENDPOINT='https://ACCOUNT_ID.r2.cloudflarestorage.com'
 export AWS_REGION='auto'
 export AWS_S3_FORCE_PATH_STYLE='true'
+export S3_ENABLE_VERSIONING='disabled'
+export S3_MAX_RETRIES='3'
 export WALG_LIBSODIUM_KEY_TRANSFORM='base64'
 export WALG_S3_PREFIX='s3://cp20-web-comic-library-backups/postgresql/16'
 wal-g backup-fetch "$PGDATA" LATEST
 ```
 
-指定時点へ復旧する場合は、空の`recovery.signal`と次の設定を作ってからPostgreSQLを起動する。
+WAL-G imageにはR2のTLS証明書を検証するCA bundleが必要である。
+
+指定LSNへ復旧する場合は、空の`recovery.signal`と次の設定を作ってからPostgreSQLを起動する。
 
 ```conf
 restore_command = 'wal-g wal-fetch %f %p'
-recovery_target_time = 'YYYY-MM-DD HH:MM:SS+09'
+recovery_target_lsn = '0/00000000'
 recovery_target_action = 'promote'
 ```
+
+本番で`postgresql.conf`と`pg_hba.conf`をConfigMapからmountしている場合は、restore先にも同じ設定を読み取り専用でmountする。
+
+PVC内の子directoryは`subPath`を使って`PGDATA`へ直接mountする。
 
 PostgreSQLがread/writeを受け付けたら、本番と同じqueryで主要件数を比較する。
 
@@ -119,11 +135,13 @@ WAL-Gは取得時にobjectを復号し、`pg_restore`へ渡せるdump fileを作
 
 ```sh
 wal-g st ls logical/
-wal-g st get "logical/YYYYMMDDTHHMMSSZ.dump" /tmp/web-comic-library.dump
-createdb --owner web_comic_library web_comic_library
+wal-g st get "logical/YYYYMMDDTHHMMSSZ.dump.lz4" /tmp/web-comic-library.dump
+createdb --template template0 --owner web_comic_library web_comic_library
 pg_restore --dbname web_comic_library --exit-on-error /tmp/web-comic-library.dump
 rm -f /tmp/web-comic-library.dump
 ```
+
+OS更新後に`template1`のcollation versionが一致しない場合でも、`template0`を指定すれば空databaseを作成できる。
 
 復元後は物理restoreと同じ件数比較とAPI、workerの確認を行う。
 
