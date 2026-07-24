@@ -19,14 +19,16 @@ const jobQueueMetrics: JobQueueMetricsPort = {
 describe('worker metrics', () => {
   test('exposes queue, connector, and notification metrics without payloads', async () => {
     const metrics = createWorkerMetrics(jobQueueMetrics);
-    metrics.recordConnectorRun('success', 0.5);
+    metrics.recordConnectorRun('failure', 0.5);
+    metrics.recordConnectorRun('failure', 0.5);
     metrics.recordNotificationFailure();
 
     const body = await metrics.registry.metrics();
 
     expect(body).toContain('web_comic_library_jobs_available 2');
     expect(body).toContain('web_comic_library_jobs_overdue 1');
-    expect(body).toContain('web_comic_library_connector_runs_total{outcome="success"} 1');
+    expect(body).toContain('web_comic_library_connector_runs_total{outcome="failure"} 2');
+    expect(body).toContain('web_comic_library_connector_consecutive_failures 2');
     expect(body).toContain('web_comic_library_notification_failures_total 1');
   });
 });

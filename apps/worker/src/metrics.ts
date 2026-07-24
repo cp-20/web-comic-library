@@ -62,6 +62,11 @@ export const createWorkerMetrics = (jobQueueMetrics: JobQueueMetricsPort): Worke
     name: 'web_comic_library_connector_duration_seconds',
     registers: [registry],
   });
+  const connectorConsecutiveFailures = new Gauge({
+    help: 'Consecutive connector failures.',
+    name: 'web_comic_library_connector_consecutive_failures',
+    registers: [registry],
+  });
   const notificationFailures = new Counter({
     help: 'Notification delivery failures.',
     name: 'web_comic_library_notification_failures_total',
@@ -79,6 +84,11 @@ export const createWorkerMetrics = (jobQueueMetrics: JobQueueMetricsPort): Worke
     recordConnectorRun(outcome, durationSeconds) {
       connectorRuns.inc({ outcome });
       connectorDuration.observe(durationSeconds);
+      if (outcome === 'failure') {
+        connectorConsecutiveFailures.inc();
+      } else {
+        connectorConsecutiveFailures.set(0);
+      }
     },
     recordNotificationFailure() {
       notificationFailures.inc();
