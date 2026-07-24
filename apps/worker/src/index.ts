@@ -1,28 +1,11 @@
-import { run } from 'graphile-worker';
-import { object, parse, string } from 'valibot';
+import { startWorker } from './worker';
 
 const databaseUrl = process.env.DATABASE_URL;
-
 if (!databaseUrl) {
   throw new Error('DATABASE_URL is required');
 }
 
-const compatibilityPayloadSchema = object({ id: string() });
-const runner = await run({
-  concurrency: 1,
-  connectionString: databaseUrl,
-  crontab: '# compatibility: cron disabled',
-  noHandleSignals: true,
-  taskList: {
-    compatibility_probe: async (payload, helpers) => {
-      const { id } = parse(compatibilityPayloadSchema, payload);
-      await helpers.query('insert into compatibility_probe (id, processed_at) values ($1, now())', [
-        id,
-      ]);
-    },
-  },
-});
-
+const runner = await startWorker(databaseUrl);
 let stopping = false;
 const stop = (signal: string): void => {
   if (stopping) {

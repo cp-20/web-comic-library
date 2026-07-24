@@ -8,4 +8,4 @@ RUN bun run check
 RUN bun test
 RUN bun run build:web
 
-CMD ["bun", "run", "smoke:compatibility"]
+CMD ["bun", "run", "verify:compatibility"]

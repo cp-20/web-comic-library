@@ -47,10 +47,13 @@
       "dependencies": {
         "@web-comic-library/application": "workspace:*",
         "@web-comic-library/connectors": "workspace:*",
+        "@web-comic-library/contracts": "workspace:*",
         "@web-comic-library/db": "workspace:*",
         "@web-comic-library/notifications": "workspace:*",
         "graphile-worker": "0.17.3",
-        "valibot": "1.4.2",
+      },
+      "devDependencies": {
+        "postgres": "3.4.9",
       },
     },
     "packages/api-client": {
@@ -102,6 +105,7 @@
         "@web-comic-library/application": "workspace:*",
         "@web-comic-library/domain": "workspace:*",
         "drizzle-orm": "0.45.2",
+        "graphile-worker": "0.17.3",
         "postgres": "3.4.9",
       },
     },
