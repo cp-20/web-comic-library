@@ -2,7 +2,7 @@
 id: 006
 title: バックアップ、監視、障害通知を整備する
 type: platform
-status: open
+status: in_progress
 priority: P0
 depends_on: [005]
 umbrella: 001
