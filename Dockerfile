@@ -41,6 +41,9 @@ ADD --checksum=sha256:f30544c5ce93cf83b87578e3c4a2e9c0e0ffc3d160ef89ecddaf75f397
   https://github.com/wal-g/wal-g/releases/download/v3.0.8/wal-g-pg-22.04-amd64 \
   /usr/local/bin/wal-g
 COPY --chmod=755 operations/logical-backup.sh /usr/local/bin/logical-backup
-RUN chmod 755 /usr/local/bin/wal-g
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/* \
+  && chmod 755 /usr/local/bin/wal-g
 LABEL org.opencontainers.image.source="https://github.com/cp-20/web-comic-library"
 USER postgres
