@@ -29,7 +29,7 @@ umbrella: 001
 - local-path PVCだけをbackupとして扱わない。
 - token、メール本文、Push鍵をlogとSentryへ送らない。
 - connectorは3回連続失敗、jobは10分超の滞留で通知する。
-- node memoryとdiskの実測値を一週間記録する。
+- Prometheusでnodeとapplicationのmetricsを8日間保持する。
 
 ## 受け入れ条件
 
@@ -41,7 +41,7 @@ umbrella: 001
 
 ## テスト
 
-- 月次のrestore drill。
+- 初回のrestore drill。
 - Web、API、worker、cloudflaredを個別停止する障害試験。
 - R2 credentialがない環境でbackup jobが安全に失敗する試験。
 

@@ -20,6 +20,7 @@ Bun monorepoを継続的に検証し、Asterionへ安全に配備して復旧で
 - [004 DBとjob基盤](./004-database-job-foundation.md)
 - [005 Asterionへの配備](./005-asterion-deployment.md)
 - [006 バックアップと監視](./006-backup-observability.md)
+- [043 運用baselineと定期drill](./043-operational-baseline-drills.md)
 
 ## 完了条件
 
