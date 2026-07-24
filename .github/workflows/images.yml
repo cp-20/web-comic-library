@@ -43,6 +43,7 @@ jobs:
           docker build --target api --tag web-comic-library-api .
           docker build --target worker --tag web-comic-library-worker .
           docker build --target migration --tag web-comic-library-migration .
+          docker build --target database --tag web-comic-library-database .
       - name: Check production dependencies and user
         run: >-
           docker run --rm --entrypoint sh web-comic-library-web
@@ -54,6 +55,13 @@ jobs:
           docker run --rm --read-only --tmpfs /tmp
           --network host --env DATABASE_URL
           web-comic-library-migration
+      - name: Check backup image and missing credentials
+        run: |
+          docker run --rm --entrypoint wal-g web-comic-library-database --version
+          if docker run --rm --read-only --tmpfs /tmp --entrypoint logical-backup web-comic-library-database; then
+            echo 'logical backup unexpectedly accepted missing credentials'
+            exit 1
+          fi
       - name: Start services read-only
         run: |
           docker run --detach --name web --read-only --tmpfs /tmp --network host web-comic-library-web
@@ -83,7 +91,7 @@ jobs:
       - name: Push images
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          for component in web api worker; do
+          for component in web api worker database; do
             image="ghcr.io/${GITHUB_REPOSITORY}-${component}:${IMAGE_TAG}"
             docker tag "web-comic-library-${component}" "$image"
             docker push "$image"

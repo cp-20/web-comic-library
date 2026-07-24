@@ -35,3 +35,12 @@ CMD ["bun", "run", "--cwd", "apps/worker", "start"]
 
 FROM production AS migration
 CMD ["bun", "run", "--cwd", "packages/db", "migrate"]
+
+FROM postgres:16 AS database
+ADD --checksum=sha256:f30544c5ce93cf83b87578e3c4a2e9c0e0ffc3d160ef89ecddaf75f397d98deb \
+  https://github.com/wal-g/wal-g/releases/download/v3.0.8/wal-g-pg-22.04-amd64 \
+  /usr/local/bin/wal-g
+COPY --chmod=755 operations/logical-backup.sh /usr/local/bin/logical-backup
+RUN chmod 755 /usr/local/bin/wal-g
+LABEL org.opencontainers.image.source="https://github.com/cp-20/web-comic-library"
+USER postgres
