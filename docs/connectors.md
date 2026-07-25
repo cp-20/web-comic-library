@@ -7,7 +7,7 @@
 DB更新と通知判定はapplication use caseへ任せる。
 
 ```ts
-interface PublicationSource {
+interface Connector {
   discover(context: DiscoveryContext): Promise<DiscoveryBatch>;
   fetchPublication(ref: PublicationRef): Promise<PublicationCandidate>;
 }
@@ -24,6 +24,20 @@ interface PublicationSource {
 - 認証、CAPTCHA、paywall、年齢確認を回避しない。
 - 漫画本文、漫画ページ画像、viewer manifestを取得しない。
 
+`ConnectorHttpClient`は`redirect: "manual"`で最大3回までredirectを追跡し、requestごとにallowlistを再検証する。
+
+hostごとのrequestは`HostRequestScheduler`で直列化し、開始間隔を2秒以上に保ってjitterを加える。
+
+429では`Retry-After`を優先し、ほかの一時応答、timeout、network失敗では指数backoffを使う。
+
+ETagとLast-Modifiedは`FetchResourceState`からconditional headerへ設定する。
+
+304では本文を読まず、確認日時とresponse validatorだけを更新する。
+
+本文はstreamとして読み、5MiBを超えた時点で中止する。
+
+画像拡張子と画像Content-Typeはrequest前に拒否する。
+
 ## 解析
 
 HTMLとXMLはCheerio、埋め込みJSONは`JSON.parse`で解析する。
@@ -37,6 +51,26 @@ fetch -> decode -> parse -> validate -> normalize -> use case
 parserはI/Oを持たない純粋関数にする。
 
 schema変更時は既存データを維持し、コネクタを停止して通知する。
+
+外部値は`validateConnectorValue`からValibotの`safeParse`へ渡す。
+
+検証失敗時は値を補完せず、`validation`としてcrawl runへ記録する。
+
+## 巡回状態
+
+resourceごとのETag、Last-Modified、本文SHA-256、確認日時は`FetchResourceState`へ保存する。
+
+取得元ごとのcheckpoint、連続失敗数、停止状態は`SourceCrawlState`へ保存する。
+
+候補保存、fetch state、checkpoint、成功runは`commitDiscovery`で同じdatabase transactionへ保存する。
+
+候補保存に失敗した場合はcheckpointを進めない。
+
+3回の連続失敗で取得元を停止し、成功だけでは自動再開しない。
+
+workerは`discoverIfActive`を通して停止状態を確認し、`stopped`の取得元では`Connector.discover`を呼ばない。
+
+運営者は原因を解消してから明示的に再開する。
 
 ## 対応済みの抽出方針
 
@@ -61,6 +95,8 @@ R18、年齢確認必須、`review`、未確認値は公開対象にしない。
 ## fixture
 
 fixtureは漫画本文、画像、token、個人情報を除いた最小HTML、XML、JSONにする。
+
+fixture名は英小文字、数字、hyphenと`.html`、`.xml`、`.json`だけを使い、`readConnectorFixture`で読み込む。
 
 各parserで正常系、必須値欠落、未知値、冪等性、画像非取得をテストする。
 

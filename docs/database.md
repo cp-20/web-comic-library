@@ -77,3 +77,17 @@ robots.txtだけを根拠に収集を許可してはならない。
 未確認値、mappingのない値、R18、年齢確認が必要な値は公開しない。
 
 `Publication.normalizedUrl`は公式閲覧URLを保持し、購入URLは`purchaseUrl`へ分ける。
+
+## connector state
+
+resource単位のETag、Last-Modified、本文SHA-256、確認日時は`fetch_resource_states`へ保存する。
+
+取得元単位のcheckpoint、連続失敗数、`active`または`stopped`の状態は`source_crawl_states`へ保存する。
+
+巡回ごとの成功件数、解析失敗件数、所要時間、失敗分類は`crawl_runs`へ追記する。
+
+候補保存、fetch resource state、checkpoint、成功runは同じ`TransactionContext`でcommitする。
+
+候補保存またはstate保存に失敗した場合はtransaction全体をrollbackし、checkpointを進めない。
+
+失敗runは連続失敗数の更新と同じtransactionへ保存する。

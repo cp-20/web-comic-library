@@ -82,3 +82,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：migration Jobは43秒で完了し、3個のpolicy table、3個のenum、2個の`publications`列、3件のDrizzle migration記録を確認した。Argo CDは`Synced`かつ`Healthy`になり、Web、API health、worker metricsはHTTP 200を返した。
 - **cleanup**：一時的なproduction resourceは作成していない。配備branchはmanifest PRのmerge時に削除した。
 - **関連**：application PR #12、manifest PR #134、issue #009。
+
+## 2026-07-25 17:43 JST connector共通基盤の統合試験
+
+- **対象**：local loopback HTTPとTCP server、Docker ComposeのPostgreSQL 16 test database。
+- **操作**：redirect、304、429、timeout、本文超過、途中切断、画像request拒否を試験し、#010のmigration、checkpoint transaction、重複排除、rollback、連続失敗停止、明示再開を統合検証した。
+- **危険性**：localの一時TCP port、TCP port 55432、Docker container、network、test dataを使用した。
+- **保護策**：serverはloopbackだけへbindし、production接続情報を渡さず、repository専用のCompose projectを使った。
+- **結果**：最初のdatabase試験でenum代入のcast不足を検出した。修正後のclean databaseでは31 testが成功し、migrationの再適用も成功した。
+- **cleanup**：各testでlocal serverを停止し、各試行後にcontainerとnetworkを削除した。repository名を持つtest volumeが残っていないことを確認した。
+- **関連**：issue #010。
