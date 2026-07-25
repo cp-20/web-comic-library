@@ -52,3 +52,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：13 testが成功し、migrationの再適用も成功した。
 - **cleanup**：対象container、network、匿名test volumeを`docker compose down --volumes`で削除した。
 - **関連**：issue #008。
+
+## 2026-07-25 17:00 JST catalog schemaのproduction配備
+
+- **対象**：Asterionの`web-comic-library` applicationとPostgreSQL 16の`web_comic_library` database。
+- **操作**：Web、API、workerをapplication merge commit `5ef26bf`へ更新し、Argo CDのPreSync hookでcatalog migrationを適用した。
+- **危険性**：DDLの実行中にtable lockが発生し、migration失敗時には後続のrolloutが停止する可能性があった。
+- **保護策**：空のPostgreSQL 16へmigrationを2回適用する統合試験、application CI、image build、Kustomize render、manifest validationを完了してから配備した。
+- **結果**：migration Jobは53秒で完了し、9個のcatalog tableと2件のDrizzle migration記録を確認した。Argo CDは`Synced`かつ`Healthy`になり、WebとAPI healthは外部経路からHTTP 200を返した。
+- **cleanup**：一時的なproduction resourceは作成していない。配備branchはmanifest PRのmerge時に削除した。
+- **関連**：application PR #10、manifest PR #133、issue #008。
