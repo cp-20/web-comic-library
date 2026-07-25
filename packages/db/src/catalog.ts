@@ -122,10 +122,12 @@ export class PostgresCatalog implements CatalogRepository, CatalogQueryPort {
           .orderBy(asc(contentUnits.position), asc(contentUnits.id)),
         this.#database
           .select({
+            ageRatingValue: publications.ageRatingValue,
             externalId: publications.externalId,
             id: publications.id,
             kind: publications.kind,
             normalizedUrl: publications.normalizedUrl,
+            purchaseUrl: publications.purchaseUrl,
             sourceId: publications.sourceId,
             sourceName: sources.name,
             title: publications.title,
@@ -192,11 +194,13 @@ export class PostgresCatalog implements CatalogRepository, CatalogQueryPort {
       creators: creatorRows,
       id: work.id,
       publications: publicationRows.map((publication) => ({
+        ageRatingValue: publication.ageRatingValue,
         entries: entriesByPublication.get(publication.id) ?? [],
         externalId: publication.externalId,
         id: publication.id,
         kind: publication.kind,
         normalizedUrl: publication.normalizedUrl,
+        purchaseUrl: publication.purchaseUrl,
         sourceId: publication.sourceId,
         sourceName: publication.sourceName,
         title: publication.title,

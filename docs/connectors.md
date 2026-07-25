@@ -46,6 +46,18 @@ schema変更時は既存データを維持し、コネクタを停止して通�
 
 掲載元の年齢区分は確認済みの対応表で変換し、未知の値は公開しない。
 
+## 取得元policy gate
+
+workerはHTTP requestの直前に最新の取得元policyを確認する。
+
+未確認、拒否、緊急停止中の取得元ではconnectorを呼ばない。
+
+HTTP responseの取得後とjob投入の直前にもpolicyを再確認し、取得中に緊急停止された場合はjobを投入しない。
+
+公開queryは取得元固有の年齢区分mappingが`public`である掲載先だけを検索、通知、共有へ渡す。
+
+R18、年齢確認必須、`review`、未確認値は公開対象にしない。
+
 ## fixture
 
 fixtureは漫画本文、画像、token、個人情報を除いた最小HTML、XML、JSONにする。

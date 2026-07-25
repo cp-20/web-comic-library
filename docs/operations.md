@@ -42,6 +42,22 @@ Discord通知を受けた運用者は、Prometheusのalert、Argo CD application
 
 Secret、認証header、メール本文、Push鍵、job payloadはログやSentryへ転記しない。
 
+## 取得元の緊急停止
+
+利用条件の変更、取得元の障害、年齢区分の誤判定を確認した場合は、対象取得元を停止する。
+
+```sh
+sudo kubectl -n web-comic-library exec deployment/worker -- \
+  bun run --cwd apps/worker source-policy -- \
+  stop SOURCE_ID OPERATOR inquiry https://example.com/evidence
+```
+
+停止後はworker logで対象取得元の新しいHTTP requestがなく、Graphile Workerへ対象jobが追加されていないことを確認する。
+
+原因を解消し、根拠URLを用意してから`stop`を`resume`へ置き換えて再開する。
+
+停止と再開はproduction databaseを変更するため、実行結果を`audit.md`へ記録する。
+
 ## Backup確認
 
 日次logical backupと週次base backupのJobを確認する。

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "smoke": "bun run src/compatibility-smoke.ts",
+    "source-policy": "bun run src/source-policy-command.ts",
     "start": "bun run src/index.ts",
     "typecheck": "tsc --noEmit"
   },

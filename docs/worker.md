@@ -17,3 +17,23 @@ APIなどのproducerは`JobQueuePort`へtask名、payload、冪等性keyを渡�
 workerは`packages/contracts`のschemaでpayloadを検証してからapplication use caseを呼ぶ。
 検証失敗はGraphile Workerの試行失敗として記録し、use caseを呼ばない。
 workerを起動する前に`bun run --cwd packages/db migrate`でDrizzleとGraphile Workerのmigrationを適用する。
+
+## 取得元の緊急停止
+
+巡回処理は`runSourceCollection`を使い、HTTP requestの前とjob投入の前に取得元policyを確認する。
+
+productionで取得元を停止または再開する場合は、worker Podの`DATABASE_URL`を利用して管理commandを実行する。
+
+```sh
+sudo kubectl -n web-comic-library exec deployment/worker -- \
+  bun run --cwd apps/worker source-policy -- \
+  stop SOURCE_ID OPERATOR inquiry https://example.com/evidence
+
+sudo kubectl -n web-comic-library exec deployment/worker -- \
+  bun run --cwd apps/worker source-policy -- \
+  resume SOURCE_ID OPERATOR inquiry https://example.com/evidence
+```
+
+`OPERATOR`には変更者を識別できる値を指定し、最後の引数には判断根拠のHTTPまたはHTTPS URLを指定する。
+
+このcommandはpolicy revisionを追記し、過去の判断を上書きしない。

@@ -20,10 +20,12 @@ describe('catalog domain', () => {
       title: '作品',
     });
     const publication = createPublication({
+      ageRatingValue: 'all-ages',
       externalId: 'source-work-1',
       id: crypto.randomUUID(),
       kind: 'official',
       normalizedUrl: 'https://example.com/works/1',
+      purchaseUrl: 'https://store.example.com/works/1',
       retiredAt: null,
       sourceId: crypto.randomUUID(),
       title: 'サイト上の作品名',
@@ -102,10 +104,12 @@ describe('catalog domain', () => {
 
     expect(() =>
       createPublication({
+        ageRatingValue: null,
         externalId: '',
         id: crypto.randomUUID(),
         kind: 'unknown',
         normalizedUrl: 'https://example.com/work',
+        purchaseUrl: null,
         retiredAt: null,
         sourceId: crypto.randomUUID(),
         title: '作品',
@@ -115,10 +119,12 @@ describe('catalog domain', () => {
 
     expect(() =>
       createPublication({
+        ageRatingValue: null,
         externalId: null,
         id: crypto.randomUUID(),
         kind: 'unknown',
         normalizedUrl: 'file:///tmp/work',
+        purchaseUrl: null,
         retiredAt: null,
         sourceId: crypto.randomUUID(),
         title: '作品',

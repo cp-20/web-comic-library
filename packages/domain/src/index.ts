@@ -27,3 +27,19 @@ export {
   serialStatuses,
   workAliasKinds,
 } from './catalog';
+export {
+  type AgeRatingDisposition,
+  type AgeRatingMapping,
+  type PolicyDecision,
+  type SourcePolicyEvidence,
+  type SourcePolicyEvidenceKind,
+  type SourcePolicyRecord,
+  ageRatingDispositions,
+  canCollectSource,
+  canExposeAgeRating,
+  createAgeRatingMapping,
+  createSourcePolicyEvidence,
+  createSourcePolicyRecord,
+  policyDecisions,
+  sourcePolicyEvidenceKinds,
+} from './source-policy';

@@ -20,3 +20,12 @@ export {
   type TransactionPort,
 } from './persistence';
 export { type JobQueueMetrics, type JobQueueMetricsPort } from './observability';
+export {
+  type EmergencyStopCommand,
+  type SourceCollectionResult,
+  type SourcePolicyQueryPort,
+  type SourcePolicyRepository,
+  findPublicWork,
+  parseSourcePolicyEvidenceKind,
+  runSourceCollection,
+} from './source-policy';

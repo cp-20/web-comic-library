@@ -7,3 +7,4 @@ export {
 } from './foundation';
 export { PostgresJobQueueMetrics, createPostgresJobQueueMetrics } from './job-queue-metrics';
 export { migrateDatabase } from './migrate';
+export { PostgresSourcePolicy, createPostgresSourcePolicy } from './source-policy';
