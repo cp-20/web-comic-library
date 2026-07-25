@@ -92,3 +92,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：最初のdatabase試験でenum代入のcast不足を検出した。修正後のclean databaseでは31 testが成功し、migrationの再適用も成功した。
 - **cleanup**：各testでlocal serverを停止し、各試行後にcontainerとnetworkを削除した。repository名を持つtest volumeが残っていないことを確認した。
 - **関連**：issue #010。
+
+## 2026-07-25 17:58 JST connector共通基盤のproduction配備
+
+- **対象**：Asterionの`web-comic-library` applicationとPostgreSQL 16の`web_comic_library` database。
+- **操作**：Web、API、workerをapplication merge commit `4921bb7`へ更新し、Argo CDのPreSync hookでconnector共通基盤のmigrationを適用した。
+- **危険性**：DDLの実行中にtable lockが発生し、migration失敗時には後続のrolloutが停止する可能性があった。
+- **保護策**：空のPostgreSQL 16へのmigration二重適用、application CI、image build、Kustomize render、manifest validationを完了してから配備した。connector設定と巡回jobは追加しなかった。
+- **結果**：migration Jobは正常終了し、3個の状態管理table、2個のenum、4件のDrizzle migration記録を確認した。新規tableはすべて0行で、connector通信とcrawlは発生していない。Argo CDは`Synced`かつ`Healthy`になり、Web、API health、worker metricsはHTTP 200を返した。
+- **cleanup**：一時的なproduction resourceは作成していない。配備branchはmanifest PRのmerge時に削除した。
+- **関連**：application PR #14、manifest PR #135、issue #010。
