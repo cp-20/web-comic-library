@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>コミックDAYS（作品B）</title>
+    <item>
+      <title>第92話 作品B</title>
+      <link>https://comic-days.com/episode/2092</link>
+      <pubDate>Sat, 25 Jul 2026 03:00:00 +0000</pubDate>
+      <author>作者B</author>
+    </item>
+    <item>
+      <title>特別編</title>
+      <link>https://comic-days.com/episode/2091</link>
+      <pubDate>Sat, 18 Jul 2026 03:00:00 +0000</pubDate>
+      <author>作者B</author>
+    </item>
+    <item>
+      <title>休載のお知らせ</title>
+      <link>https://comic-days.com/episode/2090</link>
+      <pubDate>Sat, 11 Jul 2026 03:00:00 +0000</pubDate>
+      <author>作者B</author>
+    </item>
+  </channel>
+</rss>

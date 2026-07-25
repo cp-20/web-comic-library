@@ -56,6 +56,26 @@ schema変更時は既存データを維持し、コネクタを停止して通�
 
 検証失敗時は値を補完せず、`validation`としてcrawl runへ記録する。
 
+## 共通フィード型
+
+少年ジャンプ＋、コミックDAYS、となりのヤングジャンプは`CommonFeedConnector`へサイト設定を渡して収集する。
+
+設定はbase URL、全体Atom URL、許可hostだけを持ち、サイト別classは作らない。
+
+全体Atomの`entry`から話題名、更新日時、話URL、作者を読み、話ページから作品名、作者、作品別RSSを補完する。
+
+作品別RSSの履歴は、正規化した話URLを外部keyとして返す。
+
+queryとfragmentは外部keyから除外し、hostと`/episode/{id}`のpathが変わった場合は検証失敗とする。
+
+話題名の明示的な話数表現を通常話、番外編、特別編、読切を番外編として扱い、それ以外は判定不能にする。
+
+checkpointは最新更新日時と同時刻の話URLを保持し、同じAtom entryを再処理しない。
+
+HTMLまたはfeedの必須要素が欠けた場合はcrawl全体を失敗させ、checkpointを進めず、既存dataを削除しない。
+
+話HTML内の`img`とfeed内の`enclosure`は解析対象にせず、画像URLへrequestしない。
+
 ## 巡回状態
 
 resourceごとのETag、Last-Modified、本文SHA-256、確認日時は`FetchResourceState`へ保存する。

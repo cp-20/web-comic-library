@@ -21,6 +21,7 @@ export {
   type DiscoveryContext,
   type FetchResourceState,
   type PublicationCandidate,
+  type PublicationEntryCandidate,
   type PublicationRef,
   type SourceCrawlState,
   type SourceCrawlStatus,

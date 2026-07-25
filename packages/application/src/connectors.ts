@@ -1,3 +1,5 @@
+import type { PublicationEntryKind } from '@web-comic-library/domain';
+
 import type { JsonValue, TransactionContext, TransactionPort } from './persistence';
 
 export type DiscoveryContext = Readonly<{
@@ -13,8 +15,18 @@ export type PublicationRef = Readonly<{
 
 export type PublicationCandidate = Readonly<{
   ageRatingValue: string | null;
+  authors: readonly string[];
+  entries: readonly PublicationEntryCandidate[];
   externalId: string | null;
   sourceId: string;
+  title: string;
+  url: string;
+}>;
+
+export type PublicationEntryCandidate = Readonly<{
+  externalId: string;
+  kind: PublicationEntryKind;
+  publishedAt: Date;
   title: string;
   url: string;
 }>;

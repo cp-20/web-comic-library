@@ -2,7 +2,7 @@
 id: 011
 title: 共通feed型の3サイトを収集する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [010]
 umbrella: 007

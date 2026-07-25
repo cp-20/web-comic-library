@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>少年ジャンプ＋（作品A）</title>
+    <item>
+      <title>[第8話] 作品A</title>
+      <link>https://shonenjumpplus.com/episode/1008</link>
+      <pubDate>Fri, 24 Jul 2026 15:00:00 +0000</pubDate>
+      <author>作者A</author>
+    </item>
+    <item>
+      <title>[番外編] 作品A</title>
+      <link>https://shonenjumpplus.com/episode/1007</link>
+      <pubDate>Fri, 17 Jul 2026 15:00:00 +0000</pubDate>
+      <author>作者A</author>
+    </item>
+    <item>
+      <title>お知らせ</title>
+      <link>https://shonenjumpplus.com/episode/1006</link>
+      <pubDate>Fri, 10 Jul 2026 15:00:00 +0000</pubDate>
+      <author>作者A</author>
+    </item>
+  </channel>
+</rss>
