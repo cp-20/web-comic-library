@@ -377,8 +377,18 @@ export class CommonFeedConnector implements Connector {
       authors: [page.author],
       entries: history.entries,
       externalId: page.seriesFeedUrl,
+      kind: 'official',
+      kindEvidence: this.#config.feedUrl,
       sourceId,
       title: page.workTitle,
+      updatedAt:
+        history.entries.length === 0
+          ? null
+          : new Date(
+              Math.max(
+                ...history.entries.map((entry) => entry.publishedAt?.getTime() ?? Number.MIN_VALUE),
+              ),
+            ),
       url: page.seriesFeedUrl,
     };
   }

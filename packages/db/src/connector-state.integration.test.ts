@@ -71,8 +71,11 @@ integrationTest(
       authors: ['Fixture Author'],
       entries: [],
       externalId: suffix,
+      kind: 'official',
+      kindEvidence: 'https://connector-state.example/evidence',
       sourceId: source.id,
       title: `Candidate ${suffix}`,
+      updatedAt: new Date('2026-07-25T00:00:00Z'),
       url: `https://connector-state.example/publications/${suffix}`,
     });
     const startedAt = new Date('2026-07-25T00:00:00Z');

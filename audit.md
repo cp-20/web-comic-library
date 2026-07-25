@@ -112,3 +112,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：3サイトが共通のAtom、話HTML、作品別RSS構造を維持していることを確認した。全testは35件成功し、画像requestは0件だった。
 - **cleanup**：local HTTP serverをtest終了時に停止した。外部serviceとlocalに永続dataを作成していない。
 - **関連**：issue #011。
+
+## 2026-07-25 18:28 JST ニコニコ漫画connectorの構造確認と統合試験
+
+- **対象**：ニコニコ漫画の公開更新一覧、公開公式channel、公開作品ページ、local loopback HTTP server。
+- **操作**：一覧、page送り、作成順sort、公式channel breadcrumb、作品名、作者、公開話の現行構造をread-onlyで確認し、#012の透かし巡回とbackfill再開を統合試験した。
+- **危険性**：外部serviceへ少数のHTTP requestを送り、localの一時TCP portを使用した。
+- **保護策**：公開metadataだけを対象にし、認証、年齢確認、非公開endpoint、漫画本文、画像、viewerへアクセスしなかった。外部HTMLは保存せず、画像を除いた最小fixtureを作成した。
+- **結果**：公開一覧が20件単位であること、作成順sortが`manga_created`であること、公式作品のbreadcrumb、1回の作品HTMLに170個の公開話要素がある例を確認した。最小fixtureでは公開45話を欠落なく抽出し、全testは40件成功、画像requestは0件だった。
+- **cleanup**：local HTTP serverをtest終了時に停止した。外部serviceとlocalに永続dataを作成していない。
+- **関連**：issue #012。
