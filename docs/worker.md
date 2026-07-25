@@ -37,3 +37,21 @@ sudo kubectl -n web-comic-library exec deployment/worker -- \
 `OPERATOR`には変更者を識別できる値を指定し、最後の引数には判断根拠のHTTPまたはHTTPS URLを指定する。
 
 このcommandはpolicy revisionを追記し、過去の判断を上書きしない。
+
+## connectorの停止状態
+
+連続失敗で停止したconnectorの状態は次のcommandで確認する。
+
+```sh
+sudo kubectl -n web-comic-library exec deployment/worker -- \
+  bun run --cwd apps/worker connector-state -- status SOURCE_ID
+```
+
+取得元の構造変更、利用条件、失敗原因を確認してから明示的に再開する。
+
+```sh
+sudo kubectl -n web-comic-library exec deployment/worker -- \
+  bun run --cwd apps/worker connector-state -- resume SOURCE_ID
+```
+
+再開commandは連続失敗数を0へ戻すが、checkpointを変更しない。

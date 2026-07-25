@@ -2,7 +2,7 @@
 id: 010
 title: fetchだけで動くconnector共通基盤を作る
 type: platform
-status: open
+status: done
 priority: P0
 depends_on: [003, 009]
 umbrella: 007

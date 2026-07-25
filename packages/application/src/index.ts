@@ -9,6 +9,28 @@ export {
   type WorkCatalogReadModel,
 } from './catalog';
 export {
+  type CommitDiscoveryResult,
+  type CompleteDiscoveryInput,
+  type Connector,
+  type ConnectorFailureCode,
+  type ConnectorDiscoveryResult,
+  type ConnectorStateRepository,
+  type CrawlRun,
+  type DiscoveryBatch,
+  type DiscoveryCandidateSink,
+  type DiscoveryContext,
+  type FetchResourceState,
+  type PublicationCandidate,
+  type PublicationRef,
+  type SourceCrawlState,
+  type SourceCrawlStatus,
+  canCrawlSource,
+  commitDiscovery,
+  connectorFailureCodes,
+  discoverIfActive,
+  sourceCrawlStatuses,
+} from './connectors';
+export {
   type JobInput,
   type JobQueuePort,
   type JobQueueResult,

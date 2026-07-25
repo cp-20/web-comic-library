@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>https://fixture.example/feed</id>
+  <title>Fixture feed</title>
+  <updated>2026-07-25T00:00:00Z</updated>
+  <entry>
+    <id>fixture-entry</id>
+    <title>Fixture entry</title>
+    <updated>2026-07-25T00:00:00Z</updated>
+    <link href="https://fixture.example/entries/fixture-entry" />
+  </entry>
+</feed>

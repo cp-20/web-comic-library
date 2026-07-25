@@ -58,6 +58,24 @@ sudo kubectl -n web-comic-library exec deployment/worker -- \
 
 停止と再開はproduction databaseを変更するため、実行結果を`audit.md`へ記録する。
 
+## connectorの連続失敗
+
+connectorが連続失敗で停止した場合は、取得元policy、crawl runの失敗分類、worker log、対象resourceの順に確認する。
+
+```sh
+sudo kubectl -n web-comic-library exec deployment/worker -- \
+  bun run --cwd apps/worker connector-state -- status SOURCE_ID
+```
+
+原因を解消し、fixture testと対象connector testを通してから再開する。
+
+```sh
+sudo kubectl -n web-comic-library exec deployment/worker -- \
+  bun run --cwd apps/worker connector-state -- resume SOURCE_ID
+```
+
+再開はproduction databaseを変更するため、実行結果を`audit.md`へ記録する。
+
 ## Backup確認
 
 日次logical backupと週次base backupのJobを確認する。

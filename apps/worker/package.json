@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "connector-state": "bun run src/connector-command.ts",
     "smoke": "bun run src/compatibility-smoke.ts",
     "source-policy": "bun run src/source-policy-command.ts",
     "start": "bun run src/index.ts",
