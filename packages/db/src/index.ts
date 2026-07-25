@@ -1,3 +1,4 @@
+export { PostgresCatalog, createPostgresCatalog } from './catalog';
 export {
   PostgresFoundation,
   PostgresJobQueue,
