@@ -54,10 +54,12 @@ export type Source = Readonly<{
 }>;
 
 export type Publication = Readonly<{
+  ageRatingValue: string | null;
   externalId: string | null;
   id: string;
   kind: PublicationKind;
   normalizedUrl: string;
+  purchaseUrl: string | null;
   retiredAt: Date | null;
   sourceId: string;
   title: string;
@@ -152,8 +154,12 @@ export const createSource = (input: Source): Source => {
 export const createPublication = (input: Publication): Publication => {
   return {
     ...input,
+    ageRatingValue:
+      input.ageRatingValue === null ? null : requireText(input.ageRatingValue, 'ageRatingValue'),
     externalId: input.externalId === null ? null : requireText(input.externalId, 'externalId'),
     normalizedUrl: requireHttpUrl(input.normalizedUrl, 'normalizedUrl'),
+    purchaseUrl:
+      input.purchaseUrl === null ? null : requireHttpUrl(input.purchaseUrl, 'purchaseUrl'),
     title: requireText(input.title, 'title'),
   };
 };

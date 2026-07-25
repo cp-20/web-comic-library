@@ -2,7 +2,7 @@
 id: 009
 title: 取得元の利用条件と年齢区分を管理する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [004]
 umbrella: 007

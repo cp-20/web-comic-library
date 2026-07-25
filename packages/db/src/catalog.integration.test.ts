@@ -55,20 +55,24 @@ integrationTest(
       name: 'テスト作者',
     });
     const firstPublication = createPublication({
+      ageRatingValue: null,
       externalId: `work-${crypto.randomUUID()}`,
       id: crypto.randomUUID(),
       kind: 'official',
       normalizedUrl: `https://catalog-test.example/works/${crypto.randomUUID()}`,
+      purchaseUrl: null,
       retiredAt: null,
       sourceId: source.id,
       title: '掲載先A',
       workId: work.id,
     });
     const secondPublication = createPublication({
+      ageRatingValue: null,
       externalId: `work-${crypto.randomUUID()}`,
       id: crypto.randomUUID(),
       kind: 'official',
       normalizedUrl: `https://catalog-test.example/works/${crypto.randomUUID()}`,
+      purchaseUrl: null,
       retiredAt: null,
       sourceId: source.id,
       title: '掲載先B',

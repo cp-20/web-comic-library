@@ -15,6 +15,13 @@
       "when": 1784976000000,
       "tag": "0001_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1784980800000,
+      "tag": "0002_source_policy",
+      "breakpoints": true
     }
   ]
 }

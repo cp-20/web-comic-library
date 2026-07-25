@@ -56,11 +56,13 @@ export type PublicationEntryReadModel = Readonly<{
 }>;
 
 export type PublicationReadModel = Readonly<{
+  ageRatingValue: string | null;
   entries: readonly PublicationEntryReadModel[];
   externalId: string | null;
   id: string;
   kind: PublicationKind;
   normalizedUrl: string;
+  purchaseUrl: string | null;
   sourceId: string;
   sourceName: string;
   title: string;

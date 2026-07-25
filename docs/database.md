@@ -59,3 +59,21 @@ outbox eventとGraphile Worker jobは呼び出し側が安定した冪等性key�
 一括掲載と分割掲載は`EntryContentMapping`の多対多関係で保持し、確認状態をmappingごとに記録する。
 
 既読や通知履歴から参照される`Work`、`Publication`、`ContentUnit`、`PublicationEntry`は物理削除せず、`retired_at`で廃止状態にする。
+
+## 取得元policy
+
+取得元の利用条件は`source_policy_records`へrevision単位で追記し、上書きしない。
+
+各revisionは収集、営利利用、広告、affiliateの判断、緊急停止状態、変更者、変更日時を保持する。
+
+規約、robots.txt、API、feed、問い合わせ結果の確認日時と根拠URLは`source_policy_evidence`へ保持する。
+
+robots.txtだけを根拠に収集を許可してはならない。
+
+掲載元固有の年齢区分は`source_age_rating_mappings`へrevision単位で追記し、`public`、`excluded`、`review`へ変換する。
+
+公開queryは最新のpolicyが収集許可かつ緊急停止中でなく、最新の年齢区分mappingが`public`である`Publication`だけを返す。
+
+未確認値、mappingのない値、R18、年齢確認が必要な値は公開しない。
+
+`Publication.normalizedUrl`は公式閲覧URLを保持し、購入URLは`purchaseUrl`へ分ける。

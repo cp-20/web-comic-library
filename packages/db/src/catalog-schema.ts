@@ -58,11 +58,13 @@ export const sources = pgTable('sources', {
 });
 
 export const publications = pgTable('publications', {
+  ageRatingValue: text('age_rating_value'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   externalId: text('external_id'),
   id: uuid('id').primaryKey(),
   kind: publicationKindEnum('kind').notNull(),
   normalizedUrl: text('normalized_url').notNull(),
+  purchaseUrl: text('purchase_url'),
   retiredAt: timestamp('retired_at', { withTimezone: true }),
   sourceId: uuid('source_id')
     .notNull()

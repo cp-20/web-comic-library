@@ -62,3 +62,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：migration Jobは53秒で完了し、9個のcatalog tableと2件のDrizzle migration記録を確認した。Argo CDは`Synced`かつ`Healthy`になり、WebとAPI healthは外部経路からHTTP 200を返した。
 - **cleanup**：一時的なproduction resourceは作成していない。配備branchはmanifest PRのmerge時に削除した。
 - **関連**：application PR #10、manifest PR #133、issue #008。
+
+## 2026-07-25 17:14 JST source policy統合試験
+
+- **対象**：local Docker ComposeのPostgreSQL 16 test database。
+- **操作**：#009のmigrationを2回適用し、policy revision、年齢区分mapping、公開query、緊急停止の統合試験を実行した。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用した。
+- **保護策**：production接続情報を渡さず、repository専用のCompose projectだけを対象にした。
+- **結果**：20 testが成功し、R18、年齢確認必須、未確認値の公開除外と緊急停止後の収集停止を確認した。
+- **cleanup**：対象containerとnetworkを削除し、repository名を持つtest volumeが残っていないことを確認した。
+- **関連**：issue #009。
