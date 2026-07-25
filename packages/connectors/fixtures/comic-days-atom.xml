@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>コミックDAYS</title>
+  <updated>2026-07-25T03:00:00Z</updated>
+  <entry>
+    <title>第92話 作品B</title>
+    <link href="https://comic-days.com/episode/2092"/>
+    <updated>2026-07-25T03:00:00Z</updated>
+    <author><name>作者B</name></author>
+  </entry>
+</feed>

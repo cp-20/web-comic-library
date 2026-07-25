@@ -68,6 +68,8 @@ integrationTest(
     };
     const candidate = (suffix: string): PublicationCandidate => ({
       ageRatingValue: 'all-ages',
+      authors: ['Fixture Author'],
+      entries: [],
       externalId: suffix,
       sourceId: source.id,
       title: `Candidate ${suffix}`,

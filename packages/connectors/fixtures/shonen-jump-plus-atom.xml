@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>少年ジャンプ＋</title>
+  <updated>2026-07-24T15:00:00Z</updated>
+  <entry>
+    <title>[第8話] 作品A</title>
+    <link href="https://shonenjumpplus.com/episode/1008"/>
+    <updated>2026-07-24T15:00:00Z</updated>
+    <author><name>作者A</name></author>
+  </entry>
+</feed>

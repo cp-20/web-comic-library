@@ -102,3 +102,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：migration Jobは正常終了し、3個の状態管理table、2個のenum、4件のDrizzle migration記録を確認した。新規tableはすべて0行で、connector通信とcrawlは発生していない。Argo CDは`Synced`かつ`Healthy`になり、Web、API health、worker metricsはHTTP 200を返した。
 - **cleanup**：一時的なproduction resourceは作成していない。配備branchはmanifest PRのmerge時に削除した。
 - **関連**：application PR #14、manifest PR #135、issue #010。
+
+## 2026-07-25 18:09 JST 共通feed connectorの構造確認と統合試験
+
+- **対象**：少年ジャンプ＋、コミックDAYS、となりのヤングジャンプの公開Atom、公開話HTML、公開作品別RSS、local loopback HTTP server。
+- **操作**：3サイトの公開metadata構造をread-onlyで確認し、#011のfixture test、差分checkpoint、画像非取得のHTTP統合試験を実行した。
+- **危険性**：外部serviceへ少数のHTTP requestを送り、localの一時TCP portを使用した。
+- **保護策**：公開metadataだけを対象にし、認証、非公開endpoint、漫画本文、画像、viewer manifestへアクセスしなかった。各hostへの同時requestを1以下に抑えた。
+- **結果**：3サイトが共通のAtom、話HTML、作品別RSS構造を維持していることを確認した。全testは35件成功し、画像requestは0件だった。
+- **cleanup**：local HTTP serverをtest終了時に停止した。外部serviceとlocalに永続dataを作成していない。
+- **関連**：issue #011。
