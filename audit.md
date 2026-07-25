@@ -72,3 +72,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：20 testが成功し、R18、年齢確認必須、未確認値の公開除外と緊急停止後の収集停止を確認した。
 - **cleanup**：対象containerとnetworkを削除し、repository名を持つtest volumeが残っていないことを確認した。
 - **関連**：issue #009。
+
+## 2026-07-25 17:24 JST source policy schemaのproduction配備
+
+- **対象**：Asterionの`web-comic-library` applicationとPostgreSQL 16の`web_comic_library` database。
+- **操作**：Web、API、workerをapplication merge commit `e38d9d9`へ更新し、Argo CDのPreSync hookでsource policy migrationを適用した。
+- **危険性**：DDLの実行中にtable lockが発生し、migration失敗時には後続のrolloutが停止する可能性があった。
+- **保護策**：空のPostgreSQL 16へのmigration二重適用、application CI、image build、Kustomize render、manifest validationを完了してから配備した。既存tableへ追加する列はnullableとした。
+- **結果**：migration Jobは43秒で完了し、3個のpolicy table、3個のenum、2個の`publications`列、3件のDrizzle migration記録を確認した。Argo CDは`Synced`かつ`Healthy`になり、Web、API health、worker metricsはHTTP 200を返した。
+- **cleanup**：一時的なproduction resourceは作成していない。配備branchはmanifest PRのmerge時に削除した。
+- **関連**：application PR #12、manifest PR #134、issue #009。
