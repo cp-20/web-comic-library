@@ -472,3 +472,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：draft PR #29を作成し、CIを開始した。CI結果を確認後にmerge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #29、issue #027。
+
+## 2026-07-27 #027 email digest mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #29、CI、Images workflow。
+- **操作**：qualityとImages workflow成功後にPR #29をsquash mergeし、mainのCIとImages workflowを完了まで監視する。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、CIとImagesが成功したことを確認する。production database migration、rollout、外部メールserviceへの接続を実施しない。
+- **結果**：実行前。完了後に結果を記録する。
+- **cleanup**：PR merge時にremote作業branchを削除する。production databaseと外部serviceの永続dataは変更しない。
+- **関連**：PR #29、issue #027。
