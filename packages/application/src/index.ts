@@ -1,4 +1,18 @@
 export {
+  type ProfileIconStorage,
+  type ProfileIconUpload,
+  sanitizeProfileIcon,
+  uploadProfileIcon,
+} from './profile-icon';
+export {
+  type IdentityRepository,
+  type ProfileViewer,
+  type SessionIdentity,
+  findVisibleProfile,
+  isActiveSession,
+  updateProfile,
+} from './identity';
+export {
   type BibliographyCoverageReport,
   type BibliographyProviderPort,
   type BibliographyRepository,

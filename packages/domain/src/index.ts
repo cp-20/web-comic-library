@@ -1,4 +1,16 @@
 export {
+  type AccountProfile,
+  type AccountStatus,
+  type Visibility,
+  type VisibilityContext,
+  accountStatuses,
+  canViewVisibility,
+  createAccountProfile,
+  normalizeUserId,
+  resolveVisibility,
+  visibilities,
+} from './identity';
+export {
   type BibliographyField,
   type BibliographyProvider,
   type BibliographyProviderRecord,

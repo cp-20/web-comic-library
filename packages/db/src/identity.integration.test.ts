@@ -1,0 +1,90 @@
+import { expect, test } from 'bun:test';
+
+import { findVisibleProfile } from '@web-comic-library/application';
+import postgres from 'postgres';
+
+import { createPostgresIdentity } from './identity';
+import { migrateDatabase } from './migrate';
+
+const databaseUrl = process.env.DATABASE_URL;
+const integrationTest =
+  process.env.ALLOW_DATABASE_INTEGRATION_TESTS === '1' && databaseUrl ? test : test.skip;
+
+integrationTest(
+  'identity storage preserves profile privacy, follower visibility, and account session status',
+  async () => {
+    if (!databaseUrl) throw new Error('DATABASE_URL is required');
+    await migrateDatabase(databaseUrl);
+    await migrateDatabase(databaseUrl);
+
+    const sql = postgres(databaseUrl, { max: 1 });
+    const identity = createPostgresIdentity(databaseUrl);
+    const readerId = crypto.randomUUID();
+    const followerId = crypto.randomUUID();
+    const token = `identity-test-${crypto.randomUUID()}`;
+    try {
+      const users: ReadonlyArray<readonly [string, string, string]> = [
+        [readerId, '読書者', `reader-${crypto.randomUUID()}@example.test`],
+        [followerId, 'フォロワー', `follower-${crypto.randomUUID()}@example.test`],
+      ];
+      await Promise.all(
+        users.map(async ([id, name, email]) => {
+          await sql`
+          insert into "user" (id, name, email, email_verified, image, created_at, updated_at)
+          values (${id}, ${name}, ${email}, true, null, now(), now())
+        `;
+        }),
+      );
+      await identity.saveProfile({
+        accountStatus: 'active',
+        bio: 'profile',
+        displayName: '読書者',
+        iconUrl: null,
+        userId: `reader-${readerId.slice(0, 8)}`,
+        userUuid: readerId,
+        visibility: null,
+      });
+      const privateProfile = await findVisibleProfile(identity, `reader-${readerId.slice(0, 8)}`, {
+        userUuid: followerId,
+      });
+      expect(privateProfile).toBeNull();
+
+      await identity.saveProfile({
+        accountStatus: 'active',
+        bio: 'profile',
+        displayName: '読書者',
+        iconUrl: null,
+        userId: `reader-${readerId.slice(0, 8)}`,
+        userUuid: readerId,
+        visibility: 'followers',
+      });
+      await sql`
+        insert into profile_followers (follower_user_id, followed_user_id)
+        values (${followerId}, ${readerId})
+      `;
+      expect(
+        await findVisibleProfile(identity, `reader-${readerId.slice(0, 8)}`, {
+          userUuid: followerId,
+        }),
+      ).toMatchObject({ userUuid: readerId, visibility: 'followers' });
+
+      await sql`
+        insert into session (id, expires_at, token, created_at, updated_at, ip_address, user_agent, user_id)
+        values (${crypto.randomUUID()}, now() + interval '1 hour', ${token}, now(), now(), null, null, ${readerId})
+      `;
+      expect(await identity.findSessionIdentity(token)).toMatchObject({
+        accountStatus: 'active',
+        userUuid: readerId,
+      });
+      await sql`update profiles set account_status = 'disabled'::account_status where user_id = ${readerId}`;
+      expect(await identity.findSessionIdentity(token)).toMatchObject({
+        accountStatus: 'disabled',
+      });
+    } finally {
+      await sql`delete from "user" where id in (${readerId}, ${followerId})`;
+      await identity.close();
+      await sql.end({ timeout: 1 });
+    }
+  },
+  60_000,
+);
