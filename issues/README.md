@@ -6,6 +6,7 @@ issueの書式と状態管理は[docs/issues.md](../docs/issues.md)に従う。
 
 - [001 実行基盤](./001-platform-foundation.md)
 - [007 作品カタログと更新収集](./007-catalog-ingestion.md)
+- [018 10サイト対応とbackfill](./018-source-expansion-backfill.md)
 - [019 アカウントと読書管理](./019-library-management.md)
 - [024 通知](./024-notifications.md)
 - [028 読書活動と共有](./028-social-sharing.md)
