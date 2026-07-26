@@ -69,6 +69,24 @@ export class PostgresIngestion implements IngestionCandidateSink {
     candidate: PublicationCandidate,
     mode: IngestionMode,
   ): Promise<Readonly<{ insertedCandidate: boolean; releaseEventCount: number }>> {
+    if (candidate.kind === 'unknown') {
+      const identity = candidate.externalId ?? candidate.url;
+      await session.unsafe(
+        'insert into catalog_review_items (id, kind, status, source_id, dedupe_key, payload, created_at, resolved_at, resolved_by) values ($1, $2::catalog_review_kind, $3::catalog_review_status, $4, $5, $6::jsonb, now(), null, null) on conflict (dedupe_key) do nothing',
+        [
+          crypto.randomUUID(),
+          'unknown_publication_kind',
+          'open',
+          sourceId,
+          `unknown-publication-kind:${sourceId}:${identity}`,
+          JSON.stringify({
+            externalId: candidate.externalId,
+            title: candidate.title,
+            url: candidate.url,
+          }),
+        ],
+      );
+    }
     const publications = await session.unsafe<PublicationRow[]>(
       'select id::text, work_id::text as "workId" from publications where source_id = $1 and (normalized_url = $2 or external_id = $3) for update',
       [sourceId, candidate.url, candidate.externalId],

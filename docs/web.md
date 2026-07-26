@@ -17,3 +17,7 @@ bun run check
 bun test
 bun run build:web
 ```
+
+## 管理画面
+
+`/admin/catalog`は管理者のcatalog統合・分割画面である。すべての操作で理由を入力させ、Hono RPC clientだけを使ってAPIへ送る。画面だけで権限を判断せず、API側の強い認証とrole検査を必須とする。

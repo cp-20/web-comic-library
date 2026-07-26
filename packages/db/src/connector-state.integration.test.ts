@@ -194,6 +194,7 @@ integrationTest(
       });
     } finally {
       await sql`delete from connector_test_candidates where source_id = ${source.id}`;
+      await sql`delete from catalog_review_items where source_id = ${source.id}`;
       await sql`delete from crawl_runs where source_id = ${source.id}`;
       await sql`delete from fetch_resource_states where source_id = ${source.id}`;
       await sql`delete from source_crawl_states where source_id = ${source.id}`;

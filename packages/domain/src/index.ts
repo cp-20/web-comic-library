@@ -1,4 +1,13 @@
 export {
+  type CatalogAdminActor,
+  type CatalogAdminAssurance,
+  catalogAdminAssurances,
+  requireCatalogAdmin,
+  requireCatalogOperationReason,
+  requireDistinctCatalogIds,
+  requireUniqueCatalogIds,
+} from './catalog-admin';
+export {
   type ContentUnit,
   type Creator,
   type EntryContentMapping,

@@ -166,6 +166,33 @@ export class PostgresConnectorState implements ConnectorStateRepository {
 
     return this.#client.begin(async (session) => {
       await this.#insertRun(session, run);
+      if (run.failureCode === 'parse' || run.failureCode === 'validation') {
+        await session`
+          insert into catalog_review_items (
+            id,
+            kind,
+            status,
+            source_id,
+            dedupe_key,
+            payload,
+            created_at,
+            resolved_at,
+            resolved_by
+          )
+          values (
+            ${crypto.randomUUID()},
+            'parse_failure'::catalog_review_kind,
+            'open'::catalog_review_status,
+            ${run.sourceId},
+            ${`crawl-failure:${run.id}`},
+            ${session.json({ failureCode: run.failureCode, runId: run.id })},
+            ${run.finishedAt},
+            null,
+            null
+          )
+          on conflict (dedupe_key) do nothing
+        `;
+      }
       const rows = await session<SourceCrawlRow[]>`
         insert into source_crawl_states (
           source_id,

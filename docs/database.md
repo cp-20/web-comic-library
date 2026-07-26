@@ -62,6 +62,14 @@ connector候補は`work_ingestion_keys`のNFKC正規化済み作品名、作者�
 
 `release_events`はsource、publication entry、event種別、発生時刻から作るidempotency keyを一意に保持する。初回取込とbackfillのeventは`notification_suppressed`をtrueにし、配信対象にはしない。候補、event、fetch state、checkpoint、成功runは同じtransactionで確定する。
 
+## catalog管理
+
+管理操作は`catalog_merge_audits`に操作種別、操作者、理由、変更前後、時刻を追記する。`catalog_redirects`はretireした作品または話の旧IDを正規IDへ対応付け、公開queryは旧IDを直接公開せず正規IDへredirectする。
+
+作品統合は掲載先、掲載ページ、話、対応付けを同じtransaction内で正規作品へ移す。話統合は掲載ページ対応を正規話へ集約し、重複mappingでは`confirmed`を失わない。分割は選択された掲載先と話の対応関係が閉じている場合だけ許可し、根拠のない既読対応を作らない。
+
+`catalog_review_items`は解析失敗、種別不明、利用者修正候補を保持する。解析またはvalidation失敗と種別不明候補はdedupe key付きでqueueへ追加し、管理者が解決するまで既存catalog dataを削除しない。
+
 既読や通知履歴から参照される`Work`、`Publication`、`ContentUnit`、`PublicationEntry`は物理削除せず、`retired_at`で廃止状態にする。
 
 ## 取得元policy
