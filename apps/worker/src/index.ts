@@ -2,6 +2,7 @@ import { createPostgresJobQueueMetrics } from '@web-comic-library/db';
 
 import { createBibliographyWorkerHandler } from './bibliography';
 import { createWorkerMetrics, startMetricsServer } from './metrics';
+import { createNotificationWorkerHandler } from './notifications';
 import { startWorker } from './worker';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -9,7 +10,11 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is required');
 }
 
-const runner = await startWorker(databaseUrl, createBibliographyWorkerHandler(databaseUrl));
+const runner = await startWorker(
+  databaseUrl,
+  createBibliographyWorkerHandler(databaseUrl),
+  createNotificationWorkerHandler(databaseUrl),
+);
 const jobQueueMetrics = createPostgresJobQueueMetrics(databaseUrl);
 const metrics = createWorkerMetrics(jobQueueMetrics);
 const metricsPort = Number(process.env.METRICS_PORT ?? '3002');

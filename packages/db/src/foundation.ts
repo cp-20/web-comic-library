@@ -12,6 +12,29 @@ import { TransactionContext as ApplicationTransactionContext } from '@web-comic-
 import postgres from 'postgres';
 import type { Sql, TransactionSql } from 'postgres';
 
+export const enqueueNotificationRelease = async (
+  session: TransactionSql,
+  eventId: string,
+): Promise<void> => {
+  const idempotencyKey = `notification-release:${eventId}`;
+  const keys = await session<{ idempotencyKey: string }[]>`
+    insert into job_idempotency_keys (idempotency_key, task_identifier)
+    values (${idempotencyKey}, 'notification_release')
+    on conflict (idempotency_key) do nothing
+    returning idempotency_key as "idempotencyKey"
+  `;
+  if (!keys[0]) return;
+  await session`
+    select graphile_worker.add_job(
+      identifier => 'notification_release',
+      payload => ${session.json({ eventId })}::json,
+      max_attempts => 3,
+      job_key => ${idempotencyKey},
+      job_key_mode => 'unsafe_dedupe'::text
+    )
+  `;
+};
+
 export class PostgresFoundation implements OutboxPort, TransactionPort {
   readonly #client: Sql;
   readonly #sessions = new WeakMap<TransactionContext, TransactionSql>();

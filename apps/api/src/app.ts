@@ -16,6 +16,7 @@ import type {
   VolumeLibraryRepository,
   CatalogQueryPort,
   FollowRepository,
+  NotificationRepository,
   SessionIdentity,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
@@ -35,6 +36,9 @@ import {
   setUserVolumeRecord,
   setFollowSettings,
   setSourcePreferences,
+  readAllNotifications,
+  readNotification,
+  setNotificationPreference,
   searchPublicWorks,
   unmarkContentRead,
   submitVolumeContentMappingCorrection,
@@ -57,6 +61,9 @@ import {
   setReadingStatusRequestSchema,
   setFollowSettingsRequestSchema,
   setSourcePreferencesRequestSchema,
+  notificationListQuerySchema,
+  notificationParamsSchema,
+  setNotificationPreferenceRequestSchema,
   setUserVolumeRecordRequestSchema,
   submitVolumeContentMappingCorrectionRequestSchema,
   unmarkContentReadRequestSchema,
@@ -97,6 +104,7 @@ export type ApiDependencies = Readonly<{
   catalogAdmin: CatalogAdminController | null;
   catalog: CatalogQueryPort | null;
   follow: FollowRepository | null;
+  notifications: NotificationRepository | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
   volumeLibrary: VolumeLibraryRepository | null;
@@ -118,6 +126,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   catalogAdmin: null,
   catalog: null,
   follow: null,
+  notifications: null,
   identity: null,
   library: null,
   volumeLibrary: null,
@@ -327,6 +336,71 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
           userUuid: session.userUuid,
         });
         return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .put(
+      '/api/settings/notification-preferences',
+      vValidator('json', setNotificationPreferenceRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.notifications;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await setNotificationPreference(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .get(
+      '/api/notifications',
+      vValidator('query', notificationListQuerySchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.notifications;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository) return context.json({ error: 'unavailable' }, 503);
+        const query = context.req.valid('query');
+        const limit = query.limit === undefined ? 30 : Number(query.limit);
+        if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+          return context.json({ error: 'invalid_limit' }, 400);
+        }
+        return context.json(
+          {
+            page: await repository.listNotifications(session.userUuid, query.cursor ?? null, limit),
+            unreadCount: await repository.unreadNotificationCount(session.userUuid),
+          },
+          200,
+        );
+      },
+    )
+    .post('/api/notifications/read-all', async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.notifications;
+      const transactions = dependencies.transactions;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+      await readAllNotifications(transactions, repository, session.userUuid);
+      return context.json({ status: 'ok' as const }, 200);
+    })
+    .post(
+      '/api/notifications/:id/read',
+      vValidator('param', notificationParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.notifications;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const changed = await readNotification(
+          transactions,
+          repository,
+          session.userUuid,
+          context.req.valid('param').id,
+        );
+        return context.json({ status: changed ? ('ok' as const) : ('not_found' as const) }, 200);
       },
     )
     .get('/api/library/volumes', async (context) => {

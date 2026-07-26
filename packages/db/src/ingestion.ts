@@ -16,7 +16,7 @@ import {
 import postgres from 'postgres';
 import type { Sql, TransactionSql } from 'postgres';
 
-import type { PostgresFoundation } from './foundation';
+import { enqueueNotificationRelease, type PostgresFoundation } from './foundation';
 
 type PublicationRow = Readonly<{ id: string; workId: string }>;
 type EntryRow = Readonly<{
@@ -244,6 +244,10 @@ export class PostgresIngestion implements IngestionCandidateSink {
         ],
       );
       releaseEventCount += inserted.length;
+      const eventId = inserted[0]?.id;
+      if (eventId && mode === 'incremental') {
+        await enqueueNotificationRelease(session, eventId);
+      }
     }
 
     return { insertedCandidate, releaseEventCount };

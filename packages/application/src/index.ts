@@ -20,6 +20,15 @@ export {
   setSourcePreferences,
 } from './follow';
 export {
+  type NotificationPage,
+  type NotificationReleaseEvent,
+  type NotificationRepository,
+  generateInAppNotifications,
+  readAllNotifications,
+  readNotification,
+  setNotificationPreference,
+} from './notification';
+export {
   type LibraryRepository,
   type LibraryWorkReadModel,
   type ReadMapping,

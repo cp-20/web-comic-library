@@ -2,7 +2,7 @@
 id: 025
 title: release eventからアプリ内通知を生成する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [014, 022, 023]
 umbrella: 024
