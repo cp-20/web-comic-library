@@ -1,7 +1,8 @@
 import { createPostgresJobQueueMetrics } from '@web-comic-library/db';
-import { createWebPushSender } from '@web-comic-library/notifications';
+import { createResendEmailSender, createWebPushSender } from '@web-comic-library/notifications';
 
 import { createBibliographyWorkerHandler } from './bibliography';
+import { createEmailDigestWorkerHandler } from './email-digest';
 import { createWorkerMetrics, startMetricsServer } from './metrics';
 import { createNotificationWorkerHandler } from './notifications';
 import { startWorker } from './worker';
@@ -29,10 +30,27 @@ const webPushSender =
       })
     : null;
 
+const resendApiKey = process.env.RESEND_API_KEY;
+const resendFrom = process.env.RESEND_FROM;
+const publicAppUrl = process.env.PUBLIC_APP_URL;
+const emailValues = [resendApiKey, resendFrom, publicAppUrl];
+if (emailValues.some((value) => value) && emailValues.some((value) => !value)) {
+  throw new Error('RESEND_API_KEY, RESEND_FROM, and PUBLIC_APP_URL must be configured together');
+}
+const emailDigestHandler =
+  resendApiKey && resendFrom && publicAppUrl
+    ? createEmailDigestWorkerHandler(
+        databaseUrl,
+        createResendEmailSender(resendApiKey, resendFrom),
+        new URL('/notifications', publicAppUrl).toString(),
+      )
+    : undefined;
+
 const runner = await startWorker(
   databaseUrl,
   createBibliographyWorkerHandler(databaseUrl),
   createNotificationWorkerHandler(databaseUrl, webPushSender),
+  emailDigestHandler,
 );
 const jobQueueMetrics = createPostgresJobQueueMetrics(databaseUrl);
 const metrics = createWorkerMetrics(jobQueueMetrics);

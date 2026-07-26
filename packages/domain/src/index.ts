@@ -145,3 +145,8 @@ export {
   createWebPushSubscription,
   webPushDeliveryIdempotencyKey,
 } from './web-push';
+export {
+  type EmailDigestSettings,
+  createEmailDigestSettings,
+  emailDigestIdempotencyKey,
+} from './email-digest';

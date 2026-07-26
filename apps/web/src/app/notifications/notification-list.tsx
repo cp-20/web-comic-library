@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { createApiClient } from '../../lib/api-client';
+import { EmailDigestSettings } from './email-digest-settings';
 import { PushSettings } from './push-settings';
 
 const client = createApiClient('');
@@ -96,6 +97,7 @@ export const NotificationList = () => {
         </label>
         <button type="submit">設定を保存</button>
       </form>
+      <EmailDigestSettings />
       <PushSettings />
       <h2>通知一覧</h2>
       <button

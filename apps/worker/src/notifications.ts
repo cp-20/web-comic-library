@@ -22,6 +22,7 @@ export const createNotificationWorkerHandler = (
     const subscriptions = createPostgresWebPushSubscription(databaseUrl, foundation);
     try {
       await generateInAppNotifications(foundation, notifications, eventId);
+      await generateNotifications(foundation, notifications, 'email', eventId);
       if (sender) {
         await generateNotifications(foundation, notifications, 'web_push', eventId);
         await deliverWebPushForRelease(subscriptions, sender, eventId);

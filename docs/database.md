@@ -44,6 +44,10 @@ Better Auth互換の`user`、`session`、`account`、`verification`を保持し�
 
 `web_push_subscriptions`は利用者とbrowser subscription endpointを一意に保持し、再登録時は鍵を更新して再有効化する。`web_push_deliveries`はWeb Push用notificationとsubscriptionの組を冪等に保持する。404/410の恒久失敗はsubscriptionを無効化し、再試行可能な失敗は`queued`のままworkerが再試行する。
 
+## Email digest storage
+
+`email_digest_settings`は利用者ごとの有効状態、timezone、送信時刻、unsubscribe時刻を保持し、標準では無効とする。`email_digests`は利用者とローカル日付ごとの一意な冪等性key、送信状態、試行結果を持つ。`email_digest_notifications`は送信対象notificationを固定し、同じ日を再処理しても二重送信しない。恒久的な送信失敗は設定を停止して記録する。
+
 ## ローカル開発
 
 PostgreSQL 16を起動する。

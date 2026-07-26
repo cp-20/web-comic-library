@@ -38,8 +38,11 @@ const requireText = (value: string, name: string): string => {
   return value;
 };
 
-export const defaultNotificationEnabled = (kind: NotificationKind): boolean =>
-  kind === 'new_episode' || kind === 'extra' || kind === 'new_volume';
+export const defaultNotificationEnabled = (
+  kind: NotificationKind,
+  channel: NotificationChannel = 'in_app',
+): boolean =>
+  channel === 'in_app' && (kind === 'new_episode' || kind === 'extra' || kind === 'new_volume');
 
 export const notificationIdempotencyKey = (
   userUuid: string,

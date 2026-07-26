@@ -43,6 +43,19 @@ export {
   deliverWebPushForRelease,
 } from './web-push-delivery';
 export {
+  type EmailDigestSettingsRepository,
+  recordEmailDigestFeedback,
+  setEmailDigestSettings,
+  unsubscribeEmailDigest,
+} from './email-digest';
+export {
+  type EmailDigestDeliveryOutcome,
+  type EmailDigestDeliveryRepository,
+  type EmailDigestSenderPort,
+  type QueuedEmailDigest,
+  deliverQueuedEmailDigests,
+} from './email-digest-delivery';
+export {
   type LibraryRepository,
   type LibraryWorkReadModel,
   type ReadMapping,

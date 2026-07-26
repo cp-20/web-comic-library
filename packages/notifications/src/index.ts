@@ -1,6 +1,11 @@
 import type { WebPushSubscription } from '@web-comic-library/domain';
 import webPush from 'web-push';
 
+export { createEmailDigestMessage, createResendEmailSender } from './email-digest';
+export type { EmailDeliveryOutcome, EmailDigestMessage, EmailSender } from './email-digest';
+export { verifyResendEmailFeedback } from './resend-webhook';
+export type { ResendEmailFeedback } from './resend-webhook';
+
 export type WebPushPayload = Readonly<{
   notificationId: string;
   url: string;

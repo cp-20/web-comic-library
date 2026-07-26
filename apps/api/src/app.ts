@@ -18,6 +18,7 @@ import type {
   FollowRepository,
   NotificationRepository,
   WebPushSubscriptionRepository,
+  EmailDigestSettingsRepository,
   SessionIdentity,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
@@ -47,6 +48,9 @@ import {
   updateProfile,
   registerWebPushSubscription,
   unregisterWebPushSubscription,
+  setEmailDigestSettings,
+  unsubscribeEmailDigest,
+  recordEmailDigestFeedback,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -75,8 +79,10 @@ import {
   updateProfileRequestSchema,
   webPushSubscriptionRequestSchema,
   webPushUnsubscribeRequestSchema,
+  emailDigestSettingsRequestSchema,
 } from '@web-comic-library/contracts';
 import type { CatalogAdminActor } from '@web-comic-library/domain';
+import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
 import { Hono } from 'hono';
 
 import { apiMetrics, apiRequestDuration, apiRequests } from './metrics';
@@ -112,6 +118,8 @@ export type ApiDependencies = Readonly<{
   notifications: NotificationRepository | null;
   webPushSubscriptions: WebPushSubscriptionRepository | null;
   webPushPublicKey: string | null;
+  emailDigests: EmailDigestSettingsRepository | null;
+  resendWebhookSecret: string | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
   volumeLibrary: VolumeLibraryRepository | null;
@@ -136,6 +144,8 @@ const unauthenticatedDependencies: ApiDependencies = {
   notifications: null,
   webPushSubscriptions: null,
   webPushPublicKey: null,
+  emailDigests: null,
+  resendWebhookSecret: null,
   identity: null,
   library: null,
   volumeLibrary: null,
@@ -207,6 +217,26 @@ const toCatalogSearchQuery = (
 export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
   const dependencies: ApiDependencies = { ...unauthenticatedDependencies, ...overrides };
   const baseApp = new Hono();
+
+  baseApp.post('/api/webhooks/resend', async (context) => {
+    const repository = dependencies.emailDigests;
+    const secret = dependencies.resendWebhookSecret;
+    const transactions = dependencies.transactions;
+    if (!repository || !secret || !transactions) return context.json({ error: 'unavailable' }, 503);
+    const payload = await context.req.raw.text();
+    const feedback = verifyResendEmailFeedback(
+      payload,
+      {
+        id: context.req.header('svix-id') ?? null,
+        signature: context.req.header('svix-signature') ?? null,
+        timestamp: context.req.header('svix-timestamp') ?? null,
+      },
+      secret,
+    );
+    if (!feedback) return context.json({ error: 'invalid_webhook' }, 400);
+    await recordEmailDigestFeedback(transactions, repository, feedback);
+    return context.body(null, 204);
+  });
 
   baseApp.use(
     sentry(baseApp, {
@@ -363,6 +393,31 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         return context.json({ status: 'ok' as const }, 200);
       },
     )
+    .put(
+      '/api/settings/email-digest',
+      vValidator('json', emailDigestSettingsRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.emailDigests;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await setEmailDigestSettings(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .post('/api/settings/email-digest/unsubscribe', async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.emailDigests;
+      const transactions = dependencies.transactions;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+      await unsubscribeEmailDigest(transactions, repository, session.userUuid);
+      return context.json({ status: 'ok' as const }, 200);
+    })
     .get('/api/push/config', async (context) => {
       const session = await dependencies.resolveSession(context.req.raw);
       if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
