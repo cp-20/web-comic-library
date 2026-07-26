@@ -2,7 +2,7 @@
 id: 018
 title: 許可済み10サイトとニコニコ漫画backfillへ拡張する
 type: umbrella
-status: open
+status: blocked
 priority: P2
 depends_on: [009, 010, 011, 012, 013, 014]
 umbrella: 007
@@ -41,3 +41,7 @@ umbrella: 007
 
 - 公開前の全過去作品取込完了。
 - 認証またはアクセス制限の回避。
+
+## Blocker
+
+全子issue（#050〜#054）が、公式利用規約による自動収集の禁止または明示許可の不在により`blocked`である。公式の許可済み取得手段または書面による許可が得られるまで、対象サイトをconnectorへ追加しない。
