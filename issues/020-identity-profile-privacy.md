@@ -2,7 +2,7 @@
 id: 020
 title: 認証、profile、公開範囲を実装する
 type: feature
-status: completed
+status: done
 priority: P0
 depends_on: [004]
 umbrella: 019
