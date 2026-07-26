@@ -2,7 +2,7 @@
 id: 012
 title: ニコニコ漫画の公式作品とユーザー投稿作品を収集する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [010]
 umbrella: 007

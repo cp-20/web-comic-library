@@ -22,4 +22,21 @@ export {
   createConnectorHttpClient,
 } from './http-client';
 export { readConnectorFixture } from './fixture';
+export {
+  type NiconicoClassificationEvidence,
+  type NiconicoConfig,
+  type NiconicoCrawlQueue,
+  type NiconicoListItem,
+  type NiconicoListPage,
+  type NiconicoPublicationCandidate,
+  NiconicoConnector,
+  NiconicoExcludedPublicationError,
+  classifyNiconicoPublication,
+  createNiconicoConnector,
+  niconicoConfig,
+  niconicoRecheckSchedule,
+  parseNiconicoListPage,
+  parseNiconicoPublicationPage,
+  selectNiconicoCrawlQueue,
+} from './niconico';
 export { ConnectorValidationError, validateConnectorValue } from './validation';

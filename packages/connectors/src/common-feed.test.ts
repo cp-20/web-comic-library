@@ -192,6 +192,7 @@ test('common feed connector follows Atom to series RSS without requesting images
         },
       ],
       externalId: `${origin}/rss/series/9`,
+      kind: 'official',
       title: '作品',
       url: `${origin}/rss/series/9`,
     });

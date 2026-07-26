@@ -76,6 +76,30 @@ HTMLまたはfeedの必須要素が欠けた場合はcrawl全体を失敗させ�
 
 話HTML内の`img`とfeed内の`enclosure`は解析対象にせず、画像URLへrequestしない。
 
+## ニコニコ漫画
+
+`NiconicoConnector`は`/manga/list?sort=manga_updated`を先頭から走査し、checkpointの透かし作品IDに到達するまでの作品だけを詳細取得する。
+
+透かしが設定した最大page数までに見つからない場合は更新なしとして扱わず、検証失敗で停止する。
+
+初回backfillは`sort=manga_created`を使い、page番号と最後に処理した`/comic/{id}`をcheckpointへ保存する。
+
+通常巡回とbackfillが同時に待機している場合は、通常巡回を先に選ぶ。
+
+一覧では`li.mg_item.item`から作品名、作者、開始日、更新日、公開話数を読み、作品ページでは`li.episode_item`から公開話だけを読む。
+
+作品と話の外部keyには、それぞれ`/comic/{id}`の数値IDと`/watch/{id}`のIDを使う。
+
+公式作品は`ul.sg_pankuzu`内の`/official/{channel}`だけを根拠にする。
+
+ユーザー投稿は確認済み作品IDと根拠URLが設定された場合だけ判定し、公式とユーザー投稿の根拠がない作品は`unknown`とする。
+
+ログイン、年齢確認、非公開、公開終了、有料購入が必要な作品と話は取得対象から除外し、制限を回避しない。
+
+直近更新作品は翌日、180日以上更新がない作品は30日後、完結表示のある作品は90日後を次回確認時刻とする。
+
+漫画本文、話画像、thumbnailは取得せず、公開一覧と作品HTMLだけを解析する。
+
 ## 巡回状態
 
 resourceごとのETag、Last-Modified、本文SHA-256、確認日時は`FetchResourceState`へ保存する。
