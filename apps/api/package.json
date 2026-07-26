@@ -19,6 +19,7 @@
     "@web-comic-library/auth": "workspace:*",
     "@web-comic-library/contracts": "workspace:*",
     "@web-comic-library/db": "workspace:*",
+    "@web-comic-library/domain": "workspace:*",
     "@web-comic-library/notifications": "workspace:*",
     "hono": "4.12.31",
     "prom-client": "15.1.3",

@@ -36,6 +36,13 @@
       "when": 1785100800000,
       "tag": "0004_ingestion_release",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1785196800000,
+      "tag": "0005_catalog_admin",
+      "breakpoints": true
     }
   ]
 }

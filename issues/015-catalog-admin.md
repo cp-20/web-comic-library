@@ -2,7 +2,7 @@
 id: 015
 title: カタログの修正、統合、分割を管理する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [014]
 umbrella: 007
@@ -22,6 +22,8 @@ umbrella: 007
 - 解析失敗、種別不明、利用者の修正候補を処理するqueue。
 - `MergeAudit`と運営操作の監査log。
 - 管理者だけが使えるHono RPC routeと画面。
+
+単行本のdata modelは#016、利用者identityと投稿は#020/#023で導入されるため、巻の管理commandと利用者による修正候補の投稿は#048へ分割する。本issueでは既存の作品・掲載先・話・mapping、connector由来のreview queue、管理者によるqueue処理を扱う。
 
 ## 実装方針
 

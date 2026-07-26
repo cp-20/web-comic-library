@@ -1,4 +1,21 @@
 export {
+  type CatalogAdminRepository,
+  type CatalogAuditRecord,
+  type CatalogRedirect,
+  type CatalogReviewItem,
+  type CatalogReviewKind,
+  type MergeContentUnitsCommand,
+  type MergeWorksCommand,
+  type SplitContentUnitCommand,
+  type SplitWorkCommand,
+  catalogReviewKinds,
+  mergeContentUnits,
+  mergeWorks,
+  resolveCatalogReviewItem,
+  splitContentUnit,
+  splitWork,
+} from './catalog-admin';
+export {
   type CatalogCreatorReadModel,
   type CatalogQueryPort,
   type CatalogRepository,

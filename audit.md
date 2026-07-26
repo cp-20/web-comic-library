@@ -162,3 +162,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：55 testが成功し、migrationの再適用も成功した。保存失敗後もcheckpointは進まず、初回eventは通知抑止、incremental eventは通知対象として保存された。
 - **cleanup**：test終了後にcontainer、network、匿名volumeを削除する。
 - **関連**：issue #014。
+
+## 2026-07-27 01:29 JST #014 ingestion mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #19、main CI、GitHub Container Registry image build。
+- **操作**：成功済みPR #19をsquash mergeし、main commit `3b0f0b4e83ec4e787ad105ac0f4c41b65977d9`のCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、qualityとbuildが成功済みであることを確認した。migrationはlocal統合試験で2回適用を確認済みであり、production rolloutは実施していない。
+- **結果**：PRはsquash mergeされ、mainのCIとImagesがともに成功した。
+- **cleanup**：不要になったremote作業branchを削除した。production databaseへのmigration、rollout、connector通信は実施していない。
+- **関連**：PR #19、issue #014。
+
+## 2026-07-27 #015 catalog管理 PostgreSQL統合試験
+
+- **対象**：local Docker ComposeのPostgreSQL 16 test database。
+- **操作**：#015 migrationを2回適用し、作品・話の統合と分割、旧ID redirect、操作監査、解析失敗review queue、Hono RPCの認可とvalidationを統合試験した。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用した。clean databaseを得るためrepository専用test volumeを削除した。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを対象にした。外部service、production database、永続user dataへ接続していない。
+- **結果**：migrationの再適用を含め61 testが成功した。統合・分割は同一transactionで完了し、旧ID redirect、監査履歴、解析失敗queue、未認証401・一般利用者403・不正入力400を確認した。
+- **cleanup**：container、network、test volumeを削除した。
+- **関連**：issue #015。
