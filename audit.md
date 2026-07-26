@@ -489,9 +489,19 @@ Secretの値と個人情報は記録しない。
 - **操作**：connector実装可否を判断するため、公開情報だけをread-onlyで確認する。
 - **危険性**：外部Web serviceへのrequestが発生し、利用条件を誤読すると不適切な自動取得につながる可能性がある。
 - **保護策**：漫画本文、画像、認証が必要なresource、非公開APIへアクセスしない。明示的な収集許可を確認できない場合はconnectorを実装せずfail closedとする。
-- **結果**：公式[利用規約](https://blog.www.sunday-webry.com/terms_of_service)で本サービスおよび本コンテンツの複製が禁止されていることを確認した。公開metadataの自動収集を明示許可するfeed、API、または条件は確認できず、`https://www.sunday-webry.com/robots.txt`は404だった。robots.txtは許可根拠にしないため、fail closedでconnectorを実装せずissue #051をblockedとした。
+- **結果**：公式[利用規約](https://blog.www.sunday-webry.com/terms_of_service)で本サービスおよび本コンテンツの複製が禁止されていることを確認した。公開metadataの自動収集を明示許可するfeed、API、または条件は確認できず、`https://www.sunday-webry.com/robots.txt`は404だった。robots.txtは許可根拠にしないため、fail closedでconnectorを実装せずissue #051をblockedとした。判定を含むPR #34はsquash mergeし、mainのCIとImages workflowは成功した。
 - **cleanup**：read-only確認だけであり、外部service、production、永続dataを変更しない。
-- **関連**：issue #051。
+- **関連**：issue #051、PR #34。
+
+## 2026-07-27 #052 マガポケ policy確認
+
+- **対象**：マガポケの公開Webページ、利用規約、robots.txt、公式の公開情報。
+- **操作**：connector実装可否を判断するため、公開情報だけをread-onlyで確認する。
+- **危険性**：外部Web serviceへのrequestが発生し、利用条件を誤読すると不適切な自動取得につながる可能性がある。
+- **保護策**：漫画本文、画像、認証が必要なresource、非公開APIへアクセスしない。明示的な収集許可を確認できない場合はconnectorを実装せずfail closedとする。
+- **結果**：公式の[利用規約改定告知](https://pocket.shonenmagazine.com/article/entry/2026/06/03)が、情報収集ボット、ロボット、クローラ、スパイダー、スクレーパーなどの自動化手段によるアクセスとコンテンツの収集・処理を明示的に禁止していることを確認した。[robots.txt](https://pocket.shonenmagazine.com/robots.txt)は`Allow: /`だが、利用規約の禁止を上書きする許可根拠にはしない。fail closedでconnectorを実装せずissue #052をblockedとした。
+- **cleanup**：read-only確認だけであり、外部service、production、永続dataを変更しない。
+- **関連**：issue #052。
 
 ## 2026-07-27 #027 email digest mergeとmain検証
 
