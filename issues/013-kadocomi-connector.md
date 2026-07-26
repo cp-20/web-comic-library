@@ -2,7 +2,7 @@
 id: 013
 title: カドコミの埋め込みJSONを収集する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [010]
 umbrella: 007

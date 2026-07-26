@@ -100,6 +100,25 @@ HTMLまたはfeedの必須要素が欠けた場合はcrawl全体を失敗させ�
 
 漫画本文、話画像、thumbnailは取得せず、公開一覧と作品HTMLだけを解析する。
 
+## カドコミ
+
+`KadocomiConnector`は公開の作品または話HTMLだけを取得し、`script#__NEXT_DATA__`内の
+`dehydratedState.queries[].state.data`から`work`、`firstEpisodes`、`latestEpisodes`を持つ
+dataをちょうど一つ選ぶ。`/api/`を含む非公開endpoint、漫画本文、画像、viewerへはrequestしない。
+
+作品と話の外部keyには、それぞれ`work.code`と`episode.code`を使う。各episode collectionは
+`total`と`result`の件数が一致しなければ検証失敗とし、両collectionで重複したcodeの内容が
+異なる場合も停止する。`isActive`がfalseの話は候補にしない。
+
+話種別は埋め込みdataの`type`だけで決める。`normal`は通常話、`extra`は番外編、
+`comic`、`comics`、`announcement`、`illustration`、`promotion`は告知とし、それ以外は
+不明にする。題名から通常話を推測しない。
+
+確認済みの`ratingLevel`は`all`、`adult`、`r18`だけである。未知の値は候補へ渡さず検証失敗
+とし、source policyの年齢区分mappingが公開可否を決める。`__NEXT_DATA__`が存在しない場合だけ、
+canonical URLとOpen Graph titleを使う限定fallbackを許可する。いずれも抽出できない場合は
+connector failureとして既存dataとcheckpointを維持する。
+
 ## 巡回状態
 
 resourceごとのETag、Last-Modified、本文SHA-256、確認日時は`FetchResourceState`へ保存する。
