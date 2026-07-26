@@ -402,3 +402,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：migrationを2回適用し、通知storageとconsumerを含む105 testsが成功（0 fail）した。通知は冪等生成され、既読操作は所有者に限定されることを確認した。
 - **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除した。
 - **関連**：issue #025。
+
+## 2026-07-27 #025 アプリ内通知 PR作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/025-in-app-notifications`、PR #27。
+- **操作**：検証済みの通知実装をpushし、ドラフトPR #27を作成してCIを開始した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、`bun run test:integration`、`bun run build:web`を成功させた。production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：PR #27を作成した。CI結果を確認後にmerge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #27、issue #025。
