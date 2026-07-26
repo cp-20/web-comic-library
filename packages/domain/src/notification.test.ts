@@ -7,6 +7,8 @@ test('notification defaults enable new episodes, extras, and new volumes only', 
   expect(defaultNotificationEnabled('extra')).toBe(true);
   expect(defaultNotificationEnabled('new_volume')).toBe(true);
   expect(defaultNotificationEnabled('announcement')).toBe(false);
+  expect(defaultNotificationEnabled('new_episode', 'email')).toBe(false);
+  expect(defaultNotificationEnabled('new_episode', 'web_push')).toBe(false);
   expect(defaultNotificationEnabled('availability_changed')).toBe(false);
   expect(defaultNotificationEnabled('republication')).toBe(false);
 });

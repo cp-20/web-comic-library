@@ -35,6 +35,7 @@ export {
   setNotificationPreferenceRequestSchema,
 } from './notification';
 export { webPushSubscriptionRequestSchema, webPushUnsubscribeRequestSchema } from './web-push';
+export { emailDigestSettingsRequestSchema } from './email-digest';
 export {
   type FoundationJobPayload,
   foundationJobPayloadSchema,

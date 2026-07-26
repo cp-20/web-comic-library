@@ -24,6 +24,8 @@ workerを起動する前に`bun run --cwd packages/db migrate`でDrizzleとGraph
 
 VAPIDの公開鍵、秘密鍵、subjectがすべて設定されたworkerは、同じrelease eventからWeb Push用notificationとsubscriptionごとのdeliveryを生成する。Push payloadはnotification IDと`/notifications`だけで、作品名、本文、認証情報を含めない。404/410はsubscriptionを無効化し、それ以外の送信失敗はjob再試行として扱う。
 
+Resendの設定と公開app URLがそろったworkerは15分ごとに`email_digest`を実行する。利用者がemail digestを有効にしたときだけ、timezoneのローカル日付と送信時刻を満たす未送信email通知を一通にまとめる。送信結果はdigestごとに記録し、恒久失敗は宛先のdigestを停止する。一時失敗はjobを失敗させて再試行し、本文、宛先、認証情報をログへ出さない。
+
 ## 取得元の緊急停止
 
 巡回処理は`runSourceCollection`を使い、HTTP requestの前とjob投入の前に取得元policyを確認する。

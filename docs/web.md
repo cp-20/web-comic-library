@@ -46,6 +46,8 @@ bun run build:web
 
 Web appは最小のmanifestとPush受信・notification click専用Service Workerを提供する。Push許可とsubscription登録は`/notifications`の利用者の明示操作でのみ行い、Service Workerはoffline cacheやbackground syncを実装しない。
 
+`/notifications`では更新digestを利用者の明示操作で有効にできる。timezoneと送信時刻を保存し、停止操作はその利用者のメールdigestだけに適用する。画面とメールには作品名、本文、非公開情報を出さない。
+
 ## 管理画面
 
 `/admin/catalog`は管理者のcatalog統合・分割画面である。すべての操作で理由を入力させ、Hono RPC clientだけを使ってAPIへ送る。画面だけで権限を判断せず、API側の強い認証とrole検査を必須とする。

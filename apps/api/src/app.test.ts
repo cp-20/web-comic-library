@@ -4,6 +4,7 @@ import type {
   CatalogAuditRecord,
   CatalogQueryPort,
   CatalogReviewItem,
+  EmailDigestSettingsRepository,
   FollowRepository,
   LibraryRepository,
   NotificationRepository,
@@ -716,6 +717,55 @@ describe('web push subscription RPC', () => {
       'save:reader:https://push.example.test/subscription',
       'remove:reader:https://push.example.test/subscription',
     ]);
+  });
+});
+
+describe('email digest RPC', () => {
+  test('requires the active session and scopes settings and unsubscribe to it', async () => {
+    const calls: string[] = [];
+    const digests: EmailDigestSettingsRepository = {
+      async recordEmailDigestFeedback() {},
+      async saveEmailDigestSettings(_context, settings) {
+        calls.push(
+          `save:${settings.userUuid}:${settings.enabled}:${settings.timezone}:${settings.sendTime}`,
+        );
+      },
+      async unsubscribeEmailDigest(_context, userUuid) {
+        calls.push(`unsubscribe:${userUuid}`);
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const unauthenticated = createApp({ emailDigests: digests, transactions });
+    expect(
+      (
+        await unauthenticated.request('/api/settings/email-digest', {
+          body: JSON.stringify({ enabled: true, sendTime: '09:00', timezone: 'Asia/Tokyo' }),
+          headers: { 'content-type': 'application/json' },
+          method: 'PUT',
+        })
+      ).status,
+    ).toBe(401);
+    const protectedApp = createApp({
+      emailDigests: digests,
+      transactions,
+      async resolveSession() {
+        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    expect(
+      (
+        await client.api.settings['email-digest'].$put({
+          json: { enabled: true, sendTime: '09:00', timezone: 'Asia/Tokyo' },
+        })
+      ).status,
+    ).toBe(200);
+    expect((await client.api.settings['email-digest'].unsubscribe.$post()).status).toBe(200);
+    expect(calls).toEqual(['save:reader:true:Asia/Tokyo:09:00', 'unsubscribe:reader']);
   });
 });
 

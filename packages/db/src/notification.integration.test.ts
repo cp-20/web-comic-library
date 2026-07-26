@@ -91,6 +91,12 @@ integrationTest(
           userUuid: userId,
         }),
       );
+      await setNotificationPreference(foundation, notifications, {
+        channel: 'web_push',
+        enabled: true,
+        kind: 'new_episode',
+        userUuid: userId,
+      });
       expect(await generateNotifications(foundation, notifications, 'web_push', eventId)).toBe(1);
       expect(await generateNotifications(foundation, notifications, 'web_push', eventId)).toBe(0);
       const deliveries = await subscriptions.listWebPushDeliveriesForRelease(eventId);

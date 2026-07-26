@@ -67,7 +67,7 @@ const isEnabled = async (
   channel: NotificationChannel,
 ): Promise<boolean> => {
   const preference = await repository.findNotificationPreference(userUuid, kind, channel);
-  return preference?.enabled ?? defaultNotificationEnabled(kind);
+  return preference?.enabled ?? defaultNotificationEnabled(kind, channel);
 };
 
 export const generateNotifications = async (
