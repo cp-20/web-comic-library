@@ -252,3 +252,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #22を作成した。CI結果を確認後にmerge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #22、issue #020。
+
+## 2026-07-27 #020 CI container smoke test修正
+
+- **対象**：GitHubのPR #22、Images workflow、API container smoke test。
+- **操作**：失敗logからAPIの必須auth環境変数がcontainerへ渡っていないことを確認し、workflowのtest専用設定をAPI containerへ明示的に渡すよう修正した。
+- **危険性**：再実行したImages workflowはPR branchのcontainer imageをGHCRへ公開する可能性がある。
+- **保護策**：production用Secretを追加せず、test専用の非機密値だけをworkflowに置いた。OAuth、メール送信、R2 upload、production database migration、rolloutは実施していない。
+- **結果**：localの`bun run check`と`bun test`は成功した。修正commitをpush後、CIを再確認する。
+- **cleanup**：PR merge後にremote作業branchを削除する。外部serviceの永続dataは変更していない。
+- **関連**：PR #22、issue #020。
