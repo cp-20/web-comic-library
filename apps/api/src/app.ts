@@ -14,6 +14,7 @@ import type {
   IdentityRepository,
   LibraryRepository,
   CatalogQueryPort,
+  FollowRepository,
   SessionIdentity,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
@@ -30,6 +31,8 @@ import {
   splitContentUnit,
   splitWork,
   setReadingStatus,
+  setFollowSettings,
+  setSourcePreferences,
   searchPublicWorks,
   unmarkContentRead,
   uploadProfileIcon,
@@ -49,6 +52,8 @@ import {
   splitContentUnitRequestSchema,
   splitWorkRequestSchema,
   setReadingStatusRequestSchema,
+  setFollowSettingsRequestSchema,
+  setSourcePreferencesRequestSchema,
   unmarkContentReadRequestSchema,
   profileParamsSchema,
   searchCatalogWorksQuerySchema,
@@ -86,6 +91,7 @@ export type ApiDependencies = Readonly<{
   auth: AuthAdapter | null;
   catalogAdmin: CatalogAdminController | null;
   catalog: CatalogQueryPort | null;
+  follow: FollowRepository | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
   sourcePolicies: SourcePolicyQueryPort | null;
@@ -105,6 +111,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   auth: null,
   catalogAdmin: null,
   catalog: null,
+  follow: null,
   identity: null,
   library: null,
   sourcePolicies: null,
@@ -276,6 +283,45 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         return context.json({ error: 'invalid_icon' }, 400);
       }
     })
+    .put(
+      '/api/settings/source-preferences',
+      vValidator('json', setSourcePreferencesRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.follow;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        return context.json(
+          {
+            preferences: await setSourcePreferences(
+              transactions,
+              repository,
+              session.userUuid,
+              context.req.valid('json').sourceIds,
+            ),
+          },
+          200,
+        );
+      },
+    )
+    .put(
+      '/api/settings/follows',
+      vValidator('json', setFollowSettingsRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.follow;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const input = context.req.valid('json');
+        await setFollowSettings(transactions, repository, {
+          ...input,
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    )
     .post(
       '/api/library/status',
       vValidator('json', setReadingStatusRequestSchema),

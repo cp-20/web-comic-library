@@ -24,6 +24,10 @@ Better Auth互換の`user`、`session`、`account`、`verification`を保持し�
 
 追いつき状態は保存しない。公開中の`regular`または`extra`掲載ページにconfirmed mappingを持つ論理話と、利用者の`content_read_records`からquery時に再計算する。
 
+## follow設定 storage
+
+`user_source_preferences`は利用者ごとの掲載先優先順位を連番で一度だけ保持し、作品ごとに複製しない。`work_follow_settings`は作品単位の方式を、`subscription_publications`は掲載先指定の対象だけを保持する。いずれも利用者とcatalog entityへのforeign keyで所有者と作品整合性を保証する。
+
 ## ローカル開発
 
 PostgreSQL 16を起動する。

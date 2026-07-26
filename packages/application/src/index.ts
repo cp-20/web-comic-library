@@ -13,6 +13,13 @@ export {
   updateProfile,
 } from './identity';
 export {
+  type FollowRepository,
+  type FollowSettings,
+  selectFollowNotifications,
+  setFollowSettings,
+  setSourcePreferences,
+} from './follow';
+export {
   type LibraryRepository,
   type LibraryWorkReadModel,
   type ReadMapping,

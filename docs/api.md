@@ -23,6 +23,10 @@ Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono
 
 `POST /api/library/status`は手動読書状態を変更し、`POST /api/library/reads`、`POST /api/library/reads/through`、`DELETE /api/library/reads`は論理話の既読、一括既読、取消をtransactionで実行する。`POST /api/library/publication-reads`は未確認mappingでも読んだ掲載ページだけを記録する。全routeはactive sessionを要求し、公開範囲はrecordごとの値として保存する。
 
+## follow設定 API
+
+`PUT /api/settings/source-preferences`はログイン利用者自身の掲載先優先順位を置換する。`PUT /api/settings/follows`は同じく自身の作品ごとの方式と掲載先指定を一transactionで置換する。どちらもactive sessionを必須とし、他利用者の設定を受け取らない。
+
 ## 公開catalog API
 
 `GET /api/catalog/works`は`q`、`source`、`status`、`kind`、`sort`で公開作品を検索する。`q`はNFKC正規化し、title、別名、読み仮名、作者名を対象にする。`GET /api/catalog/works/{workId}`は公開済みの作品詳細だけを返す。両routeは最新のsource policyがcollectionを許可し、緊急停止中でなく、年齢区分が`public`の掲載先だけを返し、CDN cache可能なresponse headerを付ける。人気順は直近30日間のlibrary entry数で決めるが、利用者情報と件数はresponseに含めない。

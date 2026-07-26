@@ -322,3 +322,33 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #24を作成した。CI結果を確認後にmerge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #24、issue #017。
+
+## 2026-07-27 #017 catalog search mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #24、main commit `bf1ba499cbf3dc7e75916cc09bd3da4ee9248d8b`、CI、Images workflow。
+- **操作**：qualityとImages workflow成功後にPR #24をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、CIのqualityとImagesが成功したことを確認した。production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：main CIとImages workflowはいずれも成功した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #24、issue #017。
+
+## 2026-07-27 #022 follow設定 PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#022 follow設定migration、設定adapter。
+- **操作**：migrationを2回適用し、利用者単位の掲載先優先順位、作品ごとのfollow方式、掲載先指定を統合試験する。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。外部service、production database、永続user dataへ接続しない。
+- **結果**：migration再適用を含む94 testが成功した。優先順位の0始まり、作品ごとの方式、掲載先指定、foreign key制約を確認した。
+- **cleanup**：container、network、test volumeを削除した。
+- **関連**：issue #022。
+
+## 2026-07-27 #022 follow設定 GitHub pull request作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、作業branch `agent/022-source-preferences-follow-modes`、draft PR #25。
+- **操作**：検証済みcommit `ad2e6b2`を作業branchへpushし、main向けdraft PRを作成した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、`bun run test:integration`、`bun run build:web`を成功させた。production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：PR #25を作成した。CI結果を確認後にmerge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #25、issue #022。

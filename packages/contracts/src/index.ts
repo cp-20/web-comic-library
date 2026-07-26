@@ -24,6 +24,7 @@ export {
   splitWorkRequestSchema,
 } from './catalog-admin';
 export { catalogWorkParamsSchema, searchCatalogWorksQuerySchema } from './catalog';
+export { setFollowSettingsRequestSchema, setSourcePreferencesRequestSchema } from './follow';
 export {
   type FoundationJobPayload,
   foundationJobPayloadSchema,

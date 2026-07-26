@@ -112,3 +112,11 @@ export {
   policyDecisions,
   sourcePolicyEvidenceKinds,
 } from './source-policy';
+export {
+  type FollowMode,
+  type FollowReleaseCandidate,
+  type SubscriptionPublication,
+  type UserSourcePreference,
+  followModes,
+  selectFollowReleaseCandidates,
+} from './follow';
