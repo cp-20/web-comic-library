@@ -6,6 +6,7 @@ import type {
   CatalogReviewItem,
   FollowRepository,
   LibraryRepository,
+  NotificationRepository,
   ProfileIconStorage,
   SourcePolicyQueryPort,
   TransactionPort,
@@ -577,6 +578,95 @@ describe('volume library RPC', () => {
       ).status,
     ).toBe(200);
     expect(calls).toEqual(['list:reader', 'record:reader:true:true', 'correction:reader:unit-1']);
+  });
+});
+
+describe('notification RPC', () => {
+  test('requires an active session and scopes listing and read commands to the caller', async () => {
+    const calls: string[] = [];
+    const notifications: NotificationRepository = {
+      async findFollowSettings() {
+        return null;
+      },
+      async findNotificationPreference() {
+        return null;
+      },
+      async findReleaseEvent() {
+        return null;
+      },
+      async listNotifications(userUuid) {
+        calls.push(`list:${userUuid}`);
+        return { items: [], nextCursor: null };
+      },
+      async listSourcePreferences() {
+        return [];
+      },
+      async listSubscriptionPublicationIds() {
+        return [];
+      },
+      async listWorkFollowSettings() {
+        return [];
+      },
+      async markAllNotificationsRead(_context, userUuid) {
+        calls.push(`all:${userUuid}`);
+      },
+      async markNotificationRead(_context, userUuid, notificationId) {
+        calls.push(`read:${userUuid}:${notificationId}`);
+        return true;
+      },
+      async replaceSourcePreferences() {
+        return [];
+      },
+      async replaceSubscriptionPublications() {
+        return [];
+      },
+      async saveFollowSettings() {},
+      async saveNotification() {
+        return false;
+      },
+      async saveNotificationPreference(_context, preference) {
+        calls.push(`preference:${preference.userUuid}:${preference.kind}:${preference.enabled}`);
+      },
+      async unreadNotificationCount(userUuid) {
+        calls.push(`unread:${userUuid}`);
+        return 0;
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const unauthenticated = createApp({ notifications, transactions });
+    expect((await unauthenticated.request('/api/notifications')).status).toBe(401);
+    const protectedApp = createApp({
+      notifications,
+      transactions,
+      async resolveSession() {
+        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    expect((await client.api.notifications.$get({ query: {} })).status).toBe(200);
+    expect((await client.api.notifications['read-all'].$post()).status).toBe(200);
+    const notificationId = 'c92dcb09-ccff-4f7c-8a4f-8f28780df7ad';
+    expect(
+      (await client.api.notifications[':id'].read.$post({ param: { id: notificationId } })).status,
+    ).toBe(200);
+    expect(
+      (
+        await client.api.settings['notification-preferences'].$put({
+          json: { channel: 'in_app', enabled: false, kind: 'new_episode' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(calls).toEqual([
+      'list:reader',
+      'unread:reader',
+      'all:reader',
+      `read:reader:${notificationId}`,
+      'preference:reader:new_episode:false',
+    ]);
   });
 });
 

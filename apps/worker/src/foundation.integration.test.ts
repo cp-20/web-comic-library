@@ -160,7 +160,7 @@ integrationTest(
       `;
       expect(queuedJobs[0]?.count).toBe(1);
 
-      runner = await startWorker(databaseUrl);
+      runner = await startWorker(databaseUrl, undefined, async () => undefined);
       await waitUntil(async () => {
         const rows = await sql<{ count: number }[]>`
           select count(*)::int as count
@@ -189,7 +189,7 @@ integrationTest(
       `;
       expect(pendingJobs[0]?.attempts).toBe(0);
 
-      runner = await startWorker(databaseUrl);
+      runner = await startWorker(databaseUrl, undefined, async () => undefined);
       await waitUntil(async () => {
         const rows = await sql<{ attempts: number; last_error: string | null }[]>`
           select attempts, last_error

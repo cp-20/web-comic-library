@@ -30,7 +30,17 @@ export {
 export { catalogWorkParamsSchema, searchCatalogWorksQuerySchema } from './catalog';
 export { setFollowSettingsRequestSchema, setSourcePreferencesRequestSchema } from './follow';
 export {
+  notificationListQuerySchema,
+  notificationParamsSchema,
+  setNotificationPreferenceRequestSchema,
+} from './notification';
+export {
   type FoundationJobPayload,
   foundationJobPayloadSchema,
   parseFoundationJobPayload,
 } from './foundation-job-payload';
+export {
+  type NotificationJobPayload,
+  notificationJobPayloadSchema,
+  parseNotificationJobPayload,
+} from './notification-job-payload';

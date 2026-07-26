@@ -10,7 +10,7 @@ import type { VolumeContentMapping } from '@web-comic-library/domain';
 import postgres from 'postgres';
 import type { Sql, TransactionSql } from 'postgres';
 
-import type { PostgresFoundation } from './foundation';
+import { enqueueNotificationRelease, type PostgresFoundation } from './foundation';
 
 type VolumeRow = Readonly<{ id: string; workId: string }>;
 
@@ -129,6 +129,10 @@ export class PostgresBibliography implements BibliographyRepository {
           ) on conflict (idempotency_key) do nothing returning id::text
         `;
         releaseEventCreated = rows.length === 1;
+        const eventId = rows[0]?.id;
+        if (eventId && synchronization.mode === 'incremental') {
+          await enqueueNotificationRelease(session, eventId);
+        }
       }
       return {
         created: !existing,
@@ -199,6 +203,10 @@ export class PostgresBibliography implements BibliographyRepository {
           ) on conflict (idempotency_key) do nothing returning id::text
         `;
         releaseEventCreated = rows.length === 1;
+        const eventId = rows[0]?.id;
+        if (eventId && synchronization.mode === 'incremental') {
+          await enqueueNotificationRelease(session, eventId);
+        }
       }
       return {
         created: !existing,

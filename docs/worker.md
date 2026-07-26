@@ -20,6 +20,8 @@ workerを起動する前に`bun run --cwd packages/db migrate`でDrizzleとGraph
 
 `bibliography_sync`は`workId`、ISBN、`initial`または`incremental`のmodeを受け、openBDとNDLをtransaction外で照会してから書誌同期use caseを呼ぶ。定期同期のproducerは同じ版・同期時刻でstableなidempotency keyを指定する。初回は通知抑止、後続に新規検出した版だけが通知候補になる。
 
+`notification_release`はrelease event IDを受け、利用者のfollow方式、掲載先優先順位、種別・経路設定を照合してアプリ内通知を保存する。deliveryは冪等性keyで一度だけ保存し、`notification_suppressed`のeventは通知を作らない。Pushとメール送信は後続issueの別consumerで扱う。
+
 ## 取得元の緊急停止
 
 巡回処理は`runSourceCollection`を使い、HTTP requestの前とjob投入の前に取得元policyを確認する。

@@ -34,6 +34,12 @@ Better Auth互換の`user`、`session`、`account`、`verification`を保持し�
 
 巻を既読にしたときだけ、`volume_content_mappings`が`confirmed`の話を同じtransactionで既読へupsertする。巻の状態を未読へ戻しても既存のWeb話既読を削除しない。利用者の対応修正候補は`catalog_review_items`の`user_correction`としてqueueへ追加し、確認前の共有mappingを変更しない。
 
+## 通知storage
+
+`notifications`は利用者、release event、通知種別、経路ごとに冪等性keyを一意に保持し、未読・既読を`read_at`で表す。`notification_preferences`は利用者ごとの種別・経路の明示設定だけを保存し、通常話、番外編、新刊は未設定時に有効、再掲載、公開期間変更、告知は未設定時に無効とapplicationで解決する。
+
+`release_events`のincrementalな新規eventは同じtransactionで`notification_release` jobを冪等登録する。initialとbackfillのeventはjobを登録せず、consumerも`notification_suppressed`を必ず除外する。
+
 ## ローカル開発
 
 PostgreSQL 16を起動する。

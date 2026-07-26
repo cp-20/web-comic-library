@@ -40,6 +40,10 @@ bun run build:web
 
 `/settings/follows`は利用者自身の掲載先優先順位と、作品ごとの最速、site優先、掲載先指定、全掲載先の四方式をHono RPC clientで保存する。掲載先指定は対象publication IDを明示し、未選択の掲載先は通知候補にしない。
 
+## アプリ内通知
+
+`/notifications`はログイン利用者自身の通知一覧と未読件数をHono RPC clientで表示し、個別または一括で既読にする。通知本文には非公開情報やネタバレ本文を含めず、種別と既読状態だけを表示する。
+
 ## 管理画面
 
 `/admin/catalog`は管理者のcatalog統合・分割画面である。すべての操作で理由を入力させ、Hono RPC clientだけを使ってAPIへ送る。画面だけで権限を判断せず、API側の強い認証とrole検査を必須とする。

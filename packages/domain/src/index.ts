@@ -129,3 +129,14 @@ export {
   followModes,
   selectFollowReleaseCandidates,
 } from './follow';
+export {
+  type Notification,
+  type NotificationChannel,
+  type NotificationKind,
+  type NotificationPreference,
+  createNotification,
+  defaultNotificationEnabled,
+  notificationChannels,
+  notificationIdempotencyKey,
+  notificationKinds,
+} from './notification';
