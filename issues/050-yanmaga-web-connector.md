@@ -2,7 +2,7 @@
 id: 050
 title: ヤンマガWebの許可済み公開情報を収集する
 type: feature
-status: open
+status: blocked
 priority: P2
 depends_on: [009, 010, 014]
 umbrella: 018
@@ -34,3 +34,7 @@ umbrella: 018
 ## 対象外
 
 - browser自動操作と非公開API。
+
+## Blocker
+
+ヤンマガWebの[利用規約](https://yanmaga.jp/term)は、自動化されたbot、robot、crawler、spider、scraper等によるアクセスとコンテンツの収集・蓄積・抽出・処理を禁止している。明示的な書面許可または公式の収集用feed/APIが提供されるまで、connectorを実装しない。
