@@ -396,10 +396,10 @@ Secretの値と個人情報は記録しない。
 ## 2026-07-27 #025 アプリ内通知 PostgreSQL統合試験
 
 - **対象**：local Docker Compose PostgreSQL 16 test database、#025 notification migration、通知consumer。
-- **操作**：migrationを2回適用し、follow選択、通知設定、冪等生成、一覧pagination、個別・一括既読を統合試験する。
+- **操作**：migrationを2回適用し、follow選択、通知設定、冪等生成、一覧pagination、個別・一括既読を統合試験する。CIで検出したworker終了確認も同じtest databaseで互換性smoke testする。
 - **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
 - **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。外部service、production database、永続user dataへ接続しない。
-- **結果**：migrationを2回適用し、通知storageとconsumerを含む105 testsが成功（0 fail）した。通知は冪等生成され、既読操作は所有者に限定されることを確認した。
+- **結果**：migrationを2回適用し、通知storageとconsumerを含む105 testsが成功（0 fail）した。通知は冪等生成され、既読操作は所有者に限定されることを確認した。workerが通知処理後のDB接続を閉じてSIGTERMで終了することも互換性smoke testで確認した。
 - **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除した。
 - **関連**：issue #025。
 

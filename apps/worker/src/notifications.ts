@@ -4,9 +4,13 @@ import { createPostgresFoundation, createPostgresNotification } from '@web-comic
 export type NotificationWorkerHandler = (eventId: string) => Promise<void>;
 
 export const createNotificationWorkerHandler = (databaseUrl: string): NotificationWorkerHandler => {
-  const foundation = createPostgresFoundation(databaseUrl);
-  const notifications = createPostgresNotification(databaseUrl, foundation);
   return async (eventId) => {
-    await generateInAppNotifications(foundation, notifications, eventId);
+    const foundation = createPostgresFoundation(databaseUrl);
+    const notifications = createPostgresNotification(databaseUrl, foundation);
+    try {
+      await generateInAppNotifications(foundation, notifications, eventId);
+    } finally {
+      await Promise.all([foundation.close(), notifications.close()]);
+    }
   };
 };
