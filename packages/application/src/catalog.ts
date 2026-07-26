@@ -64,7 +64,16 @@ export type PublicationReadModel = Readonly<{
   normalizedUrl: string;
   purchaseUrl: string | null;
   sourceId: string;
+  sourceKey: string;
   sourceName: string;
+  title: string;
+}>;
+
+export type VolumeEditionReadModel = Readonly<{
+  authors: readonly string[];
+  id: string;
+  publishedAt: string | null;
+  publisher: string | null;
   title: string;
 }>;
 
@@ -76,9 +85,28 @@ export type WorkCatalogReadModel = Readonly<{
   publications: readonly PublicationReadModel[];
   serialStatus: SerialStatus;
   title: string;
+  volumes: readonly VolumeEditionReadModel[];
+}>;
+
+export const catalogSearchSorts = ['recent', 'popular', 'new'] as const;
+
+export type CatalogSearchSort = (typeof catalogSearchSorts)[number];
+
+export type CatalogSearchQuery = Readonly<{
+  kind: Extract<PublicationKind, 'official' | 'user_submission'> | null;
+  query: string | null;
+  sort: CatalogSearchSort;
+  sourceKey: string | null;
+  status: SerialStatus | null;
+}>;
+
+export type CatalogSearchResult = Readonly<{
+  latestUpdatedAt: Date | null;
+  work: WorkCatalogReadModel;
 }>;
 
 export interface CatalogQueryPort {
   findWork(workId: string): Promise<WorkCatalogReadModel | null>;
   listCatchUpEntries(workId: string): Promise<readonly PublicationEntryReadModel[]>;
+  searchWorkIds(query: CatalogSearchQuery): Promise<readonly string[]>;
 }

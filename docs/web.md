@@ -28,6 +28,10 @@ bun run build:web
 
 `/works/{workId}`は手動読書状態、論理話の既読、指定話までの一括既読、既読取消、掲載ページ既読をHono RPCで操作する。状態と追いつき状態を同じ表示や入力に混在させず、掲載ページIDが未確認mappingの場合も独立した既読として扱う。
 
+## 公開catalog
+
+`/`は作品名、別名、読み仮名、作者名を検索し、掲載先、連載状態、掲載種別と並び順を組み合わせる。`/works/{workId}`はcanonical URLとOG titleを持ち、公開済みの作者、掲載先、Web話、単行本だけをHono RPC client経由で表示する。retire済みの旧作品IDはcatalog redirect APIの正規URLへ遷移する。漫画本文は表示・配信せず、公式閲覧URLへ新しいタブで遷移する。
+
 ## 管理画面
 
 `/admin/catalog`は管理者のcatalog統合・分割画面である。すべての操作で理由を入力させ、Hono RPC clientだけを使ってAPIへ送る。画面だけで権限を判断せず、API側の強い認証とrole検査を必須とする。

@@ -7,7 +7,12 @@ import type {
 } from '@web-comic-library/domain';
 import { sourcePolicyEvidenceKinds } from '@web-comic-library/domain';
 
-import type { CatalogQueryPort, WorkCatalogReadModel } from './catalog';
+import type {
+  CatalogQueryPort,
+  CatalogSearchQuery,
+  CatalogSearchResult,
+  WorkCatalogReadModel,
+} from './catalog';
 
 export type EmergencyStopCommand = Readonly<{
   changedAt: Date;
@@ -77,4 +82,32 @@ export const findPublicWork = async (
   const publications = work.publications.filter((publication) => allowedIds.has(publication.id));
 
   return publications.length === 0 ? null : { ...work, publications };
+};
+
+export const searchPublicWorks = async (
+  catalog: CatalogQueryPort,
+  policies: Pick<SourcePolicyQueryPort, 'listPublicPublicationIds'>,
+  query: CatalogSearchQuery,
+): Promise<readonly CatalogSearchResult[]> => {
+  const workIds = await catalog.searchWorkIds(query);
+  const works = await Promise.all(
+    workIds.map(async (workId): Promise<CatalogSearchResult | null> => {
+      const work = await findPublicWork(catalog, policies, workId);
+      if (!work) return null;
+      const publications: WorkCatalogReadModel['publications'] = work.publications.filter(
+        (publication) =>
+          (query.kind === null || publication.kind === query.kind) &&
+          (query.sourceKey === null || publication.sourceKey === query.sourceKey),
+      );
+      if (publications.length === 0) return null;
+      const latestUpdatedAt =
+        publications
+          .flatMap((publication) => publication.entries)
+          .map((entry) => entry.publishedAt)
+          .filter((publishedAt): publishedAt is Date => publishedAt !== null)
+          .toSorted((left, right) => right.getTime() - left.getTime())[0] ?? null;
+      return { latestUpdatedAt, work: { ...work, publications } };
+    }),
+  );
+  return works.filter((work): work is CatalogSearchResult => work !== null);
 };

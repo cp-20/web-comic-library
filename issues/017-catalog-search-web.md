@@ -2,7 +2,7 @@
 id: 017
 title: 作品検索と作品ページを提供する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [008, 021]
 umbrella: 007

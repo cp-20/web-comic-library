@@ -23,6 +23,7 @@ export {
   splitContentUnitRequestSchema,
   splitWorkRequestSchema,
 } from './catalog-admin';
+export { catalogWorkParamsSchema, searchCatalogWorksQuerySchema } from './catalog';
 export {
   type FoundationJobPayload,
   foundationJobPayloadSchema,

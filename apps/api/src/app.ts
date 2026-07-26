@@ -13,10 +13,13 @@ import type {
   TransactionPort,
   IdentityRepository,
   LibraryRepository,
+  CatalogQueryPort,
   SessionIdentity,
+  SourcePolicyQueryPort,
 } from '@web-comic-library/application';
 import {
   findVisibleProfile,
+  findPublicWork,
   isActiveSession,
   mergeContentUnits,
   markContentRead,
@@ -27,6 +30,7 @@ import {
   splitContentUnit,
   splitWork,
   setReadingStatus,
+  searchPublicWorks,
   unmarkContentRead,
   uploadProfileIcon,
   updateProfile,
@@ -34,6 +38,7 @@ import {
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
   catalogRedirectParamsSchema,
+  catalogWorkParamsSchema,
   catalogReviewItemParamsSchema,
   mergeContentUnitsRequestSchema,
   mergeWorksRequestSchema,
@@ -46,6 +51,7 @@ import {
   setReadingStatusRequestSchema,
   unmarkContentReadRequestSchema,
   profileParamsSchema,
+  searchCatalogWorksQuerySchema,
   updateProfileRequestSchema,
 } from '@web-comic-library/contracts';
 import type { CatalogAdminActor } from '@web-comic-library/domain';
@@ -79,8 +85,10 @@ export interface CatalogAdminController {
 export type ApiDependencies = Readonly<{
   auth: AuthAdapter | null;
   catalogAdmin: CatalogAdminController | null;
+  catalog: CatalogQueryPort | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
+  sourcePolicies: SourcePolicyQueryPort | null;
   profileIconStorage: ProfileIconStorage | null;
   transactions: TransactionPort | null;
   resolveSession(request: Request): Promise<SessionIdentity | null>;
@@ -96,8 +104,10 @@ type ApiEnvironment = Readonly<{
 const unauthenticatedDependencies: ApiDependencies = {
   auth: null,
   catalogAdmin: null,
+  catalog: null,
   identity: null,
   library: null,
+  sourcePolicies: null,
   profileIconStorage: null,
   transactions: null,
   async resolveSession(): Promise<SessionIdentity | null> {
@@ -145,6 +155,22 @@ const canonicalCatalogPath = (redirect: CatalogRedirect): string => {
     ? `/works/${redirect.canonicalId}`
     : `/content-units/${redirect.canonicalId}`;
 };
+
+const toCatalogSearchQuery = (
+  input: Readonly<{
+    kind?: 'official' | 'user_submission' | undefined;
+    q?: string | undefined;
+    sort?: 'recent' | 'popular' | 'new' | undefined;
+    source?: string | undefined;
+    status?: 'ongoing' | 'hiatus' | 'completed' | 'unknown' | undefined;
+  }>,
+) => ({
+  kind: input.kind ?? null,
+  query: input.q ?? null,
+  sort: input.sort ?? 'recent',
+  sourceKey: input.source ?? null,
+  status: input.status ?? null,
+});
 
 export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
   const dependencies: ApiDependencies = { ...unauthenticatedDependencies, ...overrides };
@@ -434,6 +460,40 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       },
     );
 
+  const publicCatalogRoutes = new Hono()
+    .get(
+      '/api/catalog/works',
+      vValidator('query', searchCatalogWorksQuerySchema),
+      async (context) => {
+        const catalog = dependencies.catalog;
+        const policies = dependencies.sourcePolicies;
+        if (!catalog || !policies) return context.json({ error: 'unavailable' }, 503);
+        const works = await searchPublicWorks(
+          catalog,
+          policies,
+          toCatalogSearchQuery(context.req.valid('query')),
+        );
+        return context.json({ works }, 200, {
+          'cache-control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        });
+      },
+    )
+    .get(
+      '/api/catalog/works/:workId',
+      vValidator('param', catalogWorkParamsSchema),
+      async (context) => {
+        const catalog = dependencies.catalog;
+        const policies = dependencies.sourcePolicies;
+        if (!catalog || !policies) return context.json({ error: 'unavailable' }, 503);
+        const work = await findPublicWork(catalog, policies, context.req.valid('param').workId);
+        return work
+          ? context.json({ work }, 200, {
+              'cache-control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+            })
+          : context.json({ error: 'not_found' }, 404);
+      },
+    );
+
   return baseApp
     .post('/api/login/magic-link', vValidator('json', magicLinkRequestSchema), async (context) => {
       const auth = dependencies.auth;
@@ -494,6 +554,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       },
     )
     .route('/', identityRoutes)
+    .route('/', publicCatalogRoutes)
     .route('/', catalogRoutes)
     .get('/api/health', (context) => context.json({ status: 'ok' as const }, 200))
     .get('/metrics', async (context) => {

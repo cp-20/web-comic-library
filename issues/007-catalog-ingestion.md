@@ -26,6 +26,7 @@ depends_on: []
 - [016 書誌情報](./016-bibliography.md)
 - [017 検索と作品ページ](./017-catalog-search-web.md)
 - [018 10サイト対応とbackfill](./018-source-expansion-backfill.md)
+- [049 作品概要と公開metadata](./049-work-synopsis-public-metadata.md)
 
 ## 完了条件
 

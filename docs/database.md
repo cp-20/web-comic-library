@@ -68,6 +68,8 @@ outbox eventとGraphile Worker jobは呼び出し側が安定した冪等性key�
 
 `PublicationEntry`と`ContentUnit`はwork IDを含むcomposite foreign keyで関連付け、別作品間のmappingをdatabaseでも拒否する。
 
+作品検索は`pg_trgm`のGIN indexを`works.title`、`work_aliases.value`、`creators.name`のNFKC正規化・小文字化した値に張る。検索queryも同じくNFKC正規化し、短いtitleは完全一致、前方一致、部分一致の順で順位付けする。人気順に必要な`library_entries(work_id, created_at)` indexは利用者IDや件数を公開queryのresponseへ出さない。
+
 一括掲載と分割掲載は`EntryContentMapping`の多対多関係で保持し、確認状態をmappingごとに記録する。
 
 connector候補は`work_ingestion_keys`のNFKC正規化済み作品名、作者名集合、掲載種別が完全一致した場合だけ既存`Work`へ統合する。話は正規化後の題名、話数、枝番が一対一で一致した場合だけ既存`ContentUnit`へconfirmed mappingを作る。分割掲載や曖昧な対応は別`ContentUnit`として残す。

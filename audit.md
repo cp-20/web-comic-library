@@ -292,3 +292,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #23を作成した。CI結果を確認後にmerge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #23、issue #021。
+
+## 2026-07-27 #021 library mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #23、main commit `8140821c39e5212441658892623b05feeb2931a6`、CI、Images workflow。
+- **操作**：qualityとbuild成功後にPR #23をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、qualityとbuildが成功したことを確認した。production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：main CIとImages workflowはいずれも成功した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #23、issue #021。
+
+## 2026-07-27 #017 catalog search PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#017 catalog search migration、公開catalog query。
+- **操作**：migrationを2回適用し、NFKC検索、title・別名・作者名・短いtitle、filter、公開範囲、popular順を統合試験する。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。外部service、production database、永続user dataへ接続しない。
+- **結果**：migration再適用を含む90 testが成功した。NFKCのtitle・別名・作者名・短いtitle検索、同名作品、filter、公開範囲を確認した。
+- **cleanup**：container、network、test volumeを削除した。
+- **関連**：issue #017。

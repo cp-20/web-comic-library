@@ -8,6 +8,8 @@ import {
   createPostgresFoundation,
   createPostgresIdentity,
   createPostgresLibrary,
+  createPostgresCatalog,
+  createPostgresSourcePolicy,
 } from '@web-comic-library/db';
 
 import { createApp } from './app';
@@ -41,6 +43,8 @@ if (r2Values.some((value) => value) && r2Values.some((value) => !value)) {
 const identity = createPostgresIdentity(databaseUrl);
 const foundation = createPostgresFoundation(databaseUrl);
 const library = createPostgresLibrary(databaseUrl, foundation);
+const catalog = createPostgresCatalog(databaseUrl);
+const sourcePolicies = createPostgresSourcePolicy(databaseUrl);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -75,9 +79,11 @@ const profileIconStorage =
     : null;
 const app = createApp({
   auth,
+  catalog,
   identity,
   library,
   profileIconStorage,
+  sourcePolicies,
   transactions: foundation,
   async resolveSession(request) {
     const token = readSessionToken(request);
@@ -99,6 +105,8 @@ const stop = (): void => {
     foundation.close(),
     identity.close(),
     library.close(),
+    catalog.close(),
+    sourcePolicies.close(),
   ]).then(() => process.exit(0));
 };
 

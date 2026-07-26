@@ -42,7 +42,13 @@ integrationTest(
       id: crypto.randomUUID(),
       retiredAt: null,
       serialStatus: 'unknown',
-      title: '別作品',
+      title: '猫',
+    });
+    const sameTitleWork = createWork({
+      id: crypto.randomUUID(),
+      retiredAt: null,
+      serialStatus: 'ongoing',
+      title: '統合テスト作品',
     });
     const source = createSource({
       baseUrl: 'https://catalog-test.example/',
@@ -139,6 +145,7 @@ integrationTest(
     try {
       await catalog.createWork(work);
       await catalog.createWork(otherWork);
+      await catalog.createWork(sameTitleWork);
       await catalog.addWorkAlias(
         createWorkAlias({
           id: crypto.randomUUID(),
@@ -241,6 +248,52 @@ integrationTest(
 
       const catchUpEntries = await catalog.listCatchUpEntries(work.id);
       expect(catchUpEntries.map((entry) => entry.kind).toSorted()).toEqual(['extra', 'regular']);
+
+      expect(
+        await catalog.searchWorkIds({
+          kind: 'official',
+          query: '統合テスト',
+          sort: 'recent',
+          sourceKey: source.key,
+          status: 'ongoing',
+        }),
+      ).toEqual([work.id]);
+      expect(
+        await catalog.searchWorkIds({
+          kind: null,
+          query: '統合テスト',
+          sort: 'recent',
+          sourceKey: null,
+          status: 'ongoing',
+        }),
+      ).toEqual(expect.arrayContaining([work.id, sameTitleWork.id]));
+      expect(
+        await catalog.searchWorkIds({
+          kind: null,
+          query: 'とうごうてすと',
+          sort: 'popular',
+          sourceKey: null,
+          status: null,
+        }),
+      ).toContain(work.id);
+      expect(
+        await catalog.searchWorkIds({
+          kind: null,
+          query: 'テスト作者',
+          sort: 'new',
+          sourceKey: null,
+          status: null,
+        }),
+      ).toContain(work.id);
+      expect(
+        await catalog.searchWorkIds({
+          kind: null,
+          query: '猫',
+          sort: 'recent',
+          sourceKey: null,
+          status: 'unknown',
+        }),
+      ).toEqual([otherWork.id]);
     } finally {
       await sql`
         delete from entry_content_mappings
@@ -262,7 +315,7 @@ integrationTest(
       await sql`delete from work_aliases where work_id in (${work.id}, ${otherWork.id})`;
       await sql`delete from creators where id = ${creator.id}`;
       await sql`delete from sources where id = ${source.id}`;
-      await sql`delete from works where id in (${work.id}, ${otherWork.id})`;
+      await sql`delete from works where id in (${work.id}, ${otherWork.id}, ${sameTitleWork.id})`;
       await catalog.close();
       await sql.end({ timeout: 1 });
     }

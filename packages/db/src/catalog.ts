@@ -1,4 +1,5 @@
 import type {
+  CatalogSearchQuery,
   CatalogQueryPort,
   CatalogRepository,
   PublicationEntryReadModel,
@@ -32,6 +33,19 @@ import {
   workCreators,
   works,
 } from './catalog-schema';
+
+type WorkIdRow = Readonly<{ id: string }>;
+type VolumeEditionRow = Readonly<{
+  authors: readonly string[];
+  id: string;
+  publishedAt: string | null;
+  publisher: string | null;
+  title: string;
+}>;
+
+const escapeLike = (value: string): string => {
+  return value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
+};
 
 export class PostgresCatalog implements CatalogRepository, CatalogQueryPort {
   readonly #client: Sql;
@@ -93,72 +107,88 @@ export class PostgresCatalog implements CatalogRepository, CatalogQueryPort {
       return null;
     }
 
-    const [aliasRows, creatorRows, contentUnitRows, publicationRows, entryRows, mappingRows] =
-      await Promise.all([
-        this.#database
-          .select({ value: workAliases.value })
-          .from(workAliases)
-          .where(eq(workAliases.workId, workId))
-          .orderBy(asc(workAliases.value)),
-        this.#database
-          .select({
-            id: creators.id,
-            name: creators.name,
-            position: workCreators.position,
-            role: workCreators.role,
-          })
-          .from(workCreators)
-          .innerJoin(creators, eq(creators.id, workCreators.creatorId))
-          .where(eq(workCreators.workId, workId))
-          .orderBy(asc(workCreators.position), asc(creators.id)),
-        this.#database
-          .select({
-            id: contentUnits.id,
-            position: contentUnits.position,
-            title: contentUnits.title,
-          })
-          .from(contentUnits)
-          .where(and(eq(contentUnits.workId, workId), isNull(contentUnits.retiredAt)))
-          .orderBy(asc(contentUnits.position), asc(contentUnits.id)),
-        this.#database
-          .select({
-            ageRatingValue: publications.ageRatingValue,
-            externalId: publications.externalId,
-            id: publications.id,
-            kind: publications.kind,
-            normalizedUrl: publications.normalizedUrl,
-            purchaseUrl: publications.purchaseUrl,
-            sourceId: publications.sourceId,
-            sourceName: sources.name,
-            title: publications.title,
-          })
-          .from(publications)
-          .innerJoin(sources, eq(sources.id, publications.sourceId))
-          .where(and(eq(publications.workId, workId), isNull(publications.retiredAt)))
-          .orderBy(asc(publications.title), asc(publications.id)),
-        this.#database
-          .select({
-            externalId: publicationEntries.externalId,
-            id: publicationEntries.id,
-            kind: publicationEntries.kind,
-            normalizedUrl: publicationEntries.normalizedUrl,
-            position: publicationEntries.position,
-            publicationId: publicationEntries.publicationId,
-            publishedAt: publicationEntries.publishedAt,
-            title: publicationEntries.title,
-          })
-          .from(publicationEntries)
-          .where(and(eq(publicationEntries.workId, workId), isNull(publicationEntries.retiredAt)))
-          .orderBy(asc(publicationEntries.position), asc(publicationEntries.id)),
-        this.#database
-          .select({
-            confirmed: entryContentMappings.confirmed,
-            contentUnitId: entryContentMappings.contentUnitId,
-            publicationEntryId: entryContentMappings.publicationEntryId,
-          })
-          .from(entryContentMappings)
-          .where(eq(entryContentMappings.workId, workId)),
-      ]);
+    const [
+      aliasRows,
+      creatorRows,
+      contentUnitRows,
+      publicationRows,
+      entryRows,
+      mappingRows,
+      volumeRows,
+    ] = await Promise.all([
+      this.#database
+        .select({ value: workAliases.value })
+        .from(workAliases)
+        .where(eq(workAliases.workId, workId))
+        .orderBy(asc(workAliases.value)),
+      this.#database
+        .select({
+          id: creators.id,
+          name: creators.name,
+          position: workCreators.position,
+          role: workCreators.role,
+        })
+        .from(workCreators)
+        .innerJoin(creators, eq(creators.id, workCreators.creatorId))
+        .where(eq(workCreators.workId, workId))
+        .orderBy(asc(workCreators.position), asc(creators.id)),
+      this.#database
+        .select({
+          id: contentUnits.id,
+          position: contentUnits.position,
+          title: contentUnits.title,
+        })
+        .from(contentUnits)
+        .where(and(eq(contentUnits.workId, workId), isNull(contentUnits.retiredAt)))
+        .orderBy(asc(contentUnits.position), asc(contentUnits.id)),
+      this.#database
+        .select({
+          ageRatingValue: publications.ageRatingValue,
+          externalId: publications.externalId,
+          id: publications.id,
+          kind: publications.kind,
+          normalizedUrl: publications.normalizedUrl,
+          purchaseUrl: publications.purchaseUrl,
+          sourceId: publications.sourceId,
+          sourceKey: sources.key,
+          sourceName: sources.name,
+          title: publications.title,
+        })
+        .from(publications)
+        .innerJoin(sources, eq(sources.id, publications.sourceId))
+        .where(and(eq(publications.workId, workId), isNull(publications.retiredAt)))
+        .orderBy(asc(publications.title), asc(publications.id)),
+      this.#database
+        .select({
+          externalId: publicationEntries.externalId,
+          id: publicationEntries.id,
+          kind: publicationEntries.kind,
+          normalizedUrl: publicationEntries.normalizedUrl,
+          position: publicationEntries.position,
+          publicationId: publicationEntries.publicationId,
+          publishedAt: publicationEntries.publishedAt,
+          title: publicationEntries.title,
+        })
+        .from(publicationEntries)
+        .where(and(eq(publicationEntries.workId, workId), isNull(publicationEntries.retiredAt)))
+        .orderBy(asc(publicationEntries.position), asc(publicationEntries.id)),
+      this.#database
+        .select({
+          confirmed: entryContentMappings.confirmed,
+          contentUnitId: entryContentMappings.contentUnitId,
+          publicationEntryId: entryContentMappings.publicationEntryId,
+        })
+        .from(entryContentMappings)
+        .where(eq(entryContentMappings.workId, workId)),
+      this.#client<VolumeEditionRow[]>`
+          select id::text, title, authors, publisher, published_at::text as "publishedAt"
+          from volume_editions
+          where work_id = ${workId}::uuid
+            and retired_at is null
+            and publication_status = 'active'::volume_publication_status
+          order by published_at nulls last, id
+        `,
+    ]);
 
     const entriesByPublication = new Map<string, PublicationEntryReadModel[]>();
 
@@ -202,11 +232,13 @@ export class PostgresCatalog implements CatalogRepository, CatalogQueryPort {
         normalizedUrl: publication.normalizedUrl,
         purchaseUrl: publication.purchaseUrl,
         sourceId: publication.sourceId,
+        sourceKey: publication.sourceKey,
         sourceName: publication.sourceName,
         title: publication.title,
       })),
       serialStatus: work.serialStatus,
       title: work.title,
+      volumes: volumeRows,
     };
   }
 
@@ -220,6 +252,96 @@ export class PostgresCatalog implements CatalogRepository, CatalogQueryPort {
     return work.publications.flatMap((publication) =>
       publication.entries.filter((entry) => entry.catchUpEligible),
     );
+  }
+
+  async searchWorkIds(query: CatalogSearchQuery): Promise<readonly string[]> {
+    const normalizedQuery = (query.query ?? '').normalize('NFKC').toLocaleLowerCase('ja-JP');
+    const escapedQuery = escapeLike(normalizedQuery);
+    const rows = await this.#client.unsafe<WorkIdRow[]>(
+      `
+        with ranked_works as (
+          select
+            work.id::text as id,
+            case
+              when $1 = '' then 0
+              when lower(normalize(work.title, NFKC)) = $1 then 0
+              when lower(normalize(work.title, NFKC)) like $2 escape '\\' then 1
+              when lower(normalize(work.title, NFKC)) like $3 escape '\\' then 2
+              when exists (
+                select 1 from work_aliases as alias
+                where alias.work_id = work.id and lower(normalize(alias.value, NFKC)) = $1
+              ) then 3
+              when exists (
+                select 1
+                from work_creators as link
+                join creators as creator on creator.id = link.creator_id
+                where link.work_id = work.id and lower(normalize(creator.name, NFKC)) = $1
+              ) then 4
+              else 5
+            end as match_rank,
+            (
+              select max(entry.published_at)
+              from publication_entries as entry
+              where entry.work_id = work.id and entry.retired_at is null
+            ) as recent_at,
+            (
+              select count(*)
+              from library_entries as library
+              where library.work_id = work.id and library.created_at >= now() - interval '30 days'
+            ) as popularity
+            , work.created_at as created_at
+          from works as work
+          where work.retired_at is null
+            and (
+              $1 = ''
+              or lower(normalize(work.title, NFKC)) like $3 escape '\\'
+              or exists (
+                select 1 from work_aliases as alias
+                where alias.work_id = work.id and lower(normalize(alias.value, NFKC)) like $3 escape '\\'
+              )
+              or exists (
+                select 1
+                from work_creators as link
+                join creators as creator on creator.id = link.creator_id
+                where link.work_id = work.id and lower(normalize(creator.name, NFKC)) like $3 escape '\\'
+              )
+            )
+            and (
+              $4::text is null or exists (
+                select 1 from publications as publication
+                join sources as source on source.id = publication.source_id
+                where publication.work_id = work.id and source.key = $4
+              )
+            )
+            and (
+              $5::publication_kind is null or exists (
+                select 1 from publications as publication
+                where publication.work_id = work.id and publication.kind = $5::publication_kind
+              )
+            )
+            and ($6::serial_status is null or work.serial_status = $6::serial_status)
+        )
+        select id
+        from ranked_works
+        order by
+          case when $7 = 'recent' then recent_at end desc nulls last,
+          case when $7 = 'popular' then popularity end desc nulls last,
+          case when $7 = 'new' then created_at end desc,
+          match_rank asc,
+          id asc
+        limit 200
+      `,
+      [
+        normalizedQuery,
+        `${escapedQuery}%`,
+        `%${escapedQuery}%`,
+        query.sourceKey,
+        query.kind,
+        query.status,
+        query.sort,
+      ],
+    );
+    return rows.map((row) => row.id);
   }
 
   async close(): Promise<void> {
