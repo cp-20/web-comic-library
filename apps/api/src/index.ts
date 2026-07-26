@@ -4,7 +4,11 @@ import {
   createR2ProfileIconStorage,
   readSessionToken,
 } from '@web-comic-library/auth';
-import { createPostgresIdentity } from '@web-comic-library/db';
+import {
+  createPostgresFoundation,
+  createPostgresIdentity,
+  createPostgresLibrary,
+} from '@web-comic-library/db';
 
 import { createApp } from './app';
 
@@ -35,6 +39,8 @@ if (r2Values.some((value) => value) && r2Values.some((value) => !value)) {
 }
 
 const identity = createPostgresIdentity(databaseUrl);
+const foundation = createPostgresFoundation(databaseUrl);
+const library = createPostgresLibrary(databaseUrl, foundation);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -70,7 +76,9 @@ const profileIconStorage =
 const app = createApp({
   auth,
   identity,
+  library,
   profileIconStorage,
+  transactions: foundation,
   async resolveSession(request) {
     const token = readSessionToken(request);
     return token ? identity.findSessionIdentity(token) : null;
@@ -85,7 +93,13 @@ const stop = (): void => {
   }
 
   stopping = true;
-  void Promise.all([server.stop(), auth.close(), identity.close()]).then(() => process.exit(0));
+  void Promise.all([
+    server.stop(),
+    auth.close(),
+    foundation.close(),
+    identity.close(),
+    library.close(),
+  ]).then(() => process.exit(0));
 };
 
 process.once('SIGINT', stop);

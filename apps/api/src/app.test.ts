@@ -3,8 +3,11 @@ import { describe, expect, test } from 'bun:test';
 import type {
   CatalogAuditRecord,
   CatalogReviewItem,
+  LibraryRepository,
   ProfileIconStorage,
+  TransactionPort,
 } from '@web-comic-library/application';
+import { TransactionContext } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import { hc } from 'hono/client';
 
@@ -319,5 +322,84 @@ describe('authentication RPC', () => {
       provider: 'google',
     });
     expect(requests[2]?.headers.get('cookie')).toBe('session=value');
+  });
+});
+
+describe('library RPC', () => {
+  test('requires an active session and sends reading commands through Hono RPC', async () => {
+    const calls: string[] = [];
+    const library: LibraryRepository = {
+      async deleteContentReadRecords(_context, _userUuid, ids) {
+        calls.push(`delete-content:${ids.join(',')}`);
+      },
+      async deletePublicationReadRecords(_context, _userUuid, ids) {
+        calls.push(`delete-entry:${ids.join(',')}`);
+      },
+      async findLibraryEntry() {
+        return null;
+      },
+      async findWorkReadModel() {
+        return {
+          catchUpContentUnitIds: ['unit-1'],
+          contentUnits: [{ id: 'unit-1', position: 1 }],
+          mappings: [{ confirmed: true, contentUnitId: 'unit-1', publicationEntryId: 'entry-1' }],
+          publicationEntryIds: ['entry-1'],
+          workId: 'work-1',
+        };
+      },
+      async listReadContentUnitIds() {
+        return [];
+      },
+      async saveContentReadRecords(_context, records) {
+        calls.push(`content:${records.map((record) => record.contentUnitId).join(',')}`);
+      },
+      async saveLibraryEntry(_context, entry) {
+        calls.push(`status:${entry.status}`);
+      },
+      async savePublicationReadRecords(_context, records) {
+        calls.push(`entry:${records.map((record) => record.publicationEntryId).join(',')}`);
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const protectedApp = createApp({
+      library,
+      transactions,
+      async resolveSession() {
+        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    expect(
+      (
+        await client.api.library.status.$post({
+          json: { status: 'reading', visibility: 'private', workId: 'work-1' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await client.api.library.reads.$post({
+          json: { contentUnitIds: ['unit-1'], visibility: null, workId: 'work-1' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await client.api.library.reads.$delete({
+          json: { contentUnitIds: ['unit-1'], workId: 'work-1' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(calls).toEqual([
+      'status:reading',
+      'content:unit-1',
+      'entry:entry-1',
+      'delete-content:unit-1',
+      'delete-entry:entry-1',
+    ]);
   });
 });

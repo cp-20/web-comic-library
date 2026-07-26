@@ -13,6 +13,17 @@ export {
   updateProfile,
 } from './identity';
 export {
+  type LibraryRepository,
+  type LibraryWorkReadModel,
+  type ReadMapping,
+  calculateCatchUp,
+  markContentRead,
+  markContentReadThrough,
+  markPublicationRead,
+  setReadingStatus,
+  unmarkContentRead,
+} from './library';
+export {
   type BibliographyCoverageReport,
   type BibliographyProviderPort,
   type BibliographyRepository,

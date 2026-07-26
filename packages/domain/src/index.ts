@@ -11,6 +11,17 @@ export {
   visibilities,
 } from './identity';
 export {
+  type ContentReadRecord,
+  type LibraryEntry,
+  type PublicationReadRecord,
+  type ReadingStatus,
+  type ReadingStatusHistory,
+  createLibraryEntry,
+  isCaughtUp,
+  readingStatuses,
+  transitionReadingStatus,
+} from './library';
+export {
   type BibliographyField,
   type BibliographyProvider,
   type BibliographyProviderRecord,

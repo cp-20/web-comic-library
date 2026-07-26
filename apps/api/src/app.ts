@@ -12,16 +12,22 @@ import type {
   SplitWorkCommand,
   TransactionPort,
   IdentityRepository,
+  LibraryRepository,
   SessionIdentity,
 } from '@web-comic-library/application';
 import {
   findVisibleProfile,
   isActiveSession,
   mergeContentUnits,
+  markContentRead,
+  markContentReadThrough,
+  markPublicationRead,
   mergeWorks,
   resolveCatalogReviewItem,
   splitContentUnit,
   splitWork,
+  setReadingStatus,
+  unmarkContentRead,
   uploadProfileIcon,
   updateProfile,
 } from '@web-comic-library/application';
@@ -32,8 +38,13 @@ import {
   mergeContentUnitsRequestSchema,
   mergeWorksRequestSchema,
   magicLinkRequestSchema,
+  markContentReadRequestSchema,
+  markContentReadThroughRequestSchema,
+  markPublicationReadRequestSchema,
   splitContentUnitRequestSchema,
   splitWorkRequestSchema,
+  setReadingStatusRequestSchema,
+  unmarkContentReadRequestSchema,
   profileParamsSchema,
   updateProfileRequestSchema,
 } from '@web-comic-library/contracts';
@@ -69,7 +80,9 @@ export type ApiDependencies = Readonly<{
   auth: AuthAdapter | null;
   catalogAdmin: CatalogAdminController | null;
   identity: IdentityRepository | null;
+  library: LibraryRepository | null;
   profileIconStorage: ProfileIconStorage | null;
+  transactions: TransactionPort | null;
   resolveSession(request: Request): Promise<SessionIdentity | null>;
   resolveCatalogAdmin(request: Request): Promise<CatalogAdminActor | null>;
 }>;
@@ -84,7 +97,9 @@ const unauthenticatedDependencies: ApiDependencies = {
   auth: null,
   catalogAdmin: null,
   identity: null,
+  library: null,
   profileIconStorage: null,
+  transactions: null,
   async resolveSession(): Promise<SessionIdentity | null> {
     return null;
   },
@@ -234,7 +249,89 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       } catch {
         return context.json({ error: 'invalid_icon' }, 400);
       }
-    });
+    })
+    .post(
+      '/api/library/status',
+      vValidator('json', setReadingStatusRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.library;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        return context.json(
+          await setReadingStatus(transactions, repository, {
+            ...context.req.valid('json'),
+            userUuid: session.userUuid,
+          }),
+          200,
+        );
+      },
+    )
+    .post(
+      '/api/library/reads',
+      vValidator('json', markContentReadRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.library;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await markContentRead(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .post(
+      '/api/library/reads/through',
+      vValidator('json', markContentReadThroughRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.library;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await markContentReadThrough(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .post(
+      '/api/library/publication-reads',
+      vValidator('json', markPublicationReadRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.library;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await markPublicationRead(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .delete(
+      '/api/library/reads',
+      vValidator('json', unmarkContentReadRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.library;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await unmarkContentRead(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    );
 
   const catalogRoutes = admin
     .get('/api/admin/catalog/review-items', async (context) => {

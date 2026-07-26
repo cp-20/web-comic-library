@@ -262,3 +262,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：localの`bun run check`と`bun test`、test専用設定を渡したcompatibility imageのsmoke testが成功した。修正commitをpush後、CIを再確認する。
 - **cleanup**：local PostgreSQLのcontainer、network、test volumeを削除した。PR merge後にremote作業branchを削除する。外部serviceの永続dataは変更していない。
 - **関連**：PR #22、issue #020。
+
+## 2026-07-27 #020 identity mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #22、main commit `9d51e7ab511979a89e72de2bbd461839da9b9472`、CI、Images workflow。
+- **操作**：qualityとbuild成功後にPR #22をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、qualityとbuildが成功したことを確認した。production database migration、OAuth、メール送信、R2 upload、rolloutを実施していない。
+- **結果**：main CIとImages workflowはいずれも成功した。ImagesのCI smoke testはtest専用設定でAPIを起動し、外部認証・メール・R2へ接続していない。
+- **cleanup**：PR merge時にremote作業branchを削除した。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #22、issue #020。
+
+## 2026-07-27 #021 library PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#021 library migration、read-record adapter。
+- **操作**：migrationを2回適用し、読書状態履歴、confirmed mappingだけの掲載ページ既読反映、既読取消を統合試験した。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用した。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectのみを使用した。OAuth、メール送信、R2、production databaseには接続していない。
+- **結果**：88 testが成功し、#021の多対多mappingと既読取消を確認した。
+- **cleanup**：container、network、test volumeを削除した。
+- **関連**：issue #021。

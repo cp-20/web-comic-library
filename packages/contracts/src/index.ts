@@ -4,6 +4,13 @@ export {
   updateProfileRequestSchema,
 } from './identity';
 export {
+  markContentReadRequestSchema,
+  markContentReadThroughRequestSchema,
+  markPublicationReadRequestSchema,
+  setReadingStatusRequestSchema,
+  unmarkContentReadRequestSchema,
+} from './library';
+export {
   type BibliographyJobPayload,
   bibliographyJobPayloadSchema,
   parseBibliographyJobPayload,
