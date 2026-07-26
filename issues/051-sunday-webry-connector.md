@@ -2,7 +2,7 @@
 id: 051
 title: サンデーうぇぶりの許可済み公開情報を収集する
 type: feature
-status: open
+status: blocked
 priority: P2
 depends_on: [009, 010, 014]
 umbrella: 018
@@ -34,3 +34,7 @@ umbrella: 018
 ## 対象外
 
 - browser自動操作と非公開API。
+
+## Blocker
+
+公式の[利用規約](https://blog.www.sunday-webry.com/terms_of_service)は本サービスおよび本コンテンツの複製を禁止しており、公開metadataを自動収集してよいという明示許可、公開feed、または収集用APIを示していない。`https://www.sunday-webry.com/robots.txt` も404であり、robots.txtは許可根拠にはならない。受け入れ条件の明示許可を満たす公式の取得手段または書面による許可が得られるまで、connectorを実装しない。
