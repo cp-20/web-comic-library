@@ -2,7 +2,7 @@
 id: 052
 title: マガポケの許可済み公開情報を収集する
 type: feature
-status: open
+status: blocked
 priority: P2
 depends_on: [009, 010, 014]
 umbrella: 018
@@ -34,3 +34,7 @@ umbrella: 018
 ## 対象外
 
 - browser自動操作と非公開API。
+
+## Blocker
+
+公式の[利用規約改定告知](https://pocket.shonenmagazine.com/article/entry/2026/06/03)は、情報収集ボット、ロボット、クローラ、スパイダー、スクレーパーなどの自動化手段による本サービスへのアクセスおよびコンテンツの収集・処理を明示的に禁止している。[robots.txt](https://pocket.shonenmagazine.com/robots.txt)の`Allow: /`は利用規約の禁止を上書きする許可根拠ではないため、connectorを実装しない。
