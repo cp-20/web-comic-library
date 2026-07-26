@@ -2,7 +2,7 @@
 id: 021
 title: 読書状態とWeb話の既読を管理する
 type: feature
-status: open
+status: completed
 priority: P0
 depends_on: [008, 020]
 umbrella: 019

@@ -24,6 +24,10 @@ bun run build:web
 
 プロフィール画像はPNG、2 MiB以下、512px以下だけを選択できる。multipart uploadはHono RPCのJSON schemaでは表現できないため、保存済みprofileに対する専用の同一origin endpointへ送る。それ以外のbackend呼び出しはAPI clientへ集約する。
 
+## 作品の読書操作
+
+`/works/{workId}`は手動読書状態、論理話の既読、指定話までの一括既読、既読取消、掲載ページ既読をHono RPCで操作する。状態と追いつき状態を同じ表示や入力に混在させず、掲載ページIDが未確認mappingの場合も独立した既読として扱う。
+
 ## 管理画面
 
 `/admin/catalog`は管理者のcatalog統合・分割画面である。すべての操作で理由を入力させ、Hono RPC clientだけを使ってAPIへ送る。画面だけで権限を判断せず、API側の強い認証とrole検査を必須とする。

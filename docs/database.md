@@ -18,6 +18,12 @@ Better Auth互換の`user`、`session`、`account`、`verification`を保持し�
 
 `profiles.default_visibility`は未設定を許容する。未設定の閲覧判定はapplicationで`private`として解決し、recordごとの上書きが存在する場合は標準値より優先する。follower関係は`profile_followers`の複合主キーと両方のforeign keyで保証する。
 
+## library storage
+
+`library_entries`は手動の読書状態と標準公開範囲を保持し、各変更を`library_status_history`へ追記する。`content_read_records`は論理話、`publication_read_records`は実際に読んだ掲載ページを別に保持する。confirmedな`entry_content_mappings`だけをapplication transaction内で両方のread recordへ反映し、未確認mappingは掲載ページ既読を独立に残す。
+
+追いつき状態は保存しない。公開中の`regular`または`extra`掲載ページにconfirmed mappingを持つ論理話と、利用者の`content_read_records`からquery時に再計算する。
+
 ## ローカル開発
 
 PostgreSQL 16を起動する。
