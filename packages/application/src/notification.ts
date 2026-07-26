@@ -70,9 +70,10 @@ const isEnabled = async (
   return preference?.enabled ?? defaultNotificationEnabled(kind);
 };
 
-export const generateInAppNotifications = async (
+export const generateNotifications = async (
   transactions: TransactionPort,
   repository: NotificationRepository,
+  channel: NotificationChannel,
   eventId: string,
   now: Date = new Date(),
 ): Promise<number> => {
@@ -85,7 +86,7 @@ export const generateInAppNotifications = async (
     const [preferences, publicationIds, enabled] = await Promise.all([
       repository.listSourcePreferences(setting.userUuid),
       repository.listSubscriptionPublicationIds(setting.userUuid, setting.workId),
-      isEnabled(repository, setting.userUuid, event.kind, 'in_app'),
+      isEnabled(repository, setting.userUuid, event.kind, channel),
     ]);
     if (!enabled) continue;
     const selected = selectFollowReleaseCandidates(
@@ -96,11 +97,11 @@ export const generateInAppNotifications = async (
     );
     if (!selected.some((candidate) => candidate.eventId === event.id)) continue;
     const notification = createNotification({
-      channel: 'in_app',
+      channel,
       createdAt: now,
       eventId: event.id,
       id: crypto.randomUUID(),
-      idempotencyKey: notificationIdempotencyKey(setting.userUuid, event.id, 'in_app', event.kind),
+      idempotencyKey: notificationIdempotencyKey(setting.userUuid, event.id, channel, event.kind),
       kind: event.kind,
       readAt: null,
       userUuid: setting.userUuid,
@@ -113,6 +114,13 @@ export const generateInAppNotifications = async (
   // oxlint-enable no-await-in-loop
   return created;
 };
+
+export const generateInAppNotifications = (
+  transactions: TransactionPort,
+  repository: NotificationRepository,
+  eventId: string,
+  now?: Date,
+): Promise<number> => generateNotifications(transactions, repository, 'in_app', eventId, now);
 
 export const setNotificationPreference = async (
   transactions: TransactionPort,

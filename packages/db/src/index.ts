@@ -8,6 +8,7 @@ export { PostgresLibrary, createPostgresLibrary } from './library';
 export { PostgresVolumeLibrary, createPostgresVolumeLibrary } from './volume-library';
 export { PostgresFollow, createPostgresFollow } from './follow';
 export { PostgresNotification, createPostgresNotification } from './notification';
+export { PostgresWebPushSubscription, createPostgresWebPushSubscription } from './web-push';
 export {
   PostgresFoundation,
   PostgresJobQueue,

@@ -22,6 +22,8 @@ workerを起動する前に`bun run --cwd packages/db migrate`でDrizzleとGraph
 
 `notification_release`はrelease event IDを受け、利用者のfollow方式、掲載先優先順位、種別・経路設定を照合してアプリ内通知を保存する。deliveryは冪等性keyで一度だけ保存し、`notification_suppressed`のeventは通知を作らない。Pushとメール送信は後続issueの別consumerで扱う。
 
+VAPIDの公開鍵、秘密鍵、subjectがすべて設定されたworkerは、同じrelease eventからWeb Push用notificationとsubscriptionごとのdeliveryを生成する。Push payloadはnotification IDと`/notifications`だけで、作品名、本文、認証情報を含めない。404/410はsubscriptionを無効化し、それ以外の送信失敗はjob再試行として扱う。
+
 ## 取得元の緊急停止
 
 巡回処理は`runSourceCollection`を使い、HTTP requestの前とjob投入の前に取得元policyを確認する。

@@ -17,6 +17,7 @@ import type {
   CatalogQueryPort,
   FollowRepository,
   NotificationRepository,
+  WebPushSubscriptionRepository,
   SessionIdentity,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
@@ -44,6 +45,8 @@ import {
   submitVolumeContentMappingCorrection,
   uploadProfileIcon,
   updateProfile,
+  registerWebPushSubscription,
+  unregisterWebPushSubscription,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -70,6 +73,8 @@ import {
   profileParamsSchema,
   searchCatalogWorksQuerySchema,
   updateProfileRequestSchema,
+  webPushSubscriptionRequestSchema,
+  webPushUnsubscribeRequestSchema,
 } from '@web-comic-library/contracts';
 import type { CatalogAdminActor } from '@web-comic-library/domain';
 import { Hono } from 'hono';
@@ -105,6 +110,8 @@ export type ApiDependencies = Readonly<{
   catalog: CatalogQueryPort | null;
   follow: FollowRepository | null;
   notifications: NotificationRepository | null;
+  webPushSubscriptions: WebPushSubscriptionRepository | null;
+  webPushPublicKey: string | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
   volumeLibrary: VolumeLibraryRepository | null;
@@ -127,6 +134,8 @@ const unauthenticatedDependencies: ApiDependencies = {
   catalog: null,
   follow: null,
   notifications: null,
+  webPushSubscriptions: null,
+  webPushPublicKey: null,
   identity: null,
   library: null,
   volumeLibrary: null,
@@ -352,6 +361,47 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
           userUuid: session.userUuid,
         });
         return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .get('/api/push/config', async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      return dependencies.webPushPublicKey
+        ? context.json({ publicKey: dependencies.webPushPublicKey }, 200)
+        : context.json({ error: 'unavailable' }, 503);
+    })
+    .put(
+      '/api/settings/push-subscriptions',
+      vValidator('json', webPushSubscriptionRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.webPushSubscriptions;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await registerWebPushSubscription(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .delete(
+      '/api/settings/push-subscriptions',
+      vValidator('json', webPushUnsubscribeRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.webPushSubscriptions;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const removed = await unregisterWebPushSubscription(
+          transactions,
+          repository,
+          session.userUuid,
+          context.req.valid('json').endpoint,
+        );
+        return context.json({ status: removed ? ('ok' as const) : ('not_found' as const) }, 200);
       },
     )
     .get(

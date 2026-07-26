@@ -150,7 +150,7 @@ export class PostgresNotification implements NotificationRepository {
         read_at as "readAt",
         created_at as "createdAt"
       from notifications
-      where user_id = ${userUuid}
+      where user_id = ${userUuid} and channel = 'in_app'::notification_channel
         and (
           ${decoded.createdAt}::timestamptz is null
           or created_at < ${decoded.createdAt}

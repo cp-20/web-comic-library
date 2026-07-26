@@ -23,11 +23,25 @@ export {
   type NotificationPage,
   type NotificationReleaseEvent,
   type NotificationRepository,
+  generateNotifications,
   generateInAppNotifications,
   readAllNotifications,
   readNotification,
   setNotificationPreference,
 } from './notification';
+export {
+  type WebPushSubscriptionInput,
+  type WebPushSubscriptionRepository,
+  registerWebPushSubscription,
+  unregisterWebPushSubscription,
+} from './web-push';
+export {
+  type WebPushDelivery,
+  type WebPushDeliveryOutcome,
+  type WebPushDeliveryRepository,
+  type WebPushSenderPort,
+  deliverWebPushForRelease,
+} from './web-push-delivery';
 export {
   type LibraryRepository,
   type LibraryWorkReadModel,

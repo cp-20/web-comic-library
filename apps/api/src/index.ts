@@ -12,6 +12,7 @@ import {
   createPostgresCatalog,
   createPostgresFollow,
   createPostgresNotification,
+  createPostgresWebPushSubscription,
   createPostgresSourcePolicy,
 } from '@web-comic-library/db';
 
@@ -51,6 +52,7 @@ const catalog = createPostgresCatalog(databaseUrl);
 const sourcePolicies = createPostgresSourcePolicy(databaseUrl);
 const follow = createPostgresFollow(databaseUrl, foundation);
 const notifications = createPostgresNotification(databaseUrl, foundation);
+const webPushSubscriptions = createPostgresWebPushSubscription(databaseUrl, foundation);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -88,6 +90,8 @@ const app = createApp({
   catalog,
   follow,
   notifications,
+  webPushPublicKey: process.env.VAPID_PUBLIC_KEY ?? null,
+  webPushSubscriptions,
   identity,
   library,
   volumeLibrary,
@@ -118,6 +122,7 @@ const stop = (): void => {
     catalog.close(),
     follow.close(),
     notifications.close(),
+    webPushSubscriptions.close(),
     sourcePolicies.close(),
   ]).then(() => process.exit(0));
 };

@@ -44,6 +44,8 @@ bun run build:web
 
 `/notifications`はログイン利用者自身の通知一覧と未読件数をHono RPC clientで表示し、個別または一括で既読にする。通知本文には非公開情報やネタバレ本文を含めず、種別と既読状態だけを表示する。
 
+Web appは最小のmanifestとPush受信・notification click専用Service Workerを提供する。Push許可とsubscription登録は`/notifications`の利用者の明示操作でのみ行い、Service Workerはoffline cacheやbackground syncを実装しない。
+
 ## 管理画面
 
 `/admin/catalog`は管理者のcatalog統合・分割画面である。すべての操作で理由を入力させ、Hono RPC clientだけを使ってAPIへ送る。画面だけで権限を判断せず、API側の強い認証とrole検査を必須とする。

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 
 export const metadata: Metadata = {
+  manifest: '/manifest.webmanifest',
   title: 'Web Comic Library',
 };
 

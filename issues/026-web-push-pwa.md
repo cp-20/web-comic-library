@@ -2,7 +2,7 @@
 id: 026
 title: Web Pushと最小PWAを実装する
 type: feature
-status: open
+status: done
 priority: P1
 depends_on: [020, 025]
 umbrella: 024

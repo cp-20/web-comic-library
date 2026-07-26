@@ -412,3 +412,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #27を作成した。CI結果を確認後にmerge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #27、issue #025。
+
+## 2026-07-27 #025 アプリ内通知 mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #27、main commit `9eea605a1978c918c11a698ec76ddd8d5d1f963c`、CI、Images workflow。
+- **操作**：qualityとImages workflow成功後にPR #27をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、CIとImagesが成功したことを確認した。production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：main CIとImages workflowはいずれも成功した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #27、issue #025。
+
+## 2026-07-27 #026 Web Push PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#026 Web Push migration、subscriptionとdelivery処理。
+- **操作**：migrationの再適用、subscription登録、通知・subscription単位のdelivery冪等化、恒久失敗時のsubscription無効化を統合試験する。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。外部Push service、production database、永続user dataへ接続しない。
+- **結果**：migrationを再適用し、Web Push subscription、delivery冪等化、恒久失敗時の無効化を含む109 testsが成功（0 fail）した。
+- **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除する。
+- **関連**：issue #026。
