@@ -32,6 +32,14 @@ export {
   sourceCrawlStatuses,
 } from './connectors';
 export {
+  type IngestDiscoveryInput,
+  type IngestionCandidateSink,
+  type IngestionMode,
+  type IngestionResult,
+  ingestDiscovery,
+  ingestionModes,
+} from './ingestion';
+export {
   type JobInput,
   type JobQueuePort,
   type JobQueueResult,

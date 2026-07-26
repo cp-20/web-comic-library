@@ -28,6 +28,21 @@ export {
   workAliasKinds,
 } from './catalog';
 export {
+  type EntryMatchCandidate,
+  type EpisodeIdentity,
+  type ReleaseEvent,
+  type ReleaseEventKind,
+  type WorkMatchCandidate,
+  canAutomaticallyMapEntries,
+  canAutomaticallyMergeWorks,
+  createReleaseEvent,
+  normalizeAuthorNames,
+  normalizeComparableText,
+  parseEpisodeIdentity,
+  releaseEventKindForEntry,
+  releaseEventKinds,
+} from './release';
+export {
   type AgeRatingDisposition,
   type AgeRatingMapping,
   type PolicyDecision,

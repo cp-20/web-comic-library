@@ -1,5 +1,6 @@
 export { PostgresCatalog, createPostgresCatalog } from './catalog';
 export { PostgresConnectorState, createPostgresConnectorState } from './connector-state';
+export { PostgresIngestion, createPostgresIngestion } from './ingestion';
 export {
   PostgresFoundation,
   PostgresJobQueue,

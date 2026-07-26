@@ -2,7 +2,7 @@
 id: 014
 title: 収集候補を統合してrelease eventを生成する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [008, 010]
 umbrella: 007
