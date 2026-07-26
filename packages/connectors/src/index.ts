@@ -1,4 +1,12 @@
 export {
+  NdlBibliographyProvider,
+  OpenBdBibliographyProvider,
+  createNdlBibliographyProvider,
+  createOpenBdBibliographyProvider,
+  parseNdlSruResponse,
+  parseOpenBdResponse,
+} from './bibliography';
+export {
   type CommonAtomFeed,
   type CommonFeedDiscoveryEntry,
   type CommonFeedEpisodePage,

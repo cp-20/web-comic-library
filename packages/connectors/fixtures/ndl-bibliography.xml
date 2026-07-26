@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<searchRetrieveResponse xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/">
+  <numberOfRecords>1</numberOfRecords>
+  <records>
+    <record>
+      <recordData>
+        <dc:title>NDL補完書名</dc:title>
+        <dc:creator>NDL補完著者</dc:creator>
+        <dc:publisher>NDL補完出版社</dc:publisher>
+        <dcterms:issued>2026-07-01</dcterms:issued>
+      </recordData>
+    </record>
+  </records>
+</searchRetrieveResponse>

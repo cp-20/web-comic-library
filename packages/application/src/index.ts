@@ -1,4 +1,19 @@
 export {
+  type BibliographyCoverageReport,
+  type BibliographyProviderPort,
+  type BibliographyRepository,
+  type BibliographySyncMode,
+  type PublisherProductVolumeSynchronization,
+  type RegisterPublisherProductVolumeCommand,
+  type SynchronizeVolumeCommand,
+  type SynchronizeVolumeResult,
+  type VolumeSynchronization,
+  bibliographySyncModes,
+  registerPublisherProductVolume,
+  saveVolumeContentMapping,
+  synchronizeVolume,
+} from './bibliography';
+export {
   type CatalogAdminRepository,
   type CatalogAuditRecord,
   type CatalogRedirect,

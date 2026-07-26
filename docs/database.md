@@ -62,6 +62,16 @@ connector候補は`work_ingestion_keys`のNFKC正規化済み作品名、作者�
 
 `release_events`はsource、publication entry、event種別、発生時刻から作るidempotency keyを一意に保持する。初回取込とbackfillのeventは`notification_suppressed`をtrueにし、配信対象にはしない。候補、event、fetch state、checkpoint、成功runは同じtransactionで確定する。
 
+## 単行本書誌
+
+`volume_editions`はISBNまたは出版社商品IDで版を一意に識別し、紙版と電子版を同一視しない。ISBNと商品IDはそれぞれpartial unique indexで冪等登録する。
+
+`volume_provider_records`はopenBD、NDL、出版社ごとの取得可否、取得日時、根拠URL、利用条件URLを保持する。統合後の各fieldは`volume_field_provenances`にprovider、取得日時、利用条件を残す。openBDで削除された既存版は削除せず`withdrawn`と`retired_at`で公開停止する。
+
+`volume_content_mappings`は単行本版と`ContentUnit`の多対多対応と`confirmed`、`unconfirmed`、`rejected`を保持する。複合foreign keyにより別作品の話を対応付けられない。
+
+新規の版は`release_events`へ`new_volume`として同じtransactionで記録する。初回同期のeventは通知抑止し、既存版の再同期ではeventを追加しない。
+
 ## catalog管理
 
 管理操作は`catalog_merge_audits`に操作種別、操作者、理由、変更前後、時刻を追記する。`catalog_redirects`はretireした作品または話の旧IDを正規IDへ対応付け、公開queryは旧IDを直接公開せず正規IDへredirectする。

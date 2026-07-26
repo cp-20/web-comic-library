@@ -1,0 +1,19 @@
+[
+  {
+    "hanmoto": {
+      "cover": "https://publisher.example/covers/9784101001548.jpg",
+      "coverLicenseUrl": "https://publisher.example/cover-terms"
+    },
+    "onix": {
+      "DescriptiveDetail": {
+        "Contributor": [{ "PersonName": "書誌テスト著者" }],
+        "TitleDetail": { "TitleText": "書誌テスト単行本" }
+      },
+      "ProductIdentifier": { "IDValue": "9784101001548" },
+      "PublishingDetail": {
+        "Publisher": { "PublisherName": "書誌テスト出版社" },
+        "PublishingDate": [{ "Date": "2026-07-01", "PublishingDateRole": "01" }]
+      }
+    }
+  }
+]

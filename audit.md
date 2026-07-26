@@ -182,3 +182,43 @@ Secretの値と個人情報は記録しない。
 - **結果**：migrationの再適用を含め61 testが成功した。統合・分割は同一transactionで完了し、旧ID redirect、監査履歴、解析失敗queue、未認証401・一般利用者403・不正入力400を確認した。
 - **cleanup**：container、network、test volumeを削除した。
 - **関連**：issue #015。
+
+## 2026-07-27 02:02 JST #015 catalog管理 mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #20、main CI、GitHub Container Registry image build。
+- **操作**：成功済みPR #20をsquash mergeし、main commit `cea421dd5f86a18071c2f67b82f4b404128ec90a`のCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、qualityとbuildが成功済みであることを確認した。migrationはlocal PostgreSQL統合試験で2回適用を確認済みであり、production rolloutは実施していない。
+- **結果**：PRはsquash mergeされ、mainのCIとImagesがともに成功した。
+- **cleanup**：不要になったremote作業branchを削除した。production databaseへのmigrationとrolloutは実施していない。
+- **関連**：PR #20、issue #015。
+
+## 2026-07-27 #016 書誌provider公開API構造確認
+
+- **対象**：openBDの公開`/v1/get?isbn=` endpoint、国立国会図書館サーチの公開SRU endpoint。
+- **操作**：公開ISBN 2件について、read-onlyのJSONおよびDC-NDL XML検索responseと、各providerの公開API仕様・利用条件を確認した。
+- **危険性**：外部serviceへ少数のHTTP requestを送る。
+- **保護策**：公開metadata endpointだけを各providerへ2回ずつ短時間に照会し、認証、書影、本文、非公開endpointへはアクセスしなかった。responseをrepositoryへ保存していない。
+- **結果**：openBDは未収録を`[null]`で、NDL SRUは該当なしをdiagnostic XMLで返した。adapterではこれらを例外にせず、補完不能または削除候補のprovider結果として扱う。
+- **cleanup**：外部serviceとlocalに永続dataを作成していない。
+- **関連**：issue #016。
+
+## 2026-07-27 #016 書誌同期 PostgreSQL統合試験
+
+- **対象**：local Docker ComposeのPostgreSQL 16 test database、#016 migration、書誌同期repository。
+- **操作**：migrationを2回適用し、openBD・NDLのfield provenance、ISBN収録率、初回通知抑止、再同期、新刊eventの冪等性、削除検知、巻と話の同一作品mapping制約を統合試験した。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用した。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを対象にした。外部provider、production database、永続user dataへ接続していない。
+- **結果**：migration再適用を含む69 testが成功した。書誌削除は`withdrawn`へ更新され、初回eventは通知抑止、同一ISBNと出版社商品IDの再同期ではeventを重複作成しないことを確認した。
+- **cleanup**：検証後にcontainer、network、test volumeを削除した。
+- **関連**：issue #016。
+
+## 2026-07-27 #016 書誌同期 GitHub pull request作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、作業branch `agent/016-bibliography`、draft PR #21。
+- **操作**：検証済みcommit `02fc07c`を作業branchへpushし、main向けdraft PRを作成した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、local PostgreSQL統合試験を成功させ、production rolloutと書誌providerの巡回job投入は行っていない。
+- **結果**：PR #21を作成した。CI結果を確認後、merge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部providerの永続dataは変更していない。
+- **関連**：PR #21、issue #016。

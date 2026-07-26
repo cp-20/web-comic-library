@@ -2,7 +2,7 @@
 id: 016
 title: openBDとNDLから単行本書誌を同期する
 type: feature
-status: open
+status: done
 priority: P1
 depends_on: [008, 010, 014]
 umbrella: 007
