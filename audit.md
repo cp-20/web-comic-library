@@ -312,3 +312,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：migration再適用を含む90 testが成功した。NFKCのtitle・別名・作者名・短いtitle検索、同名作品、filter、公開範囲を確認した。
 - **cleanup**：container、network、test volumeを削除した。
 - **関連**：issue #017。
+
+## 2026-07-27 #017 catalog search GitHub pull request作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、作業branch `agent/017-catalog-search-web`、draft PR #24。
+- **操作**：検証済みcommit `d97a6a1`を作業branchへpushし、main向けdraft PRを作成した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、`bun run test:integration`、`bun run build:web`を成功させた。production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：PR #24を作成した。CI結果を確認後にmerge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #24、issue #017。
