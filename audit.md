@@ -212,3 +212,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：migration再適用を含む69 testが成功した。書誌削除は`withdrawn`へ更新され、初回eventは通知抑止、同一ISBNと出版社商品IDの再同期ではeventを重複作成しないことを確認した。
 - **cleanup**：検証後にcontainer、network、test volumeを削除した。
 - **関連**：issue #016。
+
+## 2026-07-27 #016 書誌同期 GitHub pull request作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、作業branch `agent/016-bibliography`、draft PR #21。
+- **操作**：検証済みcommit `02fc07c`を作業branchへpushし、main向けdraft PRを作成した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、local PostgreSQL統合試験を成功させ、production rolloutと書誌providerの巡回job投入は行っていない。
+- **結果**：PR #21を作成した。CI結果を確認後、merge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部providerの永続dataは変更していない。
+- **関連**：PR #21、issue #016。
