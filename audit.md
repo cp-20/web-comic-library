@@ -242,3 +242,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：83 testが成功し、migration再適用、未設定profileの非公開、follower限定公開、有効・disabled accountのsession identityを確認した。
 - **cleanup**：検証後にcontainer、network、test volumeを削除した。
 - **関連**：issue #020。
+
+## 2026-07-27 #020 identity GitHub pull request作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、作業branch `agent/020-identity-profile-privacy`、draft PR #22。
+- **操作**：検証済みcommit `32545bf`を作業branchへpushし、main向けdraft PRを作成した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、`bun run test:integration`、`bun run build:web`を成功させ、production database migration、OAuth、メール送信、R2 upload、rolloutを実施していない。
+- **結果**：PR #22を作成した。CI結果を確認後にmerge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #22、issue #020。
