@@ -19,6 +19,7 @@ import type {
   NotificationRepository,
   WebPushSubscriptionRepository,
   EmailDigestSettingsRepository,
+  ExtensionTokenRepository,
   SessionIdentity,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
@@ -51,6 +52,9 @@ import {
   setEmailDigestSettings,
   unsubscribeEmailDigest,
   recordEmailDigestFeedback,
+  exchangeExtensionPairingCode,
+  issueExtensionPairingCode,
+  revokeExtensionToken,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -80,6 +84,8 @@ import {
   webPushSubscriptionRequestSchema,
   webPushUnsubscribeRequestSchema,
   emailDigestSettingsRequestSchema,
+  exchangeExtensionPairingCodeRequestSchema,
+  revokeExtensionTokenParamsSchema,
 } from '@web-comic-library/contracts';
 import type { CatalogAdminActor } from '@web-comic-library/domain';
 import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
@@ -119,6 +125,7 @@ export type ApiDependencies = Readonly<{
   webPushSubscriptions: WebPushSubscriptionRepository | null;
   webPushPublicKey: string | null;
   emailDigests: EmailDigestSettingsRepository | null;
+  extensionTokens: ExtensionTokenRepository | null;
   resendWebhookSecret: string | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
@@ -145,6 +152,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   webPushSubscriptions: null,
   webPushPublicKey: null,
   emailDigests: null,
+  extensionTokens: null,
   resendWebhookSecret: null,
   identity: null,
   library: null,
@@ -635,6 +643,54 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       },
     );
 
+  const extensionRoutes = new Hono()
+    .post('/api/extension/pairing-codes', async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.extensionTokens;
+      const transactions = dependencies.transactions;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+      return context.json(
+        await issueExtensionPairingCode(transactions, repository, session.userUuid),
+        201,
+      );
+    })
+    .post(
+      '/api/extension/pairing-codes/exchange',
+      vValidator('json', exchangeExtensionPairingCodeRequestSchema),
+      async (context) => {
+        const repository = dependencies.extensionTokens;
+        const transactions = dependencies.transactions;
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const token = await exchangeExtensionPairingCode(
+          transactions,
+          repository,
+          context.req.valid('json'),
+        );
+        return token
+          ? context.json(token, 201)
+          : context.json({ error: 'invalid_pairing_code' }, 401);
+      },
+    )
+    .delete(
+      '/api/extension/tokens/:tokenId',
+      vValidator('param', revokeExtensionTokenParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.extensionTokens;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const revoked = await revokeExtensionToken(
+          transactions,
+          repository,
+          session.userUuid,
+          context.req.valid('param').tokenId,
+        );
+        return context.json({ status: revoked ? ('ok' as const) : ('not_found' as const) }, 200);
+      },
+    );
+
   const catalogRoutes = admin
     .get('/api/admin/catalog/review-items', async (context) => {
       const actor = context.get('catalogAdminActor');
@@ -830,6 +886,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       },
     )
     .route('/', identityRoutes)
+    .route('/', extensionRoutes)
     .route('/', publicCatalogRoutes)
     .route('/', catalogRoutes)
     .get('/api/health', (context) => context.json({ status: 'ok' as const }, 200))

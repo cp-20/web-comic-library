@@ -1,0 +1,17 @@
+{
+  "name": "@web-comic-library/extension",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "wxt build",
+    "build:firefox": "wxt build --browser firefox --mv3",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "zip": "wxt zip && wxt zip --browser firefox --mv3"
+  },
+  "dependencies": {
+    "@web-comic-library/api-client": "workspace:*"
+  },
+  "devDependencies": {
+    "wxt": "0.20.27"
+  }
+}

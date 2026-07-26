@@ -36,6 +36,15 @@ export {
   unregisterWebPushSubscription,
 } from './web-push';
 export {
+  type ExtensionPairingCode,
+  type ExtensionToken,
+  type ExtensionTokenRepository,
+  exchangeExtensionPairingCode,
+  extensionTokenScope,
+  issueExtensionPairingCode,
+  revokeExtensionToken,
+} from './extension-pairing';
+export {
   type WebPushDelivery,
   type WebPushDeliveryOutcome,
   type WebPushDeliveryRepository,
