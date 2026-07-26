@@ -282,3 +282,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：88 testが成功し、#021の多対多mappingと既読取消を確認した。
 - **cleanup**：container、network、test volumeを削除した。
 - **関連**：issue #021。
+
+## 2026-07-27 #021 library GitHub pull request作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、作業branch `agent/021-reading-state-web-progress`、draft PR #23。
+- **操作**：検証済みcommit `b91cba8`を作業branchへpushし、main向けdraft PRを作成した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、`bun run test:integration`、`bun run build:web`を成功させ、production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：PR #23を作成した。CI結果を確認後にmerge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #23、issue #021。
