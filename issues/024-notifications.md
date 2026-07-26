@@ -2,7 +2,7 @@
 id: 024
 title: 更新をアプリ内、Push、メールで通知する
 type: umbrella
-status: open
+status: done
 priority: P0
 depends_on: []
 ---
