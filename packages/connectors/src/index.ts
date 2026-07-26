@@ -23,6 +23,18 @@ export {
 } from './http-client';
 export { readConnectorFixture } from './fixture';
 export {
+  type KadocomiAuthor,
+  type KadocomiConfig,
+  type KadocomiEpisode,
+  type KadocomiPublicationCandidate,
+  KadocomiConnector,
+  classifyKadocomiEntry,
+  createKadocomiConnector,
+  kadocomiConfig,
+  parseKadocomiHtmlFallback,
+  parseKadocomiPublicationPage,
+} from './kadocomi';
+export {
   type NiconicoClassificationEvidence,
   type NiconicoConfig,
   type NiconicoCrawlQueue,

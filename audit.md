@@ -122,3 +122,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：公開一覧が20件単位であること、作成順sortが`manga_created`であること、公式作品のbreadcrumb、1回の作品HTMLに170個の公開話要素がある例を確認した。最小fixtureでは公開45話を欠落なく抽出し、全testは40件成功、画像requestは0件だった。
 - **cleanup**：local HTTP serverをtest終了時に停止した。外部serviceとlocalに永続dataを作成していない。
 - **関連**：issue #012。
+
+## 2026-07-27 00:44 JST ニコニコ漫画connectorのmergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #17、main CI、GitHub Container Registry image build。
+- **操作**：成功済みPR #17をsquash mergeし、main commit `1a6a2e1`のCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、qualityとbuildが成功済みであることを確認し、connectorをproduction source、policy、巡回jobへ接続しない設計を維持した。
+- **結果**：PRはsquash mergeされ、mainのCIとImagesがともに成功した。
+- **cleanup**：不要になったremote作業branchを削除した。production rolloutとconnector通信は実施していない。
+- **関連**：PR #17、issue #012。
+
+## 2026-07-27 カドコミ公開HTMLの構造確認
+
+- **対象**：カドコミの公開トップと公開作品ページ、local connector fixture。
+- **操作**：`ax`を使い、公開HTMLの`script#__NEXT_DATA__`、`work`、`firstEpisodes.result`、`latestEpisodes.result`の存在とフィールド構造だけをread-onlyで確認した。`kadocomi.com`への1回のrequestはtimeoutしたため、公開の`comic-walker.com`を代替確認先にした。
+- **危険性**：外部serviceへ少数のHTTP requestを送る。
+- **保護策**：requestは公開HTMLだけ、キャッシュなし、短時間に限定し、非公開API、漫画本文、画像、viewer、認証付き資源にはアクセスしなかった。
+- **結果**：対象scriptが1件存在し、作品code、作者と役割、連載状態、年齢区分、公開話のcode、更新日時、話種別を埋め込みJSONから確認できた。127件fixture、構造変更・抽出件数不整合・未知年齢区分の停止、画像と非公開APIへのrequest 0件を含む全testは45件成功、4件skip、0件失敗だった。
+- **cleanup**：外部serviceとlocalに永続dataを作成していない。
+- **関連**：issue #013。
