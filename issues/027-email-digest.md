@@ -2,7 +2,7 @@
 id: 027
 title: 更新日のメールdigestを送信する
 type: feature
-status: completed
+status: done
 priority: P1
 depends_on: [020, 025]
 umbrella: 024
