@@ -1,4 +1,5 @@
 export { PostgresCatalog, createPostgresCatalog } from './catalog';
+export { PostgresBibliography, createPostgresBibliography } from './bibliography';
 export { PostgresCatalogAdmin, createPostgresCatalogAdmin } from './catalog-admin';
 export { PostgresConnectorState, createPostgresConnectorState } from './connector-state';
 export { PostgresIngestion, createPostgresIngestion } from './ingestion';

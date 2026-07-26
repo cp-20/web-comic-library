@@ -18,6 +18,8 @@ workerは`packages/contracts`のschemaでpayloadを検証してからapplication
 検証失敗はGraphile Workerの試行失敗として記録し、use caseを呼ばない。
 workerを起動する前に`bun run --cwd packages/db migrate`でDrizzleとGraphile Workerのmigrationを適用する。
 
+`bibliography_sync`は`workId`、ISBN、`initial`または`incremental`のmodeを受け、openBDとNDLをtransaction外で照会してから書誌同期use caseを呼ぶ。定期同期のproducerは同じ版・同期時刻でstableなidempotency keyを指定する。初回は通知抑止、後続に新規検出した版だけが通知候補になる。
+
 ## 取得元の緊急停止
 
 巡回処理は`runSourceCollection`を使い、HTTP requestの前とjob投入の前に取得元policyを確認する。

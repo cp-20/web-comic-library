@@ -1,4 +1,9 @@
 export {
+  type BibliographyJobPayload,
+  bibliographyJobPayloadSchema,
+  parseBibliographyJobPayload,
+} from './bibliography-job-payload';
+export {
   catalogRedirectParamsSchema,
   catalogReviewItemParamsSchema,
   mergeContentUnitsRequestSchema,
