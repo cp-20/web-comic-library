@@ -142,3 +142,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：対象scriptが1件存在し、作品code、作者と役割、連載状態、年齢区分、公開話のcode、更新日時、話種別を埋め込みJSONから確認できた。127件fixture、構造変更・抽出件数不整合・未知年齢区分の停止、画像と非公開APIへのrequest 0件を含む全testは45件成功、4件skip、0件失敗だった。
 - **cleanup**：外部serviceとlocalに永続dataを作成していない。
 - **関連**：issue #013。
+
+## 2026-07-27 01:07 JST カドコミconnectorのmergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #18、main CI、GitHub Container Registry image build。
+- **操作**：成功済みPR #18をsquash mergeし、main commit `cb9669b`のCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、qualityとbuildが成功済みであることを確認し、connectorをproduction source、policy、巡回jobへ接続しない設計を維持した。
+- **結果**：PRはsquash mergeされ、mainのCIとImagesがともに成功した。
+- **cleanup**：不要になったremote作業branchを削除した。production rolloutとconnector通信は実施していない。
+- **関連**：PR #18、issue #013。
+
+## 2026-07-27 #014 ingestion PostgreSQL統合試験
+
+- **対象**：local Docker ComposeのPostgreSQL 16 test database、local loopback HTTP server。
+- **操作**：#014 migrationを2回適用し、候補保存、release event、初回通知抑止、媒体横断の一対一話mapping、重複再処理、transaction rollbackを統合試験した。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectを使用した。外部serviceとproduction databaseには接続していない。
+- **結果**：55 testが成功し、migrationの再適用も成功した。保存失敗後もcheckpointは進まず、初回eventは通知抑止、incremental eventは通知対象として保存された。
+- **cleanup**：test終了後にcontainer、network、匿名volumeを削除する。
+- **関連**：issue #014。

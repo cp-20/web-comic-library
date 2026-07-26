@@ -58,6 +58,10 @@ outbox eventとGraphile Worker jobは呼び出し側が安定した冪等性key�
 
 一括掲載と分割掲載は`EntryContentMapping`の多対多関係で保持し、確認状態をmappingごとに記録する。
 
+connector候補は`work_ingestion_keys`のNFKC正規化済み作品名、作者名集合、掲載種別が完全一致した場合だけ既存`Work`へ統合する。話は正規化後の題名、話数、枝番が一対一で一致した場合だけ既存`ContentUnit`へconfirmed mappingを作る。分割掲載や曖昧な対応は別`ContentUnit`として残す。
+
+`release_events`はsource、publication entry、event種別、発生時刻から作るidempotency keyを一意に保持する。初回取込とbackfillのeventは`notification_suppressed`をtrueにし、配信対象にはしない。候補、event、fetch state、checkpoint、成功runは同じtransactionで確定する。
+
 既読や通知履歴から参照される`Work`、`Publication`、`ContentUnit`、`PublicationEntry`は物理削除せず、`retired_at`で廃止状態にする。
 
 ## 取得元policy
