@@ -509,9 +509,19 @@ Secretの値と個人情報は記録しない。
 - **操作**：connector実装可否を判断するため、公開情報だけをread-onlyで確認する。
 - **危険性**：外部Web serviceへのrequestが発生し、利用条件を誤読すると不適切な自動取得につながる可能性がある。
 - **保護策**：漫画本文、画像、認証が必要なresource、非公開APIへアクセスしない。明示的な収集許可を確認できない場合はconnectorを実装せずfail closedとする。
-- **結果**：公式の[サービス案内](https://support.jp.square-enix.com/faqarticle.php?c=16&id=10241&kid=75230&la=0&ret=faqtop&sc=0)を確認したが、公開metadataの自動収集を明示許可するfeed、API、または条件は確認できなかった。`https://www.ganganonline.com/robots.txt`は404であり、robots.txtは許可根拠にしない。fail closedでconnectorを実装せずissue #053をblockedとした。
+- **結果**：公式の[サービス案内](https://support.jp.square-enix.com/faqarticle.php?c=16&id=10241&kid=75230&la=0&ret=faqtop&sc=0)を確認したが、公開metadataの自動収集を明示許可するfeed、API、または条件は確認できなかった。`https://www.ganganonline.com/robots.txt`は404であり、robots.txtは許可根拠にしない。fail closedでconnectorを実装せずissue #053をblockedとした。判定を含むPR #36はsquash mergeし、mainのCIとImages workflowは成功した。
 - **cleanup**：read-only確認だけであり、外部service、production、永続dataを変更しない。
-- **関連**：issue #053。
+- **関連**：issue #053、PR #36。
+
+## 2026-07-27 #054 アルファポリス policy確認
+
+- **対象**：アルファポリスの公開Webページ、利用規約、robots.txt、公式の公開情報。
+- **操作**：connector実装可否を判断するため、公開情報だけをread-onlyで確認する。
+- **危険性**：外部Web serviceへのrequestが発生し、利用条件を誤読すると不適切な自動取得につながる可能性がある。
+- **保護策**：漫画本文、画像、認証が必要なresource、非公開APIへアクセスしない。明示的な収集許可を確認できない場合はconnectorを実装せずfail closedとする。
+- **結果**：公式の[利用規約](https://www.alphapolis.co.jp/pages/terms_of_service)で配信コンテンツの複製その他の利用が禁止されていることを確認した。公開metadataの自動収集を明示許可するfeed、API、または条件は確認できず、[robots.txt](https://www.alphapolis.co.jp/robots.txt)の許可は利用規約を上書きする許可根拠にしない。fail closedでconnectorを実装せずissue #054をblockedとした。
+- **cleanup**：read-only確認だけであり、外部service、production、永続dataを変更しない。
+- **関連**：issue #054。
 
 ## 2026-07-27 #027 email digest mergeとmain検証
 
