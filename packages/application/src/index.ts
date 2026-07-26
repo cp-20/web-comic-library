@@ -31,6 +31,12 @@ export {
   unmarkContentRead,
 } from './library';
 export {
+  type VolumeLibraryReadModel,
+  type VolumeLibraryRepository,
+  setUserVolumeRecord,
+  submitVolumeContentMappingCorrection,
+} from './volume-library';
+export {
   type BibliographyCoverageReport,
   type BibliographyProviderPort,
   type BibliographyRepository,

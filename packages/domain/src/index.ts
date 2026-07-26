@@ -22,6 +22,15 @@ export {
   transitionReadingStatus,
 } from './library';
 export {
+  type UserVolumeRecord,
+  type VolumeContentMappingCorrection,
+  type VolumeReadingStatus,
+  confirmedVolumeContentUnitIds,
+  createUserVolumeRecord,
+  createVolumeContentMappingCorrection,
+  volumeReadingStatuses,
+} from './volume-library';
+export {
   type BibliographyField,
   type BibliographyProvider,
   type BibliographyProviderRecord,

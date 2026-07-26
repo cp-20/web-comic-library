@@ -78,6 +78,13 @@
       "when": 1785628800000,
       "tag": "0010_follow_preferences",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1785715200000,
+      "tag": "0011_volume_library",
+      "breakpoints": true
     }
   ]
 }

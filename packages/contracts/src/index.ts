@@ -11,6 +11,10 @@ export {
   unmarkContentReadRequestSchema,
 } from './library';
 export {
+  setUserVolumeRecordRequestSchema,
+  submitVolumeContentMappingCorrectionRequestSchema,
+} from './volume-library';
+export {
   type BibliographyJobPayload,
   bibliographyJobPayloadSchema,
   parseBibliographyJobPayload,

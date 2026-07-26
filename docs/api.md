@@ -23,6 +23,8 @@ Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono
 
 `POST /api/library/status`は手動読書状態を変更し、`POST /api/library/reads`、`POST /api/library/reads/through`、`DELETE /api/library/reads`は論理話の既読、一括既読、取消をtransactionで実行する。`POST /api/library/publication-reads`は未確認mappingでも読んだ掲載ページだけを記録する。全routeはactive sessionを要求し、公開範囲はrecordごとの値として保存する。
 
+`GET /api/library/volumes`はログイン利用者自身の巻記録だけを返す。`PUT /api/library/volumes/records`は巻ごとの読書状態、紙・電子所蔵、話memo、公開範囲を置換し、既読にした場合だけconfirmedな巻・話対応をWeb既読へ同一transactionで反映する。`POST /api/library/volumes/mapping-corrections`は確認候補を管理queueへ追加するだけで、共有mappingや他利用者の既読を変更しない。
+
 ## follow設定 API
 
 `PUT /api/settings/source-preferences`はログイン利用者自身の掲載先優先順位を置換する。`PUT /api/settings/follows`は同じく自身の作品ごとの方式と掲載先指定を一transactionで置換する。どちらもactive sessionを必須とし、他利用者の設定を受け取らない。

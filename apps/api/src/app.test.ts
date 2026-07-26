@@ -9,6 +9,7 @@ import type {
   ProfileIconStorage,
   SourcePolicyQueryPort,
   TransactionPort,
+  VolumeLibraryRepository,
 } from '@web-comic-library/application';
 import { TransactionContext } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
@@ -503,6 +504,79 @@ describe('library RPC', () => {
       'delete-content:unit-1',
       'delete-entry:entry-1',
     ]);
+  });
+});
+
+describe('volume library RPC', () => {
+  test('requires an active session and keeps volume commands scoped to the caller', async () => {
+    const calls: string[] = [];
+    const volumeLibrary: VolumeLibraryRepository = {
+      async findVolumeReadModel() {
+        return {
+          contentUnitIds: ['unit-1'],
+          entryMappings: [],
+          volumeEditionId: 'volume-1',
+          volumeMappings: [],
+          workId: 'work-1',
+        };
+      },
+      async listUserVolumeRecords(userUuid) {
+        calls.push(`list:${userUuid}`);
+        return [];
+      },
+      async saveContentReadRecords() {},
+      async savePublicationReadRecords() {},
+      async saveUserVolumeRecord(_context, record) {
+        calls.push(`record:${record.userUuid}:${record.ownsPaper}:${record.ownsDigital}`);
+      },
+      async saveVolumeContentMappingCorrection(_context, correction) {
+        calls.push(`correction:${correction.userUuid}:${correction.contentUnitId}`);
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const unauthenticated = createApp({ transactions, volumeLibrary });
+    expect((await unauthenticated.request('/api/library/volumes')).status).toBe(401);
+
+    const protectedApp = createApp({
+      transactions,
+      volumeLibrary,
+      async resolveSession() {
+        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    expect((await client.api.library.volumes.$get()).status).toBe(200);
+    expect(
+      (
+        await client.api.library.volumes.records.$put({
+          json: {
+            memoContentUnitId: 'unit-1',
+            ownsDigital: true,
+            ownsPaper: true,
+            status: 'read',
+            visibility: 'private',
+            volumeEditionId: 'volume-1',
+          },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await client.api.library.volumes['mapping-corrections'].$post({
+          json: {
+            contentUnitId: 'unit-1',
+            rationale: '巻の収録話を確認しました。',
+            suggestedStatus: 'confirmed',
+            volumeEditionId: 'volume-1',
+          },
+        })
+      ).status,
+    ).toBe(200);
+    expect(calls).toEqual(['list:reader', 'record:reader:true:true', 'correction:reader:unit-1']);
   });
 });
 
