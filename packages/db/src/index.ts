@@ -3,6 +3,7 @@ export { PostgresBibliography, createPostgresBibliography } from './bibliography
 export { PostgresCatalogAdmin, createPostgresCatalogAdmin } from './catalog-admin';
 export { PostgresConnectorState, createPostgresConnectorState } from './connector-state';
 export { PostgresIngestion, createPostgresIngestion } from './ingestion';
+export { PostgresIdentity, createPostgresIdentity } from './identity';
 export {
   PostgresFoundation,
   PostgresJobQueue,

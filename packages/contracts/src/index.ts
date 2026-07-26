@@ -1,4 +1,9 @@
 export {
+  magicLinkRequestSchema,
+  profileParamsSchema,
+  updateProfileRequestSchema,
+} from './identity';
+export {
   type BibliographyJobPayload,
   bibliographyJobPayloadSchema,
   parseBibliographyJobPayload,

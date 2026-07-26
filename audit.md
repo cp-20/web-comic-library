@@ -222,3 +222,43 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #21を作成した。CI結果を確認後、merge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部providerの永続dataは変更していない。
 - **関連**：PR #21、issue #016。
+
+## 2026-07-27 #016 書誌同期 mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #21、main commit `8ba7236f7e8dd4aeda3b21020875b9c180d85277`、CI、Images workflow。
+- **操作**：qualityとbuild成功後にPR #21をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、qualityとbuildが成功したことを確認した。production database migration、rollout、書誌providerの巡回job投入は実施していない。
+- **結果**：main CIは成功し、Images workflowもread-only検査とGHCR image pushを成功した。
+- **cleanup**：remote作業branchはPR merge時に削除した。production databaseと外部providerの永続dataは変更していない。
+- **関連**：PR #21、issue #016。
+
+## 2026-07-27 #020 identity PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#020 identity migration、profile/session adapter。
+- **操作**：migrationを2回適用し、未設定profileの非公開、follower限定公開、有効session、disabled account sessionを統合試験した。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用した。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectのみを使用した。Google OAuth、メール送信、R2、production databaseには接続していない。
+- **結果**：83 testが成功し、migration再適用、未設定profileの非公開、follower限定公開、有効・disabled accountのsession identityを確認した。
+- **cleanup**：検証後にcontainer、network、test volumeを削除した。
+- **関連**：issue #020。
+
+## 2026-07-27 #020 identity GitHub pull request作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、作業branch `agent/020-identity-profile-privacy`、draft PR #22。
+- **操作**：検証済みcommit `32545bf`を作業branchへpushし、main向けdraft PRを作成した。
+- **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
+- **保護策**：push前に`bun run check`、`bun test`、`bun run test:integration`、`bun run build:web`を成功させ、production database migration、OAuth、メール送信、R2 upload、rolloutを実施していない。
+- **結果**：PR #22を作成した。CI結果を確認後にmerge可否を判断する。
+- **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #22、issue #020。
+
+## 2026-07-27 #020 CI container smoke test修正
+
+- **対象**：GitHubのPR #22、Images workflow、API container smoke test。
+- **操作**：失敗logからAPIの必須auth環境変数がImagesとcompatibilityのcontainerへ渡っていないことを確認し、両workflowのtest専用設定をAPI containerへ明示的に渡すよう修正した。
+- **危険性**：再実行したImages workflowはPR branchのcontainer imageをGHCRへ公開する可能性がある。
+- **保護策**：production用Secretを追加せず、test専用の非機密値だけをworkflowに置いた。OAuth、メール送信、R2 upload、production database migration、rolloutは実施していない。
+- **結果**：localの`bun run check`と`bun test`、test専用設定を渡したcompatibility imageのsmoke testが成功した。修正commitをpush後、CIを再確認する。
+- **cleanup**：local PostgreSQLのcontainer、network、test volumeを削除した。PR merge後にremote作業branchを削除する。外部serviceの永続dataは変更していない。
+- **関連**：PR #22、issue #020。

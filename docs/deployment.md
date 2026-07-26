@@ -24,3 +24,5 @@ Argo CDはdatabase初期化、migration、Deploymentの順にsyncする。
 Cloudflare Tunnelは`comic.cp20.dev/api/*`をAPIへ送り、それ以外の同一hostnameをWebへ送る。
 
 SecretはSOPSで暗号化し、平文をGit履歴とmanifestへ含めない。
+
+APIには`DATABASE_URL`、`BETTER_AUTH_SECRET`、`BETTER_AUTH_URL`、`MAGIC_LINK_DELIVERY_URL`をSecretまたは設定として与える。Google OAuthは`GOOGLE_CLIENT_ID`と`GOOGLE_CLIENT_SECRET`を必ず組で設定する。profile iconを有効にする場合は`R2_ENDPOINT`、`R2_BUCKET`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`R2_PUBLIC_BASE_URL`の全てを設定する。R2 access keyとauth secretはSOPS Secretのみで管理し、URL以外をログ、監査記録、Gitへ出さない。

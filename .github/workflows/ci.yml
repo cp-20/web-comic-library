@@ -32,7 +32,10 @@ jobs:
           - 5432:5432
     env:
       ALLOW_DATABASE_INTEGRATION_TESTS: '1'
+      BETTER_AUTH_SECRET: ci-only-auth-secret-not-for-production-000
+      BETTER_AUTH_URL: http://127.0.0.1:3101
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/web_comic_library
+      MAGIC_LINK_DELIVERY_URL: http://127.0.0.1:3101/test-only-mail-delivery
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -49,5 +52,7 @@ jobs:
       - run: >-
           docker run --rm --network host
           --env ALLOW_DATABASE_INTEGRATION_TESTS
+          --env BETTER_AUTH_SECRET --env BETTER_AUTH_URL
           --env DATABASE_URL
+          --env MAGIC_LINK_DELIVERY_URL
           web-comic-library-compatibility

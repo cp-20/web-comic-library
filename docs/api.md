@@ -13,6 +13,12 @@
 
 route変更にはHono RPC clientを通すテストを付ける。
 
+## 認証とprofile API
+
+Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono RPCの`POST /api/login/magic-link`、`POST /api/login/google`、`POST /api/logout`へ限定する。前者二つは固定された`/settings/profile` callbackだけをauth adapterへ渡し、adapterのrate limitとorigin検証を通す。
+
+`GET /api/session`は有効なaccountのsessionだけを返す。`GET /api/profiles/{userId}`はapplicationのVisibility判定を通し、存在しない場合と閲覧できない場合はともに404を返す。`PUT /api/settings/profile`と`POST /api/settings/profile/icon`は有効なsessionを必要とし、icon URLをprofile更新入力で受け取らない。icon uploadだけがapplicationのPNG、容量、寸法検証・sanitizationを経由してstorage portへ渡す。
+
 ## catalog管理API
 
 `/api/admin/catalog/*`は管理者専用とする。routeはsessionを直接解釈せず、composition rootから渡す管理者解決portを使う。解決されたactorは`administrator` roleかつ`passkey`または`two_factor`の強い認証状態でなければならない。
