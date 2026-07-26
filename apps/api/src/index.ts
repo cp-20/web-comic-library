@@ -8,6 +8,7 @@ import {
   createPostgresFoundation,
   createPostgresIdentity,
   createPostgresLibrary,
+  createPostgresVolumeLibrary,
   createPostgresCatalog,
   createPostgresFollow,
   createPostgresSourcePolicy,
@@ -44,6 +45,7 @@ if (r2Values.some((value) => value) && r2Values.some((value) => !value)) {
 const identity = createPostgresIdentity(databaseUrl);
 const foundation = createPostgresFoundation(databaseUrl);
 const library = createPostgresLibrary(databaseUrl, foundation);
+const volumeLibrary = createPostgresVolumeLibrary(databaseUrl, foundation);
 const catalog = createPostgresCatalog(databaseUrl);
 const sourcePolicies = createPostgresSourcePolicy(databaseUrl);
 const follow = createPostgresFollow(databaseUrl, foundation);
@@ -85,6 +87,7 @@ const app = createApp({
   follow,
   identity,
   library,
+  volumeLibrary,
   profileIconStorage,
   sourcePolicies,
   transactions: foundation,
@@ -108,6 +111,7 @@ const stop = (): void => {
     foundation.close(),
     identity.close(),
     library.close(),
+    volumeLibrary.close(),
     catalog.close(),
     follow.close(),
     sourcePolicies.close(),

@@ -28,6 +28,10 @@ bun run build:web
 
 `/works/{workId}`は手動読書状態、論理話の既読、指定話までの一括既読、既読取消、掲載ページ既読をHono RPCで操作する。状態と追いつき状態を同じ表示や入力に混在させず、掲載ページIDが未確認mappingの場合も独立した既読として扱う。
 
+## 単行本ライブラリ
+
+`/library/volumes`は巻の未読、読書中、既読、紙・電子所蔵、話memo、公開範囲をHono RPC clientで保存する。巻を既読にしたときのWeb話既読反映はconfirmedな巻・話対応だけに限り、画面からWeb話を直接操作しない。対応候補の送信は管理queueへ追加するだけで、確認前に公開catalogや他利用者の記録を変更しない。
+
 ## 公開catalog
 
 `/`は作品名、別名、読み仮名、作者名を検索し、掲載先、連載状態、掲載種別と並び順を組み合わせる。`/works/{workId}`はcanonical URLとOG titleを持ち、公開済みの作者、掲載先、Web話、単行本だけをHono RPC client経由で表示する。retire済みの旧作品IDはcatalog redirect APIの正規URLへ遷移する。漫画本文は表示・配信せず、公式閲覧URLへ新しいタブで遷移する。

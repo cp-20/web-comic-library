@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { type ReactNode, useEffect, useState } from 'react';
 
 import { createApiClient } from '../../../lib/api-client';
@@ -77,6 +78,9 @@ export const WorkDetails = ({ workId }: Readonly<{ workId: string }>) => {
           </section>
           <section aria-labelledby="work-volumes-heading">
             <h2 id="work-volumes-heading">単行本</h2>
+            <p>
+              <Link href="/library/volumes">単行本ライブラリを開く</Link>
+            </p>
             {work.volumes.length === 0 ? (
               <p>公開中の単行本情報はありません。</p>
             ) : (

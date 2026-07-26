@@ -13,6 +13,7 @@ import type {
   TransactionPort,
   IdentityRepository,
   LibraryRepository,
+  VolumeLibraryRepository,
   CatalogQueryPort,
   FollowRepository,
   SessionIdentity,
@@ -31,10 +32,12 @@ import {
   splitContentUnit,
   splitWork,
   setReadingStatus,
+  setUserVolumeRecord,
   setFollowSettings,
   setSourcePreferences,
   searchPublicWorks,
   unmarkContentRead,
+  submitVolumeContentMappingCorrection,
   uploadProfileIcon,
   updateProfile,
 } from '@web-comic-library/application';
@@ -54,6 +57,8 @@ import {
   setReadingStatusRequestSchema,
   setFollowSettingsRequestSchema,
   setSourcePreferencesRequestSchema,
+  setUserVolumeRecordRequestSchema,
+  submitVolumeContentMappingCorrectionRequestSchema,
   unmarkContentReadRequestSchema,
   profileParamsSchema,
   searchCatalogWorksQuerySchema,
@@ -94,6 +99,7 @@ export type ApiDependencies = Readonly<{
   follow: FollowRepository | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
+  volumeLibrary: VolumeLibraryRepository | null;
   sourcePolicies: SourcePolicyQueryPort | null;
   profileIconStorage: ProfileIconStorage | null;
   transactions: TransactionPort | null;
@@ -114,6 +120,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   follow: null,
   identity: null,
   library: null,
+  volumeLibrary: null,
   sourcePolicies: null,
   profileIconStorage: null,
   transactions: null,
@@ -320,6 +327,50 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
           userUuid: session.userUuid,
         });
         return context.json({ status: 'ok' as const }, 200);
+      },
+    )
+    .get('/api/library/volumes', async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.volumeLibrary;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository) return context.json({ error: 'unavailable' }, 503);
+      return context.json(
+        { records: await repository.listUserVolumeRecords(session.userUuid) },
+        200,
+      );
+    })
+    .put(
+      '/api/library/volumes/records',
+      vValidator('json', setUserVolumeRecordRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.volumeLibrary;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        return context.json(
+          await setUserVolumeRecord(transactions, repository, {
+            ...context.req.valid('json'),
+            userUuid: session.userUuid,
+          }),
+          200,
+        );
+      },
+    )
+    .post(
+      '/api/library/volumes/mapping-corrections',
+      vValidator('json', submitVolumeContentMappingCorrectionRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.volumeLibrary;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await submitVolumeContentMappingCorrection(transactions, repository, {
+          ...context.req.valid('json'),
+          userUuid: session.userUuid,
+        });
+        return context.json({ status: 'queued' as const }, 200);
       },
     )
     .post(

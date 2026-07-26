@@ -5,6 +5,7 @@ export { PostgresConnectorState, createPostgresConnectorState } from './connecto
 export { PostgresIngestion, createPostgresIngestion } from './ingestion';
 export { PostgresIdentity, createPostgresIdentity } from './identity';
 export { PostgresLibrary, createPostgresLibrary } from './library';
+export { PostgresVolumeLibrary, createPostgresVolumeLibrary } from './volume-library';
 export { PostgresFollow, createPostgresFollow } from './follow';
 export {
   PostgresFoundation,

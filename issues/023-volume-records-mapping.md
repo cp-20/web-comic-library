@@ -2,7 +2,7 @@
 id: 023
 title: 単行本の既読、所蔵、話との対応を管理する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [016, 020, 021]
 umbrella: 019

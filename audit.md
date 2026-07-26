@@ -352,3 +352,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #25を作成した。CI結果を確認後にmerge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #25、issue #022。
+
+## 2026-07-27 #022 follow設定 mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #25、main commit `f47a7df0c0b418dd5272d70b3ed7c21d7e80c27e`、CI、Images workflow。
+- **操作**：qualityとImages workflow成功後にPR #25をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であること、CIとImagesが成功したことを確認した。production database migration、rollout、外部serviceへの接続を実施していない。
+- **結果**：main CIとImages workflowはいずれも成功した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production databaseと外部serviceの永続dataは変更していない。
+- **関連**：PR #25、issue #022。
+
+## 2026-07-27 #023 単行本library PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#023 volume library migration、巻記録adapter。
+- **操作**：migrationを2回適用し、巻の読書状態、紙・電子所蔵、個人memo、confirmed mappingだけのWeb話既読反映、取消後のWeb話既読保持、修正候補queue登録を統合試験する。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。外部service、production database、永続user dataへ接続しない。
+- **結果**：migration再適用を含む100 testが成功した。紙・電子の独立保存、mappingなしの巻記録、confirmed mappingだけのWeb話既読反映、巻の既読取消後のWeb話既読保持、修正候補のqueue登録を確認した。
+- **cleanup**：container、network、test volumeを削除した。
+- **関連**：issue #023。
