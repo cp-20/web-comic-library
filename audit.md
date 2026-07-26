@@ -469,6 +469,6 @@ Secretの値と個人情報は記録しない。
 - **操作**：検証済みcommitをpushし、main向けdraft PRを作成してCIを開始する。
 - **危険性**：GitHub上の共有branchとPRへ変更を公開し、CIとcontainer image workflowの実行対象になる。
 - **保護策**：push前に`bun run check`、`bun test`、`bun run test:integration`、`bun run build:web`を成功させた。production database migration、rollout、外部メールserviceへの接続を実施していない。
-- **結果**：branchをpush済み。PR作成とCI結果を確認後にmerge可否を判断する。
+- **結果**：draft PR #29を作成し、CIを開始した。CI結果を確認後にmerge可否を判断する。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
-- **関連**：issue #027。
+- **関連**：PR #29、issue #027。
