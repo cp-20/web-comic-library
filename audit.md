@@ -499,9 +499,19 @@ Secretの値と個人情報は記録しない。
 - **操作**：connector実装可否を判断するため、公開情報だけをread-onlyで確認する。
 - **危険性**：外部Web serviceへのrequestが発生し、利用条件を誤読すると不適切な自動取得につながる可能性がある。
 - **保護策**：漫画本文、画像、認証が必要なresource、非公開APIへアクセスしない。明示的な収集許可を確認できない場合はconnectorを実装せずfail closedとする。
-- **結果**：公式の[利用規約改定告知](https://pocket.shonenmagazine.com/article/entry/2026/06/03)が、情報収集ボット、ロボット、クローラ、スパイダー、スクレーパーなどの自動化手段によるアクセスとコンテンツの収集・処理を明示的に禁止していることを確認した。[robots.txt](https://pocket.shonenmagazine.com/robots.txt)は`Allow: /`だが、利用規約の禁止を上書きする許可根拠にはしない。fail closedでconnectorを実装せずissue #052をblockedとした。
+- **結果**：公式の[利用規約改定告知](https://pocket.shonenmagazine.com/article/entry/2026/06/03)が、情報収集ボット、ロボット、クローラ、スパイダー、スクレーパーなどの自動化手段によるアクセスとコンテンツの収集・処理を明示的に禁止していることを確認した。[robots.txt](https://pocket.shonenmagazine.com/robots.txt)は`Allow: /`だが、利用規約の禁止を上書きする許可根拠にはしない。fail closedでconnectorを実装せずissue #052をblockedとした。判定を含むPR #35はsquash mergeし、mainのCIとImages workflowは成功した。
 - **cleanup**：read-only確認だけであり、外部service、production、永続dataを変更しない。
-- **関連**：issue #052。
+- **関連**：issue #052、PR #35。
+
+## 2026-07-27 #053 ガンガンONLINE policy確認
+
+- **対象**：ガンガンONLINEの公開Webページ、利用規約、robots.txt、公式の公開情報。
+- **操作**：connector実装可否を判断するため、公開情報だけをread-onlyで確認する。
+- **危険性**：外部Web serviceへのrequestが発生し、利用条件を誤読すると不適切な自動取得につながる可能性がある。
+- **保護策**：漫画本文、画像、認証が必要なresource、非公開APIへアクセスしない。明示的な収集許可を確認できない場合はconnectorを実装せずfail closedとする。
+- **結果**：公式の[サービス案内](https://support.jp.square-enix.com/faqarticle.php?c=16&id=10241&kid=75230&la=0&ret=faqtop&sc=0)を確認したが、公開metadataの自動収集を明示許可するfeed、API、または条件は確認できなかった。`https://www.ganganonline.com/robots.txt`は404であり、robots.txtは許可根拠にしない。fail closedでconnectorを実装せずissue #053をblockedとした。
+- **cleanup**：read-only確認だけであり、外部service、production、永続dataを変更しない。
+- **関連**：issue #053。
 
 ## 2026-07-27 #027 email digest mergeとmain検証
 

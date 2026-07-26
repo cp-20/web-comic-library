@@ -2,7 +2,7 @@
 id: 053
 title: ガンガンONLINEの許可済み公開情報を収集する
 type: feature
-status: open
+status: blocked
 priority: P2
 depends_on: [009, 010, 014]
 umbrella: 018
@@ -34,3 +34,7 @@ umbrella: 018
 ## 対象外
 
 - browser自動操作と非公開API。
+
+## Blocker
+
+公式の[サービス案内](https://support.jp.square-enix.com/faqarticle.php?c=16&id=10241&kid=75230&la=0&ret=faqtop&sc=0)はブラウザ版を利用者向けに案内しているが、公開metadataの自動収集を明示許可する条件、feed、またはAPIを示していない。`https://www.ganganonline.com/robots.txt`も404であり、robots.txtは許可根拠にはならない。受け入れ条件の明示許可を満たす公式の取得手段または書面による許可が得られるまで、connectorを実装しない。
