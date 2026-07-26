@@ -475,10 +475,10 @@ Secretの値と個人情報は記録しない。
 
 ## 2026-07-27 #027 email digest mergeとmain検証
 
-- **対象**：GitHubの`cp-20/web-comic-library`、PR #29、CI、Images workflow。
-- **操作**：qualityとImages workflow成功後にPR #29をsquash mergeし、mainのCIとImages workflowを完了まで監視する。
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #29、main commit `75bf3bcbf78e300fc5523d23dbacb0e2b0d524c1`、CI、Images workflow。
+- **操作**：qualityとImages workflow成功後にPR #29をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
 - **危険性**：mainへの変更反映とcontainer image公開により、後続のdeploymentがこの成果物を参照可能になる。
-- **保護策**：merge前にPRが`CLEAN`であること、CIとImagesが成功したことを確認する。production database migration、rollout、外部メールserviceへの接続を実施しない。
-- **結果**：実行前。完了後に結果を記録する。
-- **cleanup**：PR merge時にremote作業branchを削除する。production databaseと外部serviceの永続dataは変更しない。
+- **保護策**：merge前にPRが`CLEAN`であること、CIとImagesが成功したことを確認した。production database migration、rollout、外部メールserviceへの接続を実施していない。
+- **結果**：main CIとImages workflowはいずれも成功した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #29、issue #027。
