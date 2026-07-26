@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { CatalogSearch } from './catalog-search';
+
 export default function HomePage() {
   return (
     <main>
@@ -8,6 +10,7 @@ export default function HomePage() {
       <nav aria-label="主要メニュー">
         <Link href="/login">ログイン</Link> <Link href="/settings/profile">プロフィール設定</Link>
       </nav>
+      <CatalogSearch />
     </main>
   );
 }

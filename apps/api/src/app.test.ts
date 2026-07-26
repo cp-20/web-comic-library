@@ -2,9 +2,11 @@ import { describe, expect, test } from 'bun:test';
 
 import type {
   CatalogAuditRecord,
+  CatalogQueryPort,
   CatalogReviewItem,
   LibraryRepository,
   ProfileIconStorage,
+  SourcePolicyQueryPort,
   TransactionPort,
 } from '@web-comic-library/application';
 import { TransactionContext } from '@web-comic-library/application';
@@ -142,6 +144,105 @@ describe('catalog administration RPC', () => {
 
     expect(response.status).toBe(302);
     expect(response.headers.get('location')).toBe('/works/work-target');
+  });
+});
+
+describe('public catalog RPC', () => {
+  const publicWork = {
+    aliases: ['よみかた'],
+    contentUnits: [{ id: 'content-1', position: 0, title: '第1話' }],
+    creators: [{ id: 'creator-1', name: '作者', position: 0, role: '漫画' }],
+    id: 'work-1',
+    publications: [
+      {
+        ageRatingValue: 'all',
+        entries: [
+          {
+            catchUpEligible: true,
+            externalId: 'entry-1',
+            id: 'entry-1',
+            kind: 'regular' as const,
+            mappings: [{ confirmed: true, contentUnitId: 'content-1' }],
+            normalizedUrl: 'https://reader.example/entry-1',
+            position: 0,
+            publishedAt: new Date('2026-07-27T00:00:00Z'),
+            title: '第1話',
+          },
+        ],
+        externalId: 'public-1',
+        id: 'publication-public',
+        kind: 'official' as const,
+        normalizedUrl: 'https://reader.example/work-1',
+        purchaseUrl: null,
+        sourceId: 'source-1',
+        sourceKey: 'reader',
+        sourceName: '公式掲載先',
+        title: '公式掲載',
+      },
+      {
+        ageRatingValue: 'r18',
+        entries: [],
+        externalId: 'private-1',
+        id: 'publication-private',
+        kind: 'official' as const,
+        normalizedUrl: 'https://private.example/work-1',
+        purchaseUrl: null,
+        sourceId: 'source-2',
+        sourceKey: 'private',
+        sourceName: '非公開掲載先',
+        title: '非公開掲載',
+      },
+    ],
+    serialStatus: 'ongoing' as const,
+    title: '検索作品',
+    volumes: [],
+  };
+  const catalog: CatalogQueryPort = {
+    async findWork(workId) {
+      return workId === publicWork.id ? publicWork : null;
+    },
+    async listCatchUpEntries() {
+      return [];
+    },
+    async searchWorkIds(query) {
+      return query.query === '検索作品' ? [publicWork.id] : [];
+    },
+  };
+  const policies: SourcePolicyQueryPort = {
+    async canCollect() {
+      return true;
+    },
+    async classifyAgeRating() {
+      return 'public';
+    },
+    async findLatestPolicy() {
+      return null;
+    },
+    async listPublicPublicationIds() {
+      return ['publication-public'];
+    },
+  };
+
+  test('searches and returns only policy-approved publications through Hono RPC', async () => {
+    const publicApp = createApp({ catalog, sourcePolicies: policies });
+    const client = hc<typeof publicApp>('http://api.test', { fetch: publicApp.request });
+    const search = await client.api.catalog.works.$get({
+      query: { q: '検索作品', sort: 'recent' },
+    });
+
+    expect(search.status).toBe(200);
+    expect(search.headers.get('cache-control')).toContain('s-maxage');
+    expect(await search.json()).toMatchObject({
+      works: [{ work: { id: 'work-1', publications: [{ id: 'publication-public' }] } }],
+    });
+
+    const detail = await client.api.catalog.works[':workId'].$get({
+      param: { workId: publicWork.id },
+    });
+    expect(detail.status).toBe(200);
+    expect(await detail.json()).toMatchObject({
+      work: { id: publicWork.id, publications: [{ id: 'publication-public' }] },
+    });
   });
 });
 

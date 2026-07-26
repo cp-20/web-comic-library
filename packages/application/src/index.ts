@@ -58,12 +58,16 @@ export {
 export {
   type CatalogCreatorReadModel,
   type CatalogQueryPort,
+  type CatalogSearchQuery,
+  type CatalogSearchResult,
+  type CatalogSearchSort,
   type CatalogRepository,
   type ContentUnitReadModel,
   type EntryContentMappingReadModel,
   type PublicationEntryReadModel,
   type PublicationReadModel,
   type WorkCatalogReadModel,
+  type VolumeEditionReadModel,
 } from './catalog';
 export {
   type CommitDiscoveryResult,
@@ -114,6 +118,7 @@ export {
   type SourcePolicyQueryPort,
   type SourcePolicyRepository,
   findPublicWork,
+  searchPublicWorks,
   parseSourcePolicyEvidenceKind,
   runSourceCollection,
 } from './source-policy';
