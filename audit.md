@@ -473,6 +473,16 @@ Secretの値と個人情報は記録しない。
 - **cleanup**：不要になったremote作業branchはmerge確認後に削除する。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #29、issue #027。
 
+## 2026-07-27 #050 ヤンマガWeb policy確認
+
+- **対象**：ヤンマガWebの公開Webページ、利用規約、robots.txt、公式の公開情報。
+- **操作**：connector実装可否を判断するため、公開情報だけをread-onlyで確認する。
+- **危険性**：外部Web serviceへのrequestが発生し、利用条件を誤読すると不適切な自動取得につながる可能性がある。
+- **保護策**：漫画本文、画像、認証が必要なresource、非公開APIへアクセスしない。明示的な収集許可を確認できない場合はconnectorを実装せずfail closedとする。
+- **結果**：公式[利用規約](https://yanmaga.jp/term)が自動化されたbot、robot、crawler、spider、scraper等によるアクセスとコンテンツの収集・処理を明示的に禁止していることを確認した。収集を実装せず、issue #050をblockedとした。
+- **cleanup**：read-only確認だけであり、外部service、production、永続dataを変更しない。
+- **関連**：issue #050。
+
 ## 2026-07-27 #027 email digest mergeとmain検証
 
 - **対象**：GitHubの`cp-20/web-comic-library`、PR #29、main commit `75bf3bcbf78e300fc5523d23dbacb0e2b0d524c1`、CI、Images workflow。
