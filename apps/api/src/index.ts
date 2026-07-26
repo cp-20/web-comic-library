@@ -14,6 +14,7 @@ import {
   createPostgresNotification,
   createPostgresWebPushSubscription,
   createPostgresEmailDigest,
+  createPostgresExtensionToken,
   createPostgresSourcePolicy,
 } from '@web-comic-library/db';
 
@@ -55,6 +56,7 @@ const follow = createPostgresFollow(databaseUrl, foundation);
 const notifications = createPostgresNotification(databaseUrl, foundation);
 const webPushSubscriptions = createPostgresWebPushSubscription(databaseUrl, foundation);
 const emailDigests = createPostgresEmailDigest(databaseUrl, foundation);
+const extensionTokens = createPostgresExtensionToken(databaseUrl, foundation);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -93,6 +95,7 @@ const app = createApp({
   follow,
   notifications,
   emailDigests,
+  extensionTokens,
   resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET ?? null,
   webPushPublicKey: process.env.VAPID_PUBLIC_KEY ?? null,
   webPushSubscriptions,
@@ -127,6 +130,7 @@ const stop = (): void => {
     follow.close(),
     notifications.close(),
     emailDigests.close(),
+    extensionTokens.close(),
     webPushSubscriptions.close(),
     sourcePolicies.close(),
   ]).then(() => process.exit(0));

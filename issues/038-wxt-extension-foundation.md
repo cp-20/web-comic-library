@@ -2,7 +2,7 @@
 id: 038
 title: WXT extension基盤と安全なaccount連携を作る
 type: platform
-status: open
+status: done
 priority: P1
 depends_on: [002, 003, 020]
 umbrella: 037

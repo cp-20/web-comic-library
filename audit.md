@@ -4,6 +4,16 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
+## 2026-07-27 #038 extension pairing PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、extension pairing migration、pairing codeと限定scope token。
+- **操作**：migrationを再適用し、5分期限・単回交換・token hash保存・所有者限定失効を統合試験する。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。tokenの平文をlog、fixture、監査ログへ記録しない。
+- **結果**：migrationを初期状態から適用・再適用し、pairing codeの単回使用、5分期限、token hashのみの保存、所有者限定の失効を含む120 testsが成功（0 fail）した。Chrome/Firefox MV3のextension buildとzip、生成manifestの最小権限検査も成功した。
+- **cleanup**：`docker compose down --volumes`でtest containerとnetworkを削除した。
+- **関連**：issue #038。
+
 ## 2026-07-25 PostgreSQL collation更新
 
 - **対象**：AsterionのPostgreSQL 16。

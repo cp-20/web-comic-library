@@ -37,6 +37,10 @@ export {
 export { webPushSubscriptionRequestSchema, webPushUnsubscribeRequestSchema } from './web-push';
 export { emailDigestSettingsRequestSchema } from './email-digest';
 export {
+  exchangeExtensionPairingCodeRequestSchema,
+  revokeExtensionTokenParamsSchema,
+} from './extension-pairing';
+export {
   type FoundationJobPayload,
   foundationJobPayloadSchema,
   parseFoundationJobPayload,

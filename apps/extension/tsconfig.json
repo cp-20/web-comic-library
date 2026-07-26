@@ -1,0 +1,7 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "compilerOptions": {
+    "types": ["bun"]
+  },
+  "include": ["entrypoints", "src", "wxt.config.ts"]
+}
