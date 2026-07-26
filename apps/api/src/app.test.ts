@@ -4,6 +4,7 @@ import type {
   CatalogAuditRecord,
   CatalogQueryPort,
   CatalogReviewItem,
+  FollowRepository,
   LibraryRepository,
   ProfileIconStorage,
   SourcePolicyQueryPort,
@@ -501,6 +502,81 @@ describe('library RPC', () => {
       'entry:entry-1',
       'delete-content:unit-1',
       'delete-entry:entry-1',
+    ]);
+  });
+});
+
+describe('follow settings RPC', () => {
+  test('requires an active session and replaces only the caller settings through Hono RPC', async () => {
+    const calls: string[] = [];
+    const follow: FollowRepository = {
+      async findFollowSettings() {
+        return null;
+      },
+      async listSourcePreferences() {
+        return [];
+      },
+      async listSubscriptionPublicationIds() {
+        return [];
+      },
+      async replaceSourcePreferences(_context, userUuid, sourceIds) {
+        calls.push(`sources:${userUuid}:${sourceIds.join(',')}`);
+        return sourceIds.map((sourceId, position) => ({ position, sourceId, userUuid }));
+      },
+      async replaceSubscriptionPublications(_context, userUuid, workId, publicationIds) {
+        calls.push(`publications:${userUuid}:${workId}:${publicationIds.join(',')}`);
+        return publicationIds.map((publicationId) => ({ publicationId, userUuid, workId }));
+      },
+      async saveFollowSettings(_context, settings) {
+        calls.push(`mode:${settings.userUuid}:${settings.workId}:${settings.mode}`);
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const unauthenticated = createApp({ follow, transactions });
+    expect(
+      (
+        await unauthenticated.request('/api/settings/source-preferences', {
+          body: JSON.stringify({ sourceIds: [] }),
+          headers: { 'content-type': 'application/json' },
+          method: 'PUT',
+        })
+      ).status,
+    ).toBe(401);
+
+    const protectedApp = createApp({
+      follow,
+      transactions,
+      async resolveSession() {
+        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    expect(
+      (
+        await client.api.settings['source-preferences'].$put({
+          json: { sourceIds: ['source-b', 'source-a'] },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await client.api.settings.follows.$put({
+          json: {
+            mode: 'selected_publications',
+            publicationIds: ['publication-1'],
+            workId: 'work-1',
+          },
+        })
+      ).status,
+    ).toBe(200);
+    expect(calls).toEqual([
+      'sources:reader:source-b,source-a',
+      'mode:reader:work-1:selected_publications',
+      'publications:reader:work-1:publication-1',
     ]);
   });
 });

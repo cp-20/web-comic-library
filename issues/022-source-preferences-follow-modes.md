@@ -2,7 +2,7 @@
 id: 022
 title: 掲載先優先順位と四つのfollow方式を実装する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [021]
 umbrella: 019

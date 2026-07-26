@@ -32,6 +32,10 @@ bun run build:web
 
 `/`は作品名、別名、読み仮名、作者名を検索し、掲載先、連載状態、掲載種別と並び順を組み合わせる。`/works/{workId}`はcanonical URLとOG titleを持ち、公開済みの作者、掲載先、Web話、単行本だけをHono RPC client経由で表示する。retire済みの旧作品IDはcatalog redirect APIの正規URLへ遷移する。漫画本文は表示・配信せず、公式閲覧URLへ新しいタブで遷移する。
 
+## follow設定
+
+`/settings/follows`は利用者自身の掲載先優先順位と、作品ごとの最速、site優先、掲載先指定、全掲載先の四方式をHono RPC clientで保存する。掲載先指定は対象publication IDを明示し、未選択の掲載先は通知候補にしない。
+
 ## 管理画面
 
 `/admin/catalog`は管理者のcatalog統合・分割画面である。すべての操作で理由を入力させ、Hono RPC clientだけを使ってAPIへ送る。画面だけで権限を判断せず、API側の強い認証とrole検査を必須とする。
