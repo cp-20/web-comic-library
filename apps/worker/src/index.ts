@@ -1,4 +1,5 @@
 import { createPostgresJobQueueMetrics } from '@web-comic-library/db';
+import { createWebPushSender } from '@web-comic-library/notifications';
 
 import { createBibliographyWorkerHandler } from './bibliography';
 import { createWorkerMetrics, startMetricsServer } from './metrics';
@@ -10,10 +11,28 @@ if (!databaseUrl) {
   throw new Error('DATABASE_URL is required');
 }
 
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
+const vapidSubject = process.env.VAPID_SUBJECT;
+const vapidValues = [vapidPrivateKey, vapidPublicKey, vapidSubject];
+if (vapidValues.some((value) => value) && vapidValues.some((value) => !value)) {
+  throw new Error(
+    'VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, and VAPID_SUBJECT must be configured together',
+  );
+}
+const webPushSender =
+  vapidPrivateKey && vapidPublicKey && vapidSubject
+    ? createWebPushSender({
+        privateKey: vapidPrivateKey,
+        publicKey: vapidPublicKey,
+        subject: vapidSubject,
+      })
+    : null;
+
 const runner = await startWorker(
   databaseUrl,
   createBibliographyWorkerHandler(databaseUrl),
-  createNotificationWorkerHandler(databaseUrl),
+  createNotificationWorkerHandler(databaseUrl, webPushSender),
 );
 const jobQueueMetrics = createPostgresJobQueueMetrics(databaseUrl);
 const metrics = createWorkerMetrics(jobQueueMetrics);

@@ -40,6 +40,10 @@ Better Auth互換の`user`、`session`、`account`、`verification`を保持し�
 
 `release_events`のincrementalな新規eventは同じtransactionで`notification_release` jobを冪等登録する。initialとbackfillのeventはjobを登録せず、consumerも`notification_suppressed`を必ず除外する。
 
+## Web Push storage
+
+`web_push_subscriptions`は利用者とbrowser subscription endpointを一意に保持し、再登録時は鍵を更新して再有効化する。`web_push_deliveries`はWeb Push用notificationとsubscriptionの組を冪等に保持する。404/410の恒久失敗はsubscriptionを無効化し、再試行可能な失敗は`queued`のままworkerが再試行する。
+
 ## ローカル開発
 
 PostgreSQL 16を起動する。

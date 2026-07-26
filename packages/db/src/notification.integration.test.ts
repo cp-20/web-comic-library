@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 
 import {
   generateInAppNotifications,
+  generateNotifications,
   readAllNotifications,
   readNotification,
   setNotificationPreference,
@@ -11,6 +12,7 @@ import postgres from 'postgres';
 import { createPostgresFoundation } from './foundation';
 import { migrateDatabase } from './migrate';
 import { createPostgresNotification } from './notification';
+import { createPostgresWebPushSubscription } from './web-push';
 
 const databaseUrl = process.env.DATABASE_URL;
 const integrationTest =
@@ -25,6 +27,7 @@ integrationTest(
     const sql = postgres(databaseUrl, { max: 1 });
     const foundation = createPostgresFoundation(databaseUrl);
     const notifications = createPostgresNotification(databaseUrl, foundation);
+    const subscriptions = createPostgresWebPushSubscription(databaseUrl, foundation);
     const userId = crypto.randomUUID();
     const otherUserId = crypto.randomUUID();
     const workId = crypto.randomUUID();
@@ -79,6 +82,23 @@ integrationTest(
         kind: 'new_episode',
         userUuid: userId,
       });
+      await foundation.transaction((context) =>
+        subscriptions.saveWebPushSubscription(context, {
+          auth: 'auth',
+          endpoint: `https://push.example.test/${crypto.randomUUID()}`,
+          id: crypto.randomUUID(),
+          p256dh: 'key',
+          userUuid: userId,
+        }),
+      );
+      expect(await generateNotifications(foundation, notifications, 'web_push', eventId)).toBe(1);
+      expect(await generateNotifications(foundation, notifications, 'web_push', eventId)).toBe(0);
+      const deliveries = await subscriptions.listWebPushDeliveriesForRelease(eventId);
+      expect(deliveries).toHaveLength(1);
+      const delivery = deliveries[0];
+      if (!delivery) throw new Error('web push delivery is missing');
+      await subscriptions.recordWebPushDeliveryResult(delivery.id, 'permanent_failure');
+      expect(await subscriptions.listWebPushDeliveriesForRelease(eventId)).toHaveLength(0);
     } finally {
       await sql`delete from "user" where id in (${userId}, ${otherUserId})`;
       await sql`delete from release_events where id = ${eventId}::uuid`;
@@ -88,7 +108,7 @@ integrationTest(
       await sql`delete from content_units where id = ${contentUnitId}::uuid`;
       await sql`delete from sources where id = ${sourceId}::uuid`;
       await sql`delete from works where id = ${workId}::uuid`;
-      await Promise.all([foundation.close(), notifications.close()]);
+      await Promise.all([foundation.close(), notifications.close(), subscriptions.close()]);
       await sql.end({ timeout: 1 });
     }
   },

@@ -11,6 +11,7 @@ import type {
   SourcePolicyQueryPort,
   TransactionPort,
   VolumeLibraryRepository,
+  WebPushSubscriptionRepository,
 } from '@web-comic-library/application';
 import { TransactionContext } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
@@ -666,6 +667,54 @@ describe('notification RPC', () => {
       'all:reader',
       `read:reader:${notificationId}`,
       'preference:reader:new_episode:false',
+    ]);
+  });
+});
+
+describe('web push subscription RPC', () => {
+  test('requires the active session and scopes registration and removal to it', async () => {
+    const calls: string[] = [];
+    const subscriptions: WebPushSubscriptionRepository = {
+      async deactivateWebPushSubscription(_context, userUuid, endpoint) {
+        calls.push(`remove:${userUuid}:${endpoint}`);
+        return true;
+      },
+      async saveWebPushSubscription(_context, subscription) {
+        calls.push(`save:${subscription.userUuid}:${subscription.endpoint}`);
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const protectedApp = createApp({
+      transactions,
+      webPushPublicKey: 'public-key',
+      webPushSubscriptions: subscriptions,
+      async resolveSession() {
+        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    expect((await client.api.push.config.$get()).status).toBe(200);
+    expect(
+      (
+        await client.api.settings['push-subscriptions'].$put({
+          json: { auth: 'auth', endpoint: 'https://push.example.test/subscription', p256dh: 'key' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await client.api.settings['push-subscriptions'].$delete({
+          json: { endpoint: 'https://push.example.test/subscription' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(calls).toEqual([
+      'save:reader:https://push.example.test/subscription',
+      'remove:reader:https://push.example.test/subscription',
     ]);
   });
 });

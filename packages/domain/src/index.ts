@@ -140,3 +140,8 @@ export {
   notificationIdempotencyKey,
   notificationKinds,
 } from './notification';
+export {
+  type WebPushSubscription,
+  createWebPushSubscription,
+  webPushDeliveryIdempotencyKey,
+} from './web-push';
