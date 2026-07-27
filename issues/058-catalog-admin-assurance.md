@@ -2,9 +2,9 @@
 id: 058
 title: catalog管理者のroleと強い認証sessionを接続する
 type: platform
-status: open
+status: blocked
 priority: P0
-depends_on: [020]
+depends_on: [020, 059]
 umbrella: 007
 ---
 
@@ -17,6 +17,10 @@ catalog管理commandを、実際の認証済みsessionから解決したadminist
 ## 背景
 
 #015は`CatalogAdminActor`と管理routeを定義したが、identity storageにはroleとassuranceがなく、API composition rootもcatalog管理controllerを接続していない。#048の巻管理と利用者候補reviewを仮の管理者判定で公開してはならない。
+
+## Blocked
+
+Better Authの二要素認証pluginはverification成功後に通常sessionを発行するが、現行session tableへ強い認証完了を検証可能な形で保存しない。session時刻やCookieをassuranceの根拠にせず、#059でsession assuranceを実装してからroleとcatalog controllerを接続する。
 
 ## スコープ
 
