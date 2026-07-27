@@ -712,3 +712,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：公開範囲がprivateへ変更された既存activityがaccepted followerのtimelineから除外されることを含め、migrationとsocial storageを確認した。
 - **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除した。
 - **関連**：issue #029。
+
+## 2026-07-27 #029 followとtimeline mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #58、main commit `b290607634d643355bca14e8e973e195a0ab4605`、CI、Images workflow、GHCR。
+- **操作**：PR #58のqualityとImages成功後にsquash mergeし、mainのCIとImages workflowを完了まで監視した。Images初回の外部image pull失敗は安全に再実行した。
+- **危険性**：mainへの変更反映とGHCRへのcontainer image公開により、後続deploymentが当該成果物を参照可能になる。workflow再実行は外部registryへのrequestを追加する。
+- **保護策**：merge前にPRが`CLEAN`であることとCI・Images成功を確認した。初回Images失敗は`postgres:16`のDocker Hub pull接続タイムアウトであり、実装のbuild・migration・service検証の失敗ではないことをログで確認してから再実行した。production deployment、production database migration、Secretの変更を実施していない。
+- **結果**：PR #58をsquash mergeした。main CIと再実行したImages workflowはいずれも成功し、Imagesはmigration read-only、service checks、GHCR image pushを完了した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production環境、database、外部認証serviceの永続dataは変更していない。
+- **関連**：issue #029、PR #58、CI run #30235550001、Images run #30235549993。
