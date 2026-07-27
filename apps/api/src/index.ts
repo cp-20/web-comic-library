@@ -99,6 +99,7 @@ const app = createApp({
   emailDigests,
   extensionTokens,
   favoriteImports,
+  favoriteImportSources: sourcePolicies,
   resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET ?? null,
   webPushPublicKey: process.env.VAPID_PUBLIC_KEY ?? null,
   webPushSubscriptions,

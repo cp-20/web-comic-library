@@ -226,6 +226,9 @@ describe('public catalog RPC', () => {
     async listPublicPublicationIds() {
       return ['publication-public'];
     },
+    async resolveCollectableSourceId() {
+      return null;
+    },
   };
 
   test('searches and returns only policy-approved publications through Hono RPC', async () => {

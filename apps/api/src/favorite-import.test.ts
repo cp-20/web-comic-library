@@ -5,6 +5,7 @@ import type {
   FavoriteImportRepository,
   FollowRepository,
   LibraryRepository,
+  SourcePolicyQueryPort,
   TransactionPort,
 } from '@web-comic-library/application';
 import { TransactionContext } from '@web-comic-library/application';
@@ -25,6 +26,7 @@ const isCreatedImport = (
 
 test('extension RPC accepts only import-scoped tokens and batch owners can apply a batch', async () => {
   let batch: FavoriteImportBatch | null = null;
+  let createdBatchCount = 0;
   const candidates: FavoriteImportCandidate[] = [];
   let sessionUser = 'reader';
   const transactions: TransactionPort = {
@@ -45,6 +47,11 @@ test('extension RPC accepts only import-scoped tokens and batch owners can apply
       return false;
     },
   };
+  const sourcePolicies: Pick<SourcePolicyQueryPort, 'resolveCollectableSourceId'> = {
+    async resolveCollectableSourceId(sourceKey) {
+      return sourceKey === 'shonen-jump-plus' ? 'source-1' : null;
+    },
+  };
   const favorites: FavoriteImportRepository = {
     async claimBatch(_context, batchId, now, userUuid) {
       if (!batch || batch.id !== batchId || batch.userUuid !== userUuid || batch.confirmedAt)
@@ -53,6 +60,7 @@ test('extension RPC accepts only import-scoped tokens and batch owners can apply
       return true;
     },
     async createBatch(_context, value) {
+      createdBatchCount += 1;
       batch = value;
     },
     async createCandidates(_context, batchId, inputs) {
@@ -123,6 +131,7 @@ test('extension RPC accepts only import-scoped tokens and batch owners can apply
     favoriteImports: favorites,
     follow,
     library,
+    favoriteImportSources: sourcePolicies,
     transactions,
     async resolveSession() {
       return { accountStatus: 'active', email: 'reader@example.test', userUuid: sessionUser };
@@ -143,7 +152,7 @@ test('extension RPC accepts only import-scoped tokens and batch owners can apply
         {
           canonicalUrl: 'https://reader.example/works/1',
           externalWorkId: 'work-1',
-          sourceId: 'source-1',
+          sourceKey: 'shonen-jump-plus',
           title: '作品1',
         },
       ],
@@ -157,7 +166,7 @@ test('extension RPC accepts only import-scoped tokens and batch owners can apply
         {
           canonicalUrl: 'https://reader.example/works/1',
           externalWorkId: 'work-1',
-          sourceId: 'source-1',
+          sourceKey: 'shonen-jump-plus',
           title: '作品1',
         },
       ],
@@ -167,6 +176,22 @@ test('extension RPC accepts only import-scoped tokens and batch owners can apply
   const body: unknown = await created.json();
   if (!isCreatedImport(body)) throw new Error('favorite import response is invalid');
   expect(body.confirmationUrl).toContain('/settings/extension/imports/');
+
+  const denied = await extensionClient.api.extension['favorite-imports'].$post({
+    json: {
+      favorites: [
+        {
+          canonicalUrl: 'https://reader.example/works/2',
+          externalWorkId: 'work-2',
+          sourceKey: 'unregistered',
+          title: '作品2',
+        },
+      ],
+    },
+  });
+  expect(denied.status).toBe(403);
+  expect(createdBatchCount).toBe(1);
+  expect(candidates).toHaveLength(1);
 
   sessionUser = 'other-reader';
   const inaccessible = await client.api['favorite-imports'][':batchId'].$get({

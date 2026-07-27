@@ -10,6 +10,7 @@ import { createLibraryEntry, transitionReadingStatus } from '@web-comic-library/
 import type { FollowRepository } from './follow';
 import type { LibraryRepository } from './library';
 import type { TransactionContext, TransactionPort } from './persistence';
+import type { SourcePolicyQueryPort } from './source-policy';
 
 export type FavoriteImportInput = Readonly<{
   canonicalUrl: string;
@@ -17,6 +18,20 @@ export type FavoriteImportInput = Readonly<{
   sourceId: string;
   title: string;
 }>;
+
+export type FavoriteImportSourceInput = Readonly<{
+  canonicalUrl: string;
+  externalWorkId: string | null;
+  sourceKey: string;
+  title: string;
+}>;
+
+export class FavoriteImportSourceRejectedError extends Error {
+  constructor() {
+    super('favorite import source is not collectable');
+    this.name = 'FavoriteImportSourceRejectedError';
+  }
+}
 
 export type FavoriteImportSelection = Readonly<{
   candidateId: string;
@@ -86,6 +101,22 @@ const validateInputs = (inputs: readonly FavoriteImportInput[]): readonly Favori
     keys.add(key);
   }
   return values;
+};
+
+export const resolveFavoriteImportSources = async (
+  policies: Pick<SourcePolicyQueryPort, 'resolveCollectableSourceId'>,
+  inputs: readonly FavoriteImportSourceInput[],
+): Promise<readonly FavoriteImportInput[]> => {
+  return Promise.all(
+    inputs.map(async (input): Promise<FavoriteImportInput> => {
+      const { sourceKey: inputSourceKey, ...favorite } = input;
+      const sourceKey = inputSourceKey.trim();
+      if (!sourceKey) throw new FavoriteImportSourceRejectedError();
+      const sourceId = await policies.resolveCollectableSourceId(sourceKey);
+      if (sourceId === null) throw new FavoriteImportSourceRejectedError();
+      return { ...favorite, sourceId };
+    }),
+  );
 };
 
 const activeBatch = (batch: FavoriteImportBatch, now: Date): boolean =>

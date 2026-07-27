@@ -31,7 +31,7 @@ Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono
 
 ## extensionお気に入りimport API
 
-`POST /api/extension/favorite-imports`は`favorites:import` scopeのextension bearer tokenだけを受け付け、source ID、外部作品ID、query・fragmentを持たないcanonical URL、表示titleから24時間有効な確認batchを作成する。tokenは通常のHono routeを認証できない。`GET /api/favorite-imports/{batchId}`、`POST /api/favorite-imports/{batchId}/apply`、`POST /api/favorite-imports/{batchId}/discard`はactive sessionのbatch所有者だけが利用でき、他利用者には404を返す。
+`POST /api/extension/favorite-imports`は`favorites:import` scopeのextension bearer tokenだけを受け付け、source key、外部作品ID、query・fragmentを持たないcanonical URL、表示titleから24時間有効な確認batchを作成する。serverはsource keyを最新policyでcollectionが許可され緊急停止中でないcatalog source UUIDへ内部解決し、未登録または拒否されたkeyではbatchを作成せず403を返す。tokenは通常のHono routeを認証できない。`GET /api/favorite-imports/{batchId}`、`POST /api/favorite-imports/{batchId}/apply`、`POST /api/favorite-imports/{batchId}/discard`はactive sessionのbatch所有者だけが利用でき、他利用者には404を返す。
 
 照合はsource内の外部作品IDまたはcanonical URLの完全一致だけを自動確定する。title一致は表示用候補に留める。applyは確認済みの完全一致だけを一transactionでfollow設定と、利用者が明示した場合だけ`LibraryEntry`へ反映し、既読・進捗を作成しない。batchは確認後または期限切れ後に再適用できない。
 
