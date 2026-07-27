@@ -4,13 +4,13 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
-## 2026-07-27 #047 catalog履歴正規ID解決 GitHub pull request（実施前）
+## 2026-07-27 #047 catalog履歴正規ID解決 GitHub pull request
 
 - **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/047-catalog-history-reconciliation`、pull request、CI、container image build。
 - **操作**：検証済みcommitをpushし、main向けdraft PRを作成してCIとImages成功後にsquash mergeする。
 - **危険性**：remote branch、PR、mainへの変更反映、container image公開により後続deploymentが参照できる成果物が更新される。
 - **保護策**：保護されたmainへ直接pushせず、CI・Images成功とPR差分を確認してからsquash mergeする。production database migration、rollout、外部serviceへの接続を実施しない。Secret、token、個人情報をcommit、PR本文、監査ログへ含めない。
-- **結果**：実施前。
+- **結果**：branch `agent/047-catalog-history-reconciliation`へcommit `613ec05`をpushし、PR #49を作成した。PR quality `30230620311`とImages `30230620287`の成功後、main commit `57295bf5bd1259d7c9237994131ad7393c67745a`としてsquash mergeした。main CI `30230742660`とImages `30230742681`はともに成功した。
 - **cleanup**：merge後に不要なremote作業branchを削除する。
 - **関連**：issue #047。
 
