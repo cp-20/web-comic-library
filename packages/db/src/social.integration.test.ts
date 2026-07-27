@@ -1,7 +1,10 @@
 import { expect, test } from 'bun:test';
 
 import {
+  addReaction,
+  createReviewActivity,
   createReadingActivity,
+  listReviews,
   requestFollow,
   respondToFollow,
   setReadingStatus,
@@ -30,6 +33,15 @@ integrationTest(
     const authorId = crypto.randomUUID();
     const followerId = crypto.randomUUID();
     const workId = crypto.randomUUID();
+    const contentUnitId = crypto.randomUUID();
+    const volumeEditionId = crypto.randomUUID();
+    const isbn = `978${crypto
+      .randomUUID()
+      .replaceAll('-', '')
+      .split('')
+      .map((character) => String((character.codePointAt(0) ?? 0) % 10))
+      .join('')
+      .slice(0, 10)}`;
     try {
       await sql`
         insert into "user" (id, name, email, email_verified, image, created_at, updated_at)
@@ -43,6 +55,14 @@ integrationTest(
           (${followerId}, 'follower-01', 'active', 'followers')
       `;
       await sql`insert into works (id, serial_status, title) values (${workId}::uuid, 'ongoing', 'Social test')`;
+      await sql`
+        insert into content_units (id, work_id, title, position)
+        values (${contentUnitId}::uuid, ${workId}::uuid, 'Episode 2', 2)
+      `;
+      await sql`
+        insert into volume_editions (id, work_id, isbn, title, publication_status)
+        values (${volumeEditionId}::uuid, ${workId}::uuid, ${isbn}, 'Volume 1', 'active')
+      `;
 
       await expect(requestFollow(foundation, social, followerId, authorId)).resolves.toMatchObject({
         status: 'accepted',
@@ -77,6 +97,40 @@ integrationTest(
         workId,
       });
       expect((await social.listTimeline(followerId, null, 20)).items).toHaveLength(0);
+
+      const review = await createReviewActivity(foundation, social, {
+        body: '<script>plain text only</script>',
+        contentUnitId,
+        spoiler: false,
+        userUuid: authorId,
+        visibility: 'public',
+        volumeEditionId: null,
+        workId,
+      });
+      const hidden = await listReviews(social, null, workId, {
+        contentUnitId,
+        volumeEditionId: null,
+      });
+      expect(hidden).toEqual([expect.objectContaining({ id: review.id, state: 'hidden' })]);
+      expect('body' in hidden[0]!).toBe(false);
+
+      await sql`
+        insert into content_read_records (user_id, work_id, content_unit_id, read_at)
+        values (${followerId}, ${workId}::uuid, ${contentUnitId}::uuid, now())
+      `;
+      const visible = await listReviews(social, followerId, workId, {
+        contentUnitId,
+        volumeEditionId: null,
+      });
+      expect(visible).toEqual([
+        expect.objectContaining({
+          body: '<script>plain text only</script>',
+          id: review.id,
+          state: 'visible',
+        }),
+      ]);
+      expect(await addReaction(foundation, social, followerId, review.id)).toBe(true);
+      expect(await addReaction(foundation, social, followerId, review.id)).toBe(false);
     } finally {
       await sql`delete from "user" where id in (${authorId}, ${followerId})`;
       await Promise.all([foundation.close(), library.close(), social.close()]);

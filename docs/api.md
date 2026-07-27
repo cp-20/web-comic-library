@@ -62,3 +62,5 @@ TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enabl
 `POST`と`DELETE /api/profiles/{userId}/follow`はactive sessionの利用者だけがprofileをfollowまたは解除する。`POST /api/settings/follow-requests/{userUuid}`は申請先本人だけが`accepted`または`rejected`へ応答する。`GET /api/settings/follows/users`は本人のfollowersとfollowingだけを返す。
 
 `GET /api/timeline`はactive sessionのaccepted followから、現在も公開またはfollowers公開である読書activityだけをcreated-atとIDのstable cursorで返す。`POST /api/library/status`は`shareActivity`がtrueの場合だけ状態変更activityを作成する。
+
+`GET /api/catalog/works/{workId}/reviews`は話または巻のどちらか一方をqueryで指定する。初期read modelは、未login、未読位置、または投稿者指定のネタバレでは本文を含まない`hidden` variantを返す。`POST /api/reviews/{id}/reveal`だけが明示操作後の公開本文を返し、非公開感想は投稿者本人以外に返さない。`POST`、`PUT`、`DELETE /api/reviews`はactive session本人の感想だけを作成・編集・削除する。`POST`と`DELETE /api/reviews/{id}/reactions`は本人のいいねを切り替え、同じ利用者と感想の組を重複登録しない。

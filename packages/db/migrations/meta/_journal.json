@@ -148,6 +148,13 @@
       "when": 1785291585000,
       "tag": "0020_social_timeline",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1785371585000,
+      "tag": "0021_reviews_reactions",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,18 @@
 import type {
   FollowTarget,
+  ReviewListItem,
+  ReviewTarget,
   SocialRepository,
   TimelinePage,
   TransactionContext,
 } from '@web-comic-library/application';
-import type { ReadingActivity, UserFollow } from '@web-comic-library/domain';
+import type {
+  ActivityReaction,
+  ReadingActivity,
+  ReviewActivity,
+  ReviewReadState,
+  UserFollow,
+} from '@web-comic-library/domain';
 import postgres from 'postgres';
 import type { Sql } from 'postgres';
 
@@ -27,6 +35,20 @@ type ActivityRow = Readonly<{
   workId: string;
 }>;
 
+type ReviewRow = Readonly<{
+  body: string;
+  contentUnitId: string | null;
+  createdAt: Date;
+  id: string;
+  reactionCount: number;
+  spoiler: boolean;
+  updatedAt: Date;
+  userUuid: string;
+  visibility: ReviewActivity['visibility'];
+  volumeEditionId: string | null;
+  workId: string;
+}>;
+
 const decodeCursor = (cursor: string | null): Readonly<{ createdAt: Date; id: string }> | null => {
   if (cursor === null) return null;
   const [createdAtText, id] = cursor.split('|');
@@ -39,6 +61,27 @@ const decodeCursor = (cursor: string | null): Readonly<{ createdAt: Date; id: st
 
 const toFollow = (row: FollowRow): UserFollow => row;
 const toActivity = (row: ActivityRow): ReadingActivity => row;
+const toReview = (row: ReviewRow): ReviewActivity => ({
+  body: row.body,
+  contentUnitId: row.contentUnitId,
+  createdAt: row.createdAt,
+  id: row.id,
+  kind: 'review',
+  spoiler: row.spoiler,
+  updatedAt: row.updatedAt,
+  userUuid: row.userUuid,
+  visibility: row.visibility,
+  volumeEditionId: row.volumeEditionId,
+  workId: row.workId,
+});
+
+const reviewColumns = `
+  activity.id::text, activity.user_id as "userUuid", activity.work_id::text as "workId",
+  activity.content_unit_id::text as "contentUnitId",
+  activity.volume_edition_id::text as "volumeEditionId", activity.body, activity.spoiler,
+  activity.visibility, activity.created_at as "createdAt", activity.updated_at as "updatedAt",
+  count(reaction.activity_id)::integer as "reactionCount"
+`;
 
 export class PostgresSocial implements SocialRepository {
   readonly #client: Sql;
@@ -74,6 +117,31 @@ export class PostgresSocial implements SocialRepository {
     return toActivity(row);
   }
 
+  async createReviewActivity(
+    context: TransactionContext,
+    input: Omit<ReviewActivity, 'createdAt' | 'id' | 'kind' | 'updatedAt'>,
+  ): Promise<ReviewActivity> {
+    const rows = await this.#foundation.withSession(
+      context,
+      (session) =>
+        session<ReviewRow[]>`
+        insert into activities (
+          user_id, work_id, kind, content_unit_id, volume_edition_id, body, spoiler, visibility
+        ) values (
+          ${input.userUuid}, ${input.workId}::uuid, 'review'::activity_kind,
+          ${input.contentUnitId}::uuid, ${input.volumeEditionId}::uuid, ${input.body},
+          ${input.spoiler}, ${input.visibility}::visibility
+        )
+        returning id::text, user_id as "userUuid", work_id::text as "workId",
+          content_unit_id::text as "contentUnitId", volume_edition_id::text as "volumeEditionId",
+          body, spoiler, visibility, created_at as "createdAt", updated_at as "updatedAt", 0::integer as "reactionCount"
+      `,
+    );
+    const row = rows[0];
+    if (!row) throw new Error('review save did not return an activity');
+    return toReview(row);
+  }
+
   async deleteFollow(
     context: TransactionContext,
     followerUserUuid: string,
@@ -87,6 +155,37 @@ export class PostgresSocial implements SocialRepository {
         where follower_user_id = ${followerUserUuid} and followed_user_id = ${followedUserUuid}
       `,
     );
+  }
+
+  async deleteReaction(
+    context: TransactionContext,
+    userUuid: string,
+    activityId: string,
+  ): Promise<boolean> {
+    const result = await this.#foundation.withSession(
+      context,
+      (session) =>
+        session`
+        delete from activity_reactions where activity_id = ${activityId}::uuid and user_id = ${userUuid}
+      `,
+    );
+    return result.count > 0;
+  }
+
+  async deleteReviewActivity(
+    context: TransactionContext,
+    userUuid: string,
+    id: string,
+  ): Promise<boolean> {
+    const result = await this.#foundation.withSession(
+      context,
+      (session) =>
+        session`
+        delete from activities
+        where id = ${id}::uuid and user_id = ${userUuid} and kind = 'review'::activity_kind
+      `,
+    );
+    return result.count > 0;
   }
 
   async findFollow(followerUserUuid: string, followedUserUuid: string): Promise<UserFollow | null> {
@@ -105,6 +204,17 @@ export class PostgresSocial implements SocialRepository {
       from profiles where user_id = ${userUuid}
     `;
     return rows[0] ?? null;
+  }
+
+  async findReviewActivity(id: string): Promise<ReviewActivity | null> {
+    const rows = await this.#client<ReviewRow[]>`
+      select ${this.#client.unsafe(reviewColumns)}
+      from activities as activity
+      left join activity_reactions as reaction on reaction.activity_id = activity.id
+      where activity.id = ${id}::uuid and activity.kind = 'review'::activity_kind
+      group by activity.id
+    `;
+    return rows[0] ? toReview(rows[0]) : null;
   }
 
   async findUserUuidByPublicId(publicId: string): Promise<string | null> {
@@ -135,6 +245,47 @@ export class PostgresSocial implements SocialRepository {
     return rows.map(toFollow);
   }
 
+  async listReviewActivities(
+    workId: string,
+    target: ReviewTarget,
+  ): Promise<readonly ReviewListItem[]> {
+    const rows = target.contentUnitId
+      ? await this.#client<ReviewRow[]>`
+          select ${this.#client.unsafe(reviewColumns)}
+          from activities as activity
+          left join activity_reactions as reaction on reaction.activity_id = activity.id
+          where activity.kind = 'review'::activity_kind and activity.work_id = ${workId}::uuid
+            and activity.content_unit_id = ${target.contentUnitId}::uuid
+          group by activity.id order by activity.created_at desc, activity.id desc
+        `
+      : await this.#client<ReviewRow[]>`
+          select ${this.#client.unsafe(reviewColumns)}
+          from activities as activity
+          left join activity_reactions as reaction on reaction.activity_id = activity.id
+          where activity.kind = 'review'::activity_kind and activity.work_id = ${workId}::uuid
+            and activity.volume_edition_id = ${target.volumeEditionId}::uuid
+          group by activity.id order by activity.created_at desc, activity.id desc
+        `;
+    return rows.map((row) => ({ reactionCount: row.reactionCount, review: toReview(row) }));
+  }
+
+  async listReviewReadState(userUuid: string, workId: string): Promise<ReviewReadState> {
+    const [contentRows, volumeRows] = await Promise.all([
+      this.#client<{ id: string }[]>`
+        select content_unit_id::text as id from content_read_records
+        where user_id = ${userUuid} and work_id = ${workId}::uuid
+      `,
+      this.#client<{ id: string }[]>`
+        select volume_edition_id::text as id from user_volume_records
+        where user_id = ${userUuid} and work_id = ${workId}::uuid and status = 'read'
+      `,
+    ]);
+    return {
+      readContentUnitIds: contentRows.map((row) => row.id),
+      readVolumeEditionIds: volumeRows.map((row) => row.id),
+    };
+  }
+
   async listTimeline(
     userUuid: string,
     cursor: string | null,
@@ -150,7 +301,7 @@ export class PostgresSocial implements SocialRepository {
             and follow.follower_user_id = ${userUuid} and follow.status = 'accepted'
           join library_entries as entry on entry.user_id = activity.user_id and entry.work_id = activity.work_id
           join profiles as profile on profile.user_id = activity.user_id
-          where profile.account_status = 'active'
+          where activity.kind <> 'review'::activity_kind and profile.account_status = 'active'
             and coalesce(entry.visibility, profile.default_visibility, 'private'::visibility) in ('public', 'followers')
             and (activity.created_at, activity.id) < (${decoded.createdAt}, ${decoded.id}::uuid)
           order by activity.created_at desc, activity.id desc limit ${limit + 1}
@@ -163,7 +314,7 @@ export class PostgresSocial implements SocialRepository {
             and follow.follower_user_id = ${userUuid} and follow.status = 'accepted'
           join library_entries as entry on entry.user_id = activity.user_id and entry.work_id = activity.work_id
           join profiles as profile on profile.user_id = activity.user_id
-          where profile.account_status = 'active'
+          where activity.kind <> 'review'::activity_kind and profile.account_status = 'active'
             and coalesce(entry.visibility, profile.default_visibility, 'private'::visibility) in ('public', 'followers')
           order by activity.created_at desc, activity.id desc limit ${limit + 1}
         `;
@@ -193,6 +344,41 @@ export class PostgresSocial implements SocialRepository {
     const row = rows[0];
     if (!row) throw new Error('follow save did not return a follow');
     return toFollow(row);
+  }
+
+  async saveReaction(context: TransactionContext, reaction: ActivityReaction): Promise<boolean> {
+    const result = await this.#foundation.withSession(
+      context,
+      (session) =>
+        session`
+        insert into activity_reactions (activity_id, user_id, created_at)
+        values (${reaction.activityId}::uuid, ${reaction.userUuid}, ${reaction.createdAt})
+        on conflict (activity_id, user_id) do nothing
+      `,
+    );
+    return result.count > 0;
+  }
+
+  async updateReviewActivity(
+    context: TransactionContext,
+    userUuid: string,
+    id: string,
+    input: Pick<ReviewActivity, 'body' | 'spoiler' | 'visibility'>,
+  ): Promise<ReviewActivity | null> {
+    const rows = await this.#foundation.withSession(
+      context,
+      (session) =>
+        session<ReviewRow[]>`
+        update activities
+        set body = ${input.body}, spoiler = ${input.spoiler}, visibility = ${input.visibility}::visibility,
+          updated_at = now()
+        where id = ${id}::uuid and user_id = ${userUuid} and kind = 'review'::activity_kind
+        returning id::text, user_id as "userUuid", work_id::text as "workId",
+          content_unit_id::text as "contentUnitId", volume_edition_id::text as "volumeEditionId",
+          body, spoiler, visibility, created_at as "createdAt", updated_at as "updatedAt", 0::integer as "reactionCount"
+      `,
+    );
+    return rows[0] ? toReview(rows[0]) : null;
   }
 
   async close(): Promise<void> {

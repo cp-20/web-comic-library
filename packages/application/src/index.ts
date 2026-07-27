@@ -94,11 +94,20 @@ export {
 export {
   type SocialRepository,
   type FollowTarget,
+  type ReviewListItem,
+  type ReviewTarget,
   type TimelinePage,
+  addReaction,
   createReadingActivity,
+  createReviewActivity,
+  deleteReviewActivity,
+  listReviews,
+  removeReaction,
+  revealReview,
   requestFollow,
   respondToFollow,
   unfollow,
+  updateReviewActivity,
 } from './social';
 export {
   type VolumeLibraryReadModel,

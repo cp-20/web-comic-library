@@ -10,6 +10,7 @@ import type {
   NotificationRepository,
   ProfileIconStorage,
   SessionAssuranceRepository,
+  SocialRepository,
   SourcePolicyQueryPort,
   TransactionPort,
   VolumeLibraryRepository,
@@ -17,6 +18,7 @@ import type {
 } from '@web-comic-library/application';
 import { TransactionContext } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
+import type { ReviewActivity } from '@web-comic-library/domain';
 import { hc } from 'hono/client';
 
 import { app, createApp, type ApiType, type CatalogAdminController } from './app';
@@ -998,5 +1000,126 @@ describe('follow settings RPC', () => {
       'mode:reader:work-1:selected_publications',
       'publications:reader:work-1:publication-1',
     ]);
+  });
+});
+
+describe('review RPC', () => {
+  test('uses Hono RPC to omit a spoiler body until reveal and reject duplicate reactions', async () => {
+    const reviews = new Map<string, ReviewActivity>();
+    const social: SocialRepository = {
+      async createReadingActivity() {
+        throw new Error('not used');
+      },
+      async createReviewActivity(_context, input) {
+        const review: ReviewActivity = {
+          ...input,
+          createdAt: new Date('2026-07-27T00:00:00Z'),
+          id: '11111111-1111-4111-8111-111111111111',
+          kind: 'review',
+          updatedAt: new Date('2026-07-27T00:00:00Z'),
+        };
+        reviews.set(review.id, review);
+        return review;
+      },
+      async deleteFollow() {},
+      async deleteReaction() {
+        return false;
+      },
+      async deleteReviewActivity() {
+        return false;
+      },
+      async findFollow() {
+        return null;
+      },
+      async findFollowTarget() {
+        return null;
+      },
+      async findReviewActivity(id) {
+        return reviews.get(id) ?? null;
+      },
+      async findUserUuidByPublicId() {
+        return null;
+      },
+      async listFollowers() {
+        return [];
+      },
+      async listFollowing() {
+        return [];
+      },
+      async listReviewActivities() {
+        return [...reviews.values()].map((review) => ({ reactionCount: 0, review }));
+      },
+      async listReviewReadState() {
+        return { readContentUnitIds: [], readVolumeEditionIds: [] };
+      },
+      async listTimeline() {
+        return { items: [], nextCursor: null };
+      },
+      async saveFollow(_context, follow) {
+        return follow;
+      },
+      async saveReaction() {
+        return false;
+      },
+      async updateReviewActivity() {
+        return null;
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const protectedApp = createApp({
+      social,
+      transactions,
+      async resolveSession() {
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    const workId = '22222222-2222-4222-8222-222222222222';
+    const contentUnitId = '33333333-3333-4333-8333-333333333333';
+    const created = await client.api.reviews.$post({
+      json: {
+        body: 'spoiler text',
+        contentUnitId,
+        spoiler: true,
+        visibility: 'public',
+        volumeEditionId: null,
+        workId,
+      },
+    });
+    expect(created.status).toBe(201);
+    const publicApp = createApp({ social });
+    const publicClient = hc<typeof publicApp>('http://api.test', { fetch: publicApp.request });
+    const listed = await publicClient.api.catalog.works[':workId'].reviews.$get({
+      param: { workId },
+      query: { contentUnitId },
+    });
+    expect(await listed.json()).toEqual({
+      reviews: [
+        expect.objectContaining({ id: '11111111-1111-4111-8111-111111111111', state: 'hidden' }),
+      ],
+    });
+    expect(
+      (
+        await client.api.reviews[':id'].reveal.$post({
+          param: { id: '11111111-1111-4111-8111-111111111111' },
+        })
+      ).status,
+    ).toBe(200);
+    expect(
+      (
+        await client.api.reviews[':id'].reactions.$post({
+          param: { id: '11111111-1111-4111-8111-111111111111' },
+        })
+      ).status,
+    ).toBe(200);
   });
 });

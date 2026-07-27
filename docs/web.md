@@ -44,6 +44,8 @@ bun run build:web
 
 `/profiles/{userId}`はprofileのfollowまたは解除をHono RPC clientで行う。`/settings/follows`は受け取ったfollow申請の承認・拒否と自分のfollow一覧を表示する。`/timeline`はaccepted followの現在も閲覧可能なactivityだけをcursor paginationで表示し、非公開化されたactivityをHTMLへ残さない。
 
+`/works/{workId}`は話または巻を指定して感想を投稿・表示する。初期表示で伏せられた感想の本文をHTMLへ含めず、利用者の明示操作後だけreveal APIで取得してテキストとして表示する。感想本文を`dangerouslySetInnerHTML`、metadata、OG、SNS共有文へ渡さない。
+
 ## extensionお気に入りimport
 
 `/settings/extension/imports/{batchId}`はextensionが作成した24時間有効の候補batchを、ログイン利用者本人だけに表示する。完全一致、未照合、曖昧な複数候補とtitleのみの候補を区別し、完全一致だけを選択できる。一括のfollow方式・読書状態に対し作品単位で上書きでき、標準はfollowだけである。画面はお気に入りから既読または読書進捗を推測・作成しない。
