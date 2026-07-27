@@ -23,6 +23,7 @@ umbrella: 019
 - [042 カドコミのextractor](./042-kadocomi-favorites-extractor.md)
 - [055 extension Web origin権限とE2E](./055-extension-web-origin-e2e.md)
 - [056 extension source key解決](./056-extension-source-resolution.md)
+- [057 匿名化お気に入りfixture](./057-sanitized-favorite-fixtures.md)
 
 ## 完了条件
 

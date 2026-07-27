@@ -4,6 +4,16 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
+## 2026-07-27 #040 共通feedお気に入りページ公開構造確認
+
+- **対象**：少年ジャンプ＋、コミックDAYS、となりのヤングジャンプの公開Web pageと、local extension fixture。
+- **操作**：`ax`で公開ページだけをread-only確認し、お気に入りpageへの匿名アクセス可否と、作品linkに使える安定した公開URL規則を調べる。
+- **危険性**：外部serviceへ少数のHTTP requestを送る。
+- **保護策**：認証、Cookie、account情報、内部API、漫画本文、画像、viewerへアクセスしない。ログインが必要な画面は回避せず、公開情報だけで判定する。
+- **結果**：各siteの公開トップをread-only確認したが、「お気に入り」への公開導線は検出できなかった。login後の利用者固有DOMにはアクセスせず、公開情報だけではstable selectorを確定できないため、匿名化fixture取得をissue #057へ分離した。
+- **cleanup**：read-only確認だけであり、外部serviceとlocalに永続dataを作成しない。
+- **関連**：issue #040。
+
 ## 2026-07-27 #056 source key解決 GitHub pull request
 
 - **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/056-extension-source-resolution`、pull request、CI、container image build。

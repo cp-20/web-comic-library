@@ -2,9 +2,9 @@
 id: 040
 title: 共通feed型3サイトのお気に入りextractorを作る
 type: feature
-status: open
+status: blocked
 priority: P1
-depends_on: [009, 011, 039]
+depends_on: [009, 011, 039, 057]
 umbrella: 037
 ---
 
@@ -61,3 +61,7 @@ umbrella: 037
 ## Blocker解消
 
 [056](./056-extension-source-resolution.md)で、extensionのsource keyを許可済みcatalog source UUIDへserver側で解決する経路を実装した。extractorはUUIDを保持せずsite keyだけを送信できる。
+
+## Blocker
+
+ログイン後のお気に入りDOMを認証なしで確認できず、公開トップだけからsite固有selectorを推測してはならない。個人情報・credentialを含まない匿名化fixtureが必要なため、[057](./057-sanitized-favorite-fixtures.md)の完了まで実装を停止する。
