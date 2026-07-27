@@ -749,9 +749,9 @@ Secretの値と個人情報は記録しない。
 - **操作**：検証済みのblock、mute、通報、moderation migration・API・Web画面・監査記録をGitHubへpushし、ドラフトPRを作成してCIとImages workflowを開始する。
 - **危険性**：外部GitHub上に実装・migration・監査記録が公開され、CIが実行される。
 - **保護策**：production database、外部service、Secret、永続user dataに接続しない。`bun run check`、sandbox外の`bun test`、Web build、local PostgreSQL統合試験が成功した状態だけをpushし、CI成功確認前にはmainへmergeしない。
-- **結果**：実行後に記録する。
+- **結果**：branchをpushし、ドラフトPR #62を作成してCIとImages workflowを開始した。
 - **cleanup**：merge完了時にremote作業branchを削除する。production環境と永続dataは変更しない。
-- **関連**：issue #031。
+- **関連**：issue #031、PR #62。
 
 ## 2026-07-27 #030 感想・いいね PR作成
 
