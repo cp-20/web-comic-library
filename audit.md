@@ -10,7 +10,7 @@ Secretの値と個人情報は記録しない。
 - **操作**：検証済みcommitをpushし、draft PRを作成してCIとImages成功後にsquash mergeする。
 - **危険性**：remote branch、PR、mainへの変更反映、container image公開により後続deploymentが参照できる成果物が更新される。
 - **保護策**：保護されたmainへ直接pushせず、CI・Images成功とPR差分を確認してからsquash mergeする。Secret、token、個人情報をcommit、PR本文、監査ログへ含めない。
-- **結果**：branch `agent/039-favorites-import-workflow`へcommit `d5a0caf`をpushし、draft PR #41を作成した。CIとImagesの結果待ち。
+- **結果**：branch `agent/039-favorites-import-workflow`へcommit `d5a0caf`をpushし、draft PR #41を作成した。PR #41はmain commit `1dca840`としてsquash mergeされ、main CI `30226856899`とImages `30226856896`はともに成功した。
 - **cleanup**：merge後に作業branchを削除する。
 - **関連**：issue #039。
 
