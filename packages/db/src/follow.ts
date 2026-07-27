@@ -20,9 +20,16 @@ export class PostgresFollow implements FollowRepository {
 
   async findFollowSettings(userUuid: string, workId: string): Promise<FollowSettings | null> {
     const rows = await this.#client<FollowSettings[]>`
-      select user_id as "userUuid", work_id::text as "workId", mode
+      select
+        user_id as "userUuid",
+        resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)::text as "workId",
+        mode
       from work_follow_settings
-      where user_id = ${userUuid} and work_id = ${workId}::uuid
+      where user_id = ${userUuid}
+        and resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)
+          = resolve_catalog_redirect('work'::catalog_redirect_resource, ${workId}::uuid)
+      order by updated_at desc
+      limit 1
     `;
     return rows[0] ?? null;
   }
@@ -41,7 +48,9 @@ export class PostgresFollow implements FollowRepository {
     const rows = await this.#client<{ publicationId: string }[]>`
       select publication_id::text as "publicationId"
       from subscription_publications
-      where user_id = ${userUuid} and work_id = ${workId}::uuid
+      where user_id = ${userUuid}
+        and resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)
+          = resolve_catalog_redirect('work'::catalog_redirect_resource, ${workId}::uuid)
       order by publication_id
     `;
     return rows.map((row) => row.publicationId);
@@ -73,12 +82,17 @@ export class PostgresFollow implements FollowRepository {
     return this.#foundation.withSession(context, async (session) => {
       await session`
         delete from subscription_publications
-        where user_id = ${userUuid} and work_id = ${workId}::uuid
+        where user_id = ${userUuid}
+          and resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)
+            = resolve_catalog_redirect('work'::catalog_redirect_resource, ${workId}::uuid)
       `;
       if (publicationIds.length === 0) return [];
       await session`
         insert into subscription_publications (user_id, work_id, publication_id)
-        select ${userUuid}, ${workId}::uuid, publication_id::uuid
+        select
+          ${userUuid},
+          resolve_catalog_redirect('work'::catalog_redirect_resource, ${workId}::uuid),
+          publication_id::uuid
         from unnest(${[...publicationIds]}::text[]) as selection(publication_id)
       `;
       return publicationIds.map((publicationId) => ({ publicationId, userUuid, workId }));
@@ -90,7 +104,11 @@ export class PostgresFollow implements FollowRepository {
       context,
       (session) => session`
       insert into work_follow_settings (user_id, work_id, mode)
-      values (${settings.userUuid}, ${settings.workId}::uuid, ${settings.mode}::follow_mode)
+      values (
+        ${settings.userUuid},
+        resolve_catalog_redirect('work'::catalog_redirect_resource, ${settings.workId}::uuid),
+        ${settings.mode}::follow_mode
+      )
       on conflict (user_id, work_id) do update
       set mode = excluded.mode, updated_at = now()
     `,

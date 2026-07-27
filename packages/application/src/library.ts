@@ -83,7 +83,7 @@ export const markContentRead = async (
   now: Date = new Date(),
 ): Promise<void> => {
   const work = await repository.findWorkReadModel(input.workId);
-  if (!work || work.workId !== input.workId) throw new Error('work is unavailable');
+  if (!work) throw new Error('work is unavailable');
   const ids = [...new Set(input.contentUnitIds)];
   if (ids.length === 0 || ids.some((id) => !id.trim()))
     throw new Error('content unit IDs are required');

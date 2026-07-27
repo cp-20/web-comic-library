@@ -2,7 +2,7 @@
 id: 047
 title: カタログ統合後の読書・所蔵・通知履歴を正規IDへ解決する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [015, 021, 023, 024]
 umbrella: 007

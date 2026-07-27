@@ -61,8 +61,16 @@ export class PostgresNotification implements NotificationRepository {
 
   async findFollowSettings(userUuid: string, workId: string): Promise<FollowSettings | null> {
     const rows = await this.#client<FollowSettings[]>`
-      select user_id as "userUuid", work_id::text as "workId", mode
-      from work_follow_settings where user_id = ${userUuid} and work_id = ${workId}::uuid
+      select
+        user_id as "userUuid",
+        resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)::text as "workId",
+        mode
+      from work_follow_settings
+      where user_id = ${userUuid}
+        and resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)
+          = resolve_catalog_redirect('work'::catalog_redirect_resource, ${workId}::uuid)
+      order by updated_at desc
+      limit 1
     `;
     return rows[0] ?? null;
   }
@@ -93,7 +101,10 @@ export class PostgresNotification implements NotificationRepository {
         event.id::text,
         event.kind,
         event.notification_suppressed as "notificationSuppressed",
-        coalesce(entry.work_id, volume.work_id)::text as "workId"
+        coalesce(
+          resolve_catalog_redirect('work'::catalog_redirect_resource, entry.work_id),
+          resolve_catalog_redirect('work'::catalog_redirect_resource, volume.work_id)
+        )::text as "workId"
       from release_events as event
       left join publication_entries as entry on entry.id = event.publication_entry_id
       left join volume_editions as volume on volume.id = event.volume_edition_id
@@ -103,7 +114,10 @@ export class PostgresNotification implements NotificationRepository {
     if (!event) return null;
     const candidates = await this.#client<CandidateRow[]>`
       with target_content as (
-        select mapping.content_unit_id
+        select resolve_catalog_redirect(
+          'content_unit'::catalog_redirect_resource,
+          mapping.content_unit_id
+        ) as content_unit_id
         from release_events as target
         join entry_content_mappings as mapping
           on mapping.publication_entry_id = target.publication_entry_id and mapping.confirmed
@@ -113,7 +127,10 @@ export class PostgresNotification implements NotificationRepository {
         candidate.id::text as "eventId",
         candidate.occurred_at as "occurredAt",
         candidate.notification_suppressed = false as "notificationEligible",
-        candidate_mapping.content_unit_id::text as "contentUnitId",
+        resolve_catalog_redirect(
+          'content_unit'::catalog_redirect_resource,
+          candidate_mapping.content_unit_id
+        )::text as "contentUnitId",
         coalesce(publication.id::text, candidate.id::text) as "publicationId",
         coalesce(source.id::text, candidate.id::text) as "sourceId",
         coalesce(publication.kind = 'official'::publication_kind, true) as official,
@@ -125,7 +142,10 @@ export class PostgresNotification implements NotificationRepository {
       left join entry_content_mappings as candidate_mapping
         on candidate_mapping.publication_entry_id = candidate.publication_entry_id and candidate_mapping.confirmed
       where candidate.id = ${eventId}::uuid
-        or candidate_mapping.content_unit_id in (select content_unit_id from target_content)
+        or resolve_catalog_redirect(
+          'content_unit'::catalog_redirect_resource,
+          candidate_mapping.content_unit_id
+        ) in (select content_unit_id from target_content)
     `;
     return { ...event, candidates };
   }
@@ -180,15 +200,23 @@ export class PostgresNotification implements NotificationRepository {
   ): Promise<readonly string[]> {
     const rows = await this.#client<{ publicationId: string }[]>`
       select publication_id::text as "publicationId" from subscription_publications
-      where user_id = ${userUuid} and work_id = ${workId}::uuid order by publication_id
+      where user_id = ${userUuid}
+        and resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)
+          = resolve_catalog_redirect('work'::catalog_redirect_resource, ${workId}::uuid)
+      order by publication_id
     `;
     return rows.map((row) => row.publicationId);
   }
 
   async listWorkFollowSettings(workId: string): Promise<readonly FollowSettings[]> {
     return this.#client<FollowSettings[]>`
-      select user_id as "userUuid", work_id::text as "workId", mode
-      from work_follow_settings where work_id = ${workId}::uuid
+      select
+        user_id as "userUuid",
+        resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)::text as "workId",
+        mode
+      from work_follow_settings
+      where resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)
+        = resolve_catalog_redirect('work'::catalog_redirect_resource, ${workId}::uuid)
     `;
   }
 
