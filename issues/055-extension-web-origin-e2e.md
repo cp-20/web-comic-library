@@ -4,7 +4,7 @@ title: extensionのWeb origin権限とbrowser E2Eを確定する
 type: quality
 status: open
 priority: P1
-depends_on: [038, 039]
+depends_on: [038, 039, 057]
 umbrella: 037
 ---
 

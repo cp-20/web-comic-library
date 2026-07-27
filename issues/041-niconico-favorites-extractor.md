@@ -4,7 +4,7 @@ title: ニコニコ漫画のお気に入りextractorを作る
 type: feature
 status: open
 priority: P1
-depends_on: [009, 012, 039]
+depends_on: [009, 012, 039, 057]
 umbrella: 037
 ---
 
