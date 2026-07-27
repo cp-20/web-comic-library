@@ -4,6 +4,36 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
+## 2026-07-27 #045 database接続待機 local検証
+
+- **対象**：local Docker network、使い捨てPostgreSQL 16 container、`pg_isready` wait command。
+- **操作**：databaseなしで同期相当のwaitを開始し、その後にPostgreSQLを起動して接続待機から成功すること、および短いtimeoutで原因が出ることを検証する。
+- **危険性**：local Docker container、network、匿名test databaseを一時的に作成する。
+- **保護策**：production接続情報を渡さず、ランダムな一時network/container名だけを使用する。test完了後にcontainerとnetworkを削除し、Secret値、個人情報、実database dataを使用しない。
+- **結果**：database起動前にDNS未解決の`no response`を3回確認した後、PostgreSQL起動後に`accepting connections`となりwait commandが成功した。timeoutを0秒にした別試行では`timed out waiting 0s for PostgreSQL DNS resolution and connections`を出して失敗した。
+- **cleanup**：test containerとnetworkを削除する。
+- **関連**：issue #045、manifest PR #136。
+
+## 2026-07-27 #045 database同期Job接続待機 rollout
+
+- **対象**：Asterion production Argo CD、PostgreSQL、`initialize-database` PreSync Job、Web Comic Library migration PreSync Job。
+- **操作**：manifest PRをmergeしてArgo CDにbounded `pg_isready` waitを反映し、同期Jobがdatabase接続可能になるまで待機することを確認する。
+- **危険性**：Argo CD syncによりproduction Jobが作成され、database初期化・migrationが実行される。timeoutやmanifest不備はrollout停止、Job失敗、alert発火につながり得る。
+- **保護策**：PR validate成功と差分を確認してからsquash mergeする。待機は300秒・5秒間隔で上限を持たせ、hookの成功削除policyと既存のbackoffを維持する。Secret値を表示せず、API/worker rollout前にJob状態と短いerrorだけを確認する。
+- **結果**：manifest PR #136をmain commit `784fadbac277d5a0dcc621b6db307d1cad949981`としてsquash mergeした。Argo CD applicationは同revisionで`Synced`かつ`Healthy`、operationは`Succeeded`となり、両namespaceにFailed Podはなかった。成功hookは削除policyどおり残っていない。
+- **cleanup**：成功hookはArgo CDの`HookSucceeded` policyで削除する。追加したwait container以外のproduction resourceは作成しない。
+- **関連**：issue #045、manifest PR #136。
+
+## 2026-07-27 #045 database同期Job manifest確認
+
+- **対象**：Asterion production Argo CD application、PostgreSQL service、Web Comic Libraryの`initialize-database`とmigration Job manifest source。
+- **操作**：SSHと`kubectl get`、Argo CD application specをread-onlyで確認し、同期Jobの実際のmanifest repositoryとdatabase接続前提を特定する。
+- **危険性**：production control planeへ接続し、誤ったcommandはworkloadや同期状態へ影響し得る。
+- **保護策**：read-onlyの`get`と`describe`だけを実行し、Argo CD sync、workload再起動、database接続、Secret参照を行わない。Secret値と個人情報をlog、監査記録へ出さない。
+- **結果**：Argo CD applicationのsourceは`cp-20/asterion-manifest`の`web-comic-library/overlays/production`であることを確認した。local checkoutをfast-forwardして`initialize-database`とmigration Jobの現行manifestを確認した。production resourceとdatabaseを変更しなかった。
+- **cleanup**：read-only確認後にSSH接続を終了し、production resourceを作成・変更しない。
+- **関連**：issue #045。
+
 ## 2026-07-27 #043 運用baseline事前確認
 
 - **対象**：Asterion production Kubernetes、Prometheus、PostgreSQL backup metadata、Web Comic Library APIとworkerのread-only health/metrics。
