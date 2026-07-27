@@ -9,6 +9,7 @@ import {
   createPostgresLibrary,
   createPostgresVolumeLibrary,
   createPostgresCatalog,
+  createPostgresCatalogAdmin,
   createPostgresFollow,
   createPostgresNotification,
   createPostgresWebPushSubscription,
@@ -19,7 +20,7 @@ import {
   createPostgresSessionAssurance,
 } from '@web-comic-library/db';
 
-import { createApp } from './app';
+import { createApp, createCatalogAdminController } from './app';
 
 const port = Number(process.env.PORT ?? '3001');
 const databaseUrl = process.env.DATABASE_URL;
@@ -52,6 +53,7 @@ const foundation = createPostgresFoundation(databaseUrl);
 const library = createPostgresLibrary(databaseUrl, foundation);
 const volumeLibrary = createPostgresVolumeLibrary(databaseUrl, foundation);
 const catalog = createPostgresCatalog(databaseUrl);
+const catalogAdmin = createPostgresCatalogAdmin(databaseUrl, foundation);
 const sourcePolicies = createPostgresSourcePolicy(databaseUrl);
 const follow = createPostgresFollow(databaseUrl, foundation);
 const notifications = createPostgresNotification(databaseUrl, foundation);
@@ -95,6 +97,7 @@ const profileIconStorage =
 const app = createApp({
   auth,
   catalog,
+  catalogAdmin: createCatalogAdminController(foundation, catalogAdmin),
   follow,
   notifications,
   emailDigests,
@@ -115,6 +118,10 @@ const app = createApp({
     const token = await auth.sessionToken(request);
     return token ? identity.findSessionIdentity(token) : null;
   },
+  async resolveCatalogAdmin(request) {
+    const token = await auth.sessionToken(request);
+    return token ? identity.findCatalogAdminActor(token) : null;
+  },
 });
 const server = Bun.serve({ fetch: app.fetch, port });
 let stopping = false;
@@ -133,6 +140,7 @@ const stop = (): void => {
     library.close(),
     volumeLibrary.close(),
     catalog.close(),
+    catalogAdmin.close(),
     follow.close(),
     notifications.close(),
     emailDigests.close(),

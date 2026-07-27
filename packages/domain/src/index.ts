@@ -63,6 +63,7 @@ export {
   type CatalogAdminActor,
   type CatalogAdminAssurance,
   catalogAdminAssurances,
+  isCatalogAdmin,
   requireCatalogAdmin,
   requireCatalogOperationReason,
   requireDistinctCatalogIds,

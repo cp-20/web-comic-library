@@ -95,7 +95,7 @@ describe('catalog administration RPC', () => {
     },
   };
 
-  test('rejects unauthenticated and non-administrator callers', async () => {
+  test('rejects unauthenticated, non-administrator, and weak-session callers', async () => {
     const unauthenticated = createApp();
     const noSession = await unauthenticated.request('/api/admin/catalog/review-items');
     expect(noSession.status).toBe(401);
@@ -108,6 +108,14 @@ describe('catalog administration RPC', () => {
     });
     const response = await nonAdmin.request('/api/admin/catalog/review-items');
     expect(response.status).toBe(403);
+
+    const weakAdmin = createApp({
+      catalogAdmin: controller,
+      async resolveCatalogAdmin() {
+        return { assurance: 'none', id: 'admin-1', role: 'administrator' };
+      },
+    });
+    expect((await weakAdmin.request('/api/admin/catalog/review-items')).status).toBe(403);
   });
 
   test('validates and dispatches an administrator command through Hono RPC', async () => {

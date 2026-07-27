@@ -682,3 +682,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #54をsquash mergeした。main CIは成功し、再実行したmain Images workflowもbuild、migration read-only、service checks、GHCR image pushを含めて成功した。
 - **cleanup**：PR merge時にremote作業branchを削除した。production環境、database、外部認証serviceの永続dataは変更していない。
 - **関連**：issue #059、PR #54、CI run #30233192008、Images run #30233192014。
+
+## 2026-07-27 #058 catalog管理認可 PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#058 role・session assurance migration、catalog管理者解決query。
+- **操作**：migrationを初期状態から適用・再適用し、通常user、administrator role、TOTP assurance、role/assurance audit、session失効と削除を統合試験した。
+- **危険性**：local TCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さずrepository専用Compose projectだけを使用した。session token、Cookie、emailなどの値を出力・保存・監査記録しない。production databaseと外部serviceへ接続しない。
+- **結果**：通常user・弱いsessionの拒否、administratorと二要素認証済みsessionの解決、role変更とassurance記録の履歴、session削除後の無効化を確認した。PostgreSQL統合を含む128 testsが成功（0 fail）した。
+- **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除した。
+- **関連**：issue #058。
