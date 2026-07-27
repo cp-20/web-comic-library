@@ -7,9 +7,14 @@ import {
 
 export type SessionIdentity = Readonly<{
   accountStatus: 'active' | 'disabled' | 'pending_deletion';
+  assurance: 'none' | 'two_factor';
   email: string;
   userUuid: string;
 }>;
+
+export interface SessionAssuranceRepository {
+  recordTwoFactorAssurance(sessionToken: string): Promise<boolean>;
+}
 
 export type ProfileViewer = Readonly<{
   userUuid: string | null;
@@ -25,6 +30,11 @@ export interface IdentityRepository {
 export const isActiveSession = (identity: SessionIdentity | null): identity is SessionIdentity => {
   return identity !== null && identity.accountStatus === 'active';
 };
+
+export const recordTwoFactorAssurance = async (
+  repository: SessionAssuranceRepository,
+  sessionToken: string,
+): Promise<boolean> => repository.recordTwoFactorAssurance(sessionToken);
 
 export const findVisibleProfile = async (
   repository: IdentityRepository,

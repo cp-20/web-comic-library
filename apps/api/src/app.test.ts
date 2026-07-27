@@ -9,6 +9,7 @@ import type {
   LibraryRepository,
   NotificationRepository,
   ProfileIconStorage,
+  SessionAssuranceRepository,
   SourcePolicyQueryPort,
   TransactionPort,
   VolumeLibraryRepository,
@@ -283,7 +284,12 @@ describe('profile and session RPC', () => {
     const privateApp = createApp({
       identity,
       async resolveSession() {
-        return { accountStatus: 'disabled', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'disabled',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     expect((await privateApp.request('/api/profiles/reader-01')).status).toBe(404);
@@ -294,7 +300,12 @@ describe('profile and session RPC', () => {
     const protectedApp = createApp({
       identity,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
@@ -329,6 +340,7 @@ describe('profile and session RPC', () => {
     };
     const session = {
       accountStatus: 'active' as const,
+      assurance: 'none' as const,
       email: 'reader@example.com',
       userUuid: 'reader',
     };
@@ -362,7 +374,12 @@ describe('profile and session RPC', () => {
       identity,
       profileIconStorage: storage,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const png = new Uint8Array([
@@ -399,6 +416,9 @@ describe('authentication RPC', () => {
           },
         );
       },
+      async sessionToken() {
+        return null;
+      },
     };
     const protectedApp = createApp({ auth });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
@@ -431,6 +451,102 @@ describe('authentication RPC', () => {
       provider: 'google',
     });
     expect(requests[2]?.headers.get('cookie')).toBe('session=value');
+  });
+
+  test('enrolls and verifies TOTP only through the RPC routes, without exposing a session token', async () => {
+    const requests: Request[] = [];
+    const recordedTokens: string[] = [];
+    const assurances: SessionAssuranceRepository = {
+      async recordTwoFactorAssurance(sessionToken) {
+        recordedTokens.push(sessionToken);
+        return true;
+      },
+    };
+    const auth: AuthAdapter = {
+      async close() {},
+      async handler(request) {
+        requests.push(request);
+        const path = new URL(request.url).pathname;
+        if (path === '/api/auth/two-factor/enable') {
+          return new Response(
+            JSON.stringify({ backupCodes: ['backup-1'], totpURI: 'otpauth://totp/reader' }),
+            { headers: { 'content-type': 'application/json' }, status: 200 },
+          );
+        }
+        if (path === '/api/auth/two-factor/verify-totp') {
+          return new Response(JSON.stringify({ token: 'session-token' }), {
+            headers: {
+              'content-type': 'application/json',
+              'set-cookie': 'better-auth.session_token=rotated; HttpOnly; SameSite=Lax',
+            },
+            status: 200,
+          });
+        }
+        return new Response(null, { status: 404 });
+      },
+      async sessionToken() {
+        return 'verified-session';
+      },
+    };
+    const protectedApp = createApp({ auth, sessionAssurances: assurances });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+
+    const enrollment = await client.api.settings['two-factor'].enable.$post({
+      json: { issuer: 'Web Comic Library' },
+    });
+    expect(enrollment.status).toBe(200);
+    expect(await enrollment.json()).toEqual({
+      backupCodes: ['backup-1'],
+      totpURI: 'otpauth://totp/reader',
+    });
+
+    const verified = await client.api.settings['two-factor'].verify.$post({
+      json: { code: '123456' },
+    });
+    expect(verified.status).toBe(200);
+    expect(await verified.json()).toEqual({ status: 'verified' });
+    expect(verified.headers.get('set-cookie')).toContain('better-auth.session_token=rotated');
+    expect(recordedTokens).toEqual(['verified-session']);
+    expect(requests.map((request) => new URL(request.url).pathname)).toEqual([
+      '/api/auth/two-factor/enable',
+      '/api/auth/two-factor/verify-totp',
+    ]);
+    expect(await requests[0]?.json()).toEqual({ issuer: 'Web Comic Library' });
+    expect(await requests[1]?.json()).toEqual({ code: '123456' });
+    expect((await protectedApp.request('/api/auth/two-factor/verify-totp')).status).toBe(404);
+  });
+
+  test('fails closed when an authenticated TOTP verification cannot be recorded', async () => {
+    const auth: AuthAdapter = {
+      async close() {},
+      async handler() {
+        return new Response(JSON.stringify({ token: 'session-token' }), {
+          headers: {
+            'content-type': 'application/json',
+            'set-cookie': 'better-auth.session_token=rotated; HttpOnly; SameSite=Lax',
+          },
+          status: 200,
+        });
+      },
+      async sessionToken() {
+        return 'verified-session';
+      },
+    };
+    const protectedApp = createApp({
+      auth,
+      sessionAssurances: {
+        async recordTwoFactorAssurance() {
+          return false;
+        },
+      },
+    });
+    const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
+    const response = await client.api.settings['two-factor'].verify.$post({
+      json: { code: '123456' },
+    });
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: 'assurance_unavailable' });
   });
 });
 
@@ -478,7 +594,12 @@ describe('library RPC', () => {
       library,
       transactions,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
@@ -551,7 +672,12 @@ describe('volume library RPC', () => {
       transactions,
       volumeLibrary,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
@@ -648,7 +774,12 @@ describe('notification RPC', () => {
       notifications,
       transactions,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
@@ -697,7 +828,12 @@ describe('web push subscription RPC', () => {
       webPushPublicKey: 'public-key',
       webPushSubscriptions: subscriptions,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
@@ -756,7 +892,12 @@ describe('email digest RPC', () => {
       emailDigests: digests,
       transactions,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
@@ -817,7 +958,12 @@ describe('follow settings RPC', () => {
       follow,
       transactions,
       async resolveSession() {
-        return { accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' };
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: 'reader',
+        };
       },
     });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });

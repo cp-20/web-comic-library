@@ -2,7 +2,7 @@
 id: 059
 title: 二要素認証済みsessionのassuranceを検証可能に保存する
 type: platform
-status: open
+status: completed
 priority: P0
 depends_on: [020]
 umbrella: 019

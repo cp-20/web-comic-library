@@ -21,6 +21,7 @@ import type {
   EmailDigestSettingsRepository,
   ExtensionTokenRepository,
   FavoriteImportRepository,
+  SessionAssuranceRepository,
   SessionIdentity,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
@@ -61,6 +62,7 @@ import {
   createFavoriteImport,
   discardFavoriteImport,
   getFavoriteImport,
+  recordTwoFactorAssurance,
   FavoriteImportSourceRejectedError,
   resolveFavoriteImportSources,
 } from '@web-comic-library/application';
@@ -87,6 +89,10 @@ import {
   submitVolumeContentMappingCorrectionRequestSchema,
   unmarkContentReadRequestSchema,
   profileParamsSchema,
+  twoFactorEnableRequestSchema,
+  twoFactorEnableResponseSchema,
+  twoFactorVerifyRequestSchema,
+  twoFactorVerifyResponseSchema,
   searchCatalogWorksQuerySchema,
   updateProfileRequestSchema,
   webPushSubscriptionRequestSchema,
@@ -101,6 +107,7 @@ import {
 import type { CatalogAdminActor } from '@web-comic-library/domain';
 import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
 import { Hono } from 'hono';
+import { safeParse } from 'valibot';
 
 import { apiMetrics, apiRequestDuration, apiRequests } from './metrics';
 
@@ -144,6 +151,7 @@ export type ApiDependencies = Readonly<{
   library: LibraryRepository | null;
   volumeLibrary: VolumeLibraryRepository | null;
   sourcePolicies: SourcePolicyQueryPort | null;
+  sessionAssurances: SessionAssuranceRepository | null;
   profileIconStorage: ProfileIconStorage | null;
   transactions: TransactionPort | null;
   resolveSession(request: Request): Promise<SessionIdentity | null>;
@@ -173,6 +181,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   library: null,
   volumeLibrary: null,
   sourcePolicies: null,
+  sessionAssurances: null,
   profileIconStorage: null,
   transactions: null,
   async resolveSession(): Promise<SessionIdentity | null> {
@@ -226,6 +235,43 @@ const readBearerToken = (request: Request): string | null => {
   if (!authorization?.startsWith('Bearer ')) return null;
   const token = authorization.slice('Bearer '.length).trim();
   return token || null;
+};
+
+const forwardAuthRequest = (
+  context: { req: { header(name: string): string | undefined; url: string } },
+  path: string,
+  body: unknown,
+): Request => {
+  const headers = new Headers({
+    'content-type': 'application/json',
+    origin: new URL(context.req.url).origin,
+  });
+  const cookie = context.req.header('cookie');
+  if (cookie) headers.set('cookie', cookie);
+  return new Request(new URL(path, context.req.url), {
+    body: JSON.stringify(body),
+    headers,
+    method: 'POST',
+  });
+};
+
+const responseHeaders = (response: Response): Record<string, string | string[]> => {
+  const headers: Record<string, string | string[]> = {};
+  for (const [name, value] of response.headers) {
+    if (name !== 'content-length' && name !== 'content-type' && name !== 'set-cookie') {
+      headers[name] = value;
+    }
+  }
+  const setCookies = response.headers.getSetCookie();
+  if (setCookies.length > 0) headers['set-cookie'] = setCookies;
+  return headers;
+};
+
+const responseSessionCookie = (response: Response): string | null => {
+  const cookie = response.headers
+    .getSetCookie()
+    .find((value) => /^(?:__Secure-)?better-auth\.session_token=/u.test(value));
+  return cookie?.split(';')[0] ?? null;
 };
 
 const toCatalogSearchQuery = (
@@ -997,8 +1043,59 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         new Request(new URL('/api/auth/sign-out', context.req.url), { headers, method: 'POST' }),
       );
     })
+    .post(
+      '/api/settings/two-factor/enable',
+      vValidator('json', twoFactorEnableRequestSchema),
+      async (context) => {
+        const auth = dependencies.auth;
+        if (!auth) return context.json({ error: 'unavailable' }, 503);
+        const response = await auth.handler(
+          forwardAuthRequest(context, '/api/auth/two-factor/enable', context.req.valid('json')),
+        );
+        if (!response.ok) return response;
+        const result = safeParse(twoFactorEnableResponseSchema, await response.clone().json());
+        return result.success
+          ? context.json(result.output, 200, responseHeaders(response))
+          : context.json({ error: 'invalid_auth_response' }, 502);
+      },
+    )
+    .post(
+      '/api/settings/two-factor/verify',
+      vValidator('json', twoFactorVerifyRequestSchema),
+      async (context) => {
+        const auth = dependencies.auth;
+        const assurances = dependencies.sessionAssurances;
+        if (!auth || !assurances) return context.json({ error: 'unavailable' }, 503);
+        const response = await auth.handler(
+          forwardAuthRequest(
+            context,
+            '/api/auth/two-factor/verify-totp',
+            context.req.valid('json'),
+          ),
+        );
+        if (!response.ok) return response;
+        const result = safeParse(twoFactorVerifyResponseSchema, await response.clone().json());
+        if (!result.success) return context.json({ error: 'invalid_auth_response' }, 502);
+        const cookie = responseSessionCookie(response);
+        if (!cookie) return context.json({ error: 'invalid_auth_response' }, 502);
+        const sessionToken = await auth.sessionToken(
+          new Request(context.req.url, { headers: { cookie } }),
+        );
+        if (!sessionToken) return context.json({ error: 'invalid_auth_response' }, 502);
+        const recorded = await recordTwoFactorAssurance(assurances, sessionToken);
+        return recorded
+          ? context.json({ status: 'verified' as const }, 200, responseHeaders(response))
+          : context.json({ error: 'assurance_unavailable' }, 503);
+      },
+    )
     .all('/api/auth/*', async (context) => {
       const auth = dependencies.auth;
+      if (
+        context.req.path === '/api/auth/two-factor/enable' ||
+        context.req.path === '/api/auth/two-factor/verify-totp'
+      ) {
+        return context.json({ error: 'not_found' }, 404);
+      }
       return auth ? auth.handler(context.req.raw) : context.json({ error: 'unavailable' }, 503);
     })
     .get(

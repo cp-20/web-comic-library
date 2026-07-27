@@ -7,9 +7,11 @@ export {
 export {
   type IdentityRepository,
   type ProfileViewer,
+  type SessionAssuranceRepository,
   type SessionIdentity,
   findVisibleProfile,
   isActiveSession,
+  recordTwoFactorAssurance,
   updateProfile,
 } from './identity';
 export {
