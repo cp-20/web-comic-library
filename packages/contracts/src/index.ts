@@ -34,6 +34,12 @@ export {
 export { catalogWorkParamsSchema, searchCatalogWorksQuerySchema } from './catalog';
 export { setFollowSettingsRequestSchema, setSourcePreferencesRequestSchema } from './follow';
 export {
+  followResponseRequestSchema,
+  followRequestParamsSchema,
+  socialProfileParamsSchema,
+  timelineQuerySchema,
+} from './social';
+export {
   notificationListQuerySchema,
   notificationParamsSchema,
   setNotificationPreferenceRequestSchema,

@@ -56,3 +56,9 @@ TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enabl
 管理commandには理由を必須にし、統合、分割、queue解決の前にapplication use caseを呼ぶ。認証なしは401、一般利用者は403、validation失敗は400を返す。実sessionとpasskey/二要素認証の接続は#020でauth adapterに実装する。
 
 `/api/catalog/redirects/{resource}/{id}`はretire済み作品または話の旧公開IDを正規URLへ302 redirectする。redirect解決に管理者認可は要求しないが、管理queryやcommandは公開しない。
+
+## social API
+
+`POST`と`DELETE /api/profiles/{userId}/follow`はactive sessionの利用者だけがprofileをfollowまたは解除する。`POST /api/settings/follow-requests/{userUuid}`は申請先本人だけが`accepted`または`rejected`へ応答する。`GET /api/settings/follows/users`は本人のfollowersとfollowingだけを返す。
+
+`GET /api/timeline`はactive sessionのaccepted followから、現在も公開またはfollowers公開である読書activityだけをcreated-atとIDのstable cursorで返す。`POST /api/library/status`は`shareActivity`がtrueの場合だけ状態変更activityを作成する。

@@ -66,7 +66,13 @@ export const setReadingStatus = async (
   const current = await repository.findLibraryEntry(input.userUuid, input.workId);
   const entry =
     current ?? createLibraryEntry(input.userUuid, input.workId, input.status, input.visibility);
-  const next = current === null ? entry : transitionReadingStatus(current, input.status, now).entry;
+  const next =
+    current === null
+      ? entry
+      : {
+          ...transitionReadingStatus(current, input.status, now).entry,
+          visibility: input.visibility,
+        };
   await transactions.transaction((context) => repository.saveLibraryEntry(context, next, now));
   return next;
 };

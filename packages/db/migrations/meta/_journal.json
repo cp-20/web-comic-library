@@ -141,6 +141,13 @@
       "when": 1785205185000,
       "tag": "0019_catalog_admin_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1785291585000,
+      "tag": "0020_social_timeline",
+      "breakpoints": true
     }
   ]
 }

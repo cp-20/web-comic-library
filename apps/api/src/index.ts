@@ -18,6 +18,7 @@ import {
   createPostgresFavoriteImport,
   createPostgresSourcePolicy,
   createPostgresSessionAssurance,
+  createPostgresSocial,
 } from '@web-comic-library/db';
 
 import { createApp, createCatalogAdminController } from './app';
@@ -62,6 +63,7 @@ const emailDigests = createPostgresEmailDigest(databaseUrl, foundation);
 const extensionTokens = createPostgresExtensionToken(databaseUrl, foundation);
 const favoriteImports = createPostgresFavoriteImport(databaseUrl, foundation);
 const sessionAssurances = createPostgresSessionAssurance(databaseUrl);
+const social = createPostgresSocial(databaseUrl, foundation);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -113,6 +115,7 @@ const app = createApp({
   profileIconStorage,
   sourcePolicies,
   sessionAssurances,
+  social,
   transactions: foundation,
   async resolveSession(request) {
     const token = await auth.sessionToken(request);
@@ -149,6 +152,7 @@ const stop = (): void => {
     webPushSubscriptions.close(),
     sourcePolicies.close(),
     sessionAssurances.close(),
+    social.close(),
   ]).then(() => process.exit(0));
 };
 

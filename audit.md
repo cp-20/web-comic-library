@@ -702,3 +702,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #56をsquash mergeした。main CIとImages workflowはいずれも成功し、Imagesはmigration read-only、service checks、GHCR image pushを完了した。
 - **cleanup**：PR merge時にremote作業branchを削除した。production環境、database、外部認証serviceの永続dataは変更していない。
 - **関連**：issue #058、PR #56、CI run #30234120995、Images run #30234120989。
+
+## 2026-07-27 #029 followとtimeline PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#029 social migration、follow・timeline query。
+- **操作**：migrationを初期状態から適用・再適用し、公開profileの即時follow、承認制profileの申請・拒否、読書activity、公開範囲変更後のtimeline除外を統合試験した。
+- **危険性**：local TCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さずrepository専用Compose projectだけを使用した。session token、Cookie、emailなどの値を出力・保存・監査記録しない。production databaseと外部serviceへ接続しない。
+- **結果**：公開範囲がprivateへ変更された既存activityがaccepted followerのtimelineから除外されることを含め、migrationとsocial storageを確認した。
+- **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除した。
+- **関連**：issue #029。
