@@ -2,9 +2,9 @@
 id: 048
 title: 単行本管理と利用者修正候補の投稿をcatalog管理へ接続する
 type: feature
-status: open
+status: blocked
 priority: P1
-depends_on: [015, 016, 020, 023]
+depends_on: [015, 016, 020, 023, 058]
 umbrella: 007
 ---
 
@@ -17,6 +17,10 @@ umbrella: 007
 ## 背景
 
 #015で作品と話の管理操作、review queue、強い管理者認可の境界を導入した。`VolumeEdition`と利用者identityは#016、#020、#023で初めてstorageと認証主体を持つため、それらが存在する前に巻操作や利用者由来の候補を安全に実装できない。
+
+## Blocked
+
+実identity storageにはadministrator roleとpasskey・二要素認証assuranceがなく、production API composition rootにもcatalog管理controllerが接続されていない。仮の管理者判定を導入せず、これらの前提を#058で実装してから再開する。
 
 ## スコープ
 
