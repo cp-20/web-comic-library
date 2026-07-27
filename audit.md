@@ -4,13 +4,13 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
-## 2026-07-27 #039 GitHub pull request（実施予定）
+## 2026-07-27 #039 GitHub pull request
 
 - **対象**：GitHubの`cp-20/web-comic-library`、#039実装branch、pull request、CI、container image build。
 - **操作**：検証済みcommitをpushし、draft PRを作成してCIとImages成功後にsquash mergeする。
 - **危険性**：remote branch、PR、mainへの変更反映、container image公開により後続deploymentが参照できる成果物が更新される。
 - **保護策**：保護されたmainへ直接pushせず、CI・Images成功とPR差分を確認してからsquash mergeする。Secret、token、個人情報をcommit、PR本文、監査ログへ含めない。
-- **結果**：未実施。
+- **結果**：branch `agent/039-favorites-import-workflow`へcommit `d5a0caf`をpushし、draft PR #41を作成した。CIとImagesの結果待ち。
 - **cleanup**：merge後に作業branchを削除する。
 - **関連**：issue #039。
 
