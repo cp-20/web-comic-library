@@ -50,14 +50,20 @@ export class PostgresVolumeLibrary implements VolumeLibraryRepository {
       this.#client<{ confirmed: boolean; contentUnitId: string }[]>`
         select
           (status = 'confirmed'::volume_content_mapping_status) as confirmed,
-          content_unit_id::text as "contentUnitId"
+          resolve_catalog_redirect(
+            'content_unit'::catalog_redirect_resource,
+            content_unit_id
+          )::text as "contentUnitId"
         from volume_content_mappings
         where volume_edition_id = ${volumeEditionId}::uuid
       `,
       this.#client<{ confirmed: boolean; contentUnitId: string; publicationEntryId: string }[]>`
         select
           mapping.confirmed,
-          mapping.content_unit_id::text as "contentUnitId",
+          resolve_catalog_redirect(
+            'content_unit'::catalog_redirect_resource,
+            mapping.content_unit_id
+          )::text as "contentUnitId",
           mapping.publication_entry_id::text as "publicationEntryId"
         from entry_content_mappings as mapping
         join publication_entries as entry on entry.id = mapping.publication_entry_id
@@ -78,11 +84,17 @@ export class PostgresVolumeLibrary implements VolumeLibraryRepository {
       select
         user_id as "userUuid",
         volume_edition_id::text as "volumeEditionId",
-        work_id::text as "workId",
+        resolve_catalog_redirect('work'::catalog_redirect_resource, work_id)::text as "workId",
         status,
         owns_paper as "ownsPaper",
         owns_digital as "ownsDigital",
-        memo_content_unit_id::text as "memoContentUnitId",
+        case
+          when memo_content_unit_id is null then null
+          else resolve_catalog_redirect(
+            'content_unit'::catalog_redirect_resource,
+            memo_content_unit_id
+          )::text
+        end as "memoContentUnitId",
         visibility
       from user_volume_records
       where user_id = ${userUuid}
@@ -101,7 +113,10 @@ export class PostgresVolumeLibrary implements VolumeLibraryRepository {
         records.map(
           async (record) => session`
             insert into content_read_records (user_id, work_id, content_unit_id, visibility, read_at)
-            values (${record.userUuid}, ${record.workId}::uuid, ${record.contentUnitId}::uuid,
+            values (
+              ${record.userUuid},
+              resolve_catalog_redirect('work'::catalog_redirect_resource, ${record.workId}::uuid),
+              resolve_catalog_redirect('content_unit'::catalog_redirect_resource, ${record.contentUnitId}::uuid),
               ${record.visibility}::visibility, ${record.readAt})
             on conflict (user_id, content_unit_id) do update
             set visibility = excluded.visibility, read_at = excluded.read_at, work_id = excluded.work_id
@@ -121,7 +136,10 @@ export class PostgresVolumeLibrary implements VolumeLibraryRepository {
         records.map(
           async (record) => session`
             insert into publication_read_records (user_id, work_id, publication_entry_id, visibility, read_at)
-            values (${record.userUuid}, ${record.workId}::uuid, ${record.publicationEntryId}::uuid,
+            values (
+              ${record.userUuid},
+              resolve_catalog_redirect('work'::catalog_redirect_resource, ${record.workId}::uuid),
+              ${record.publicationEntryId}::uuid,
               ${record.visibility}::visibility, ${record.readAt})
             on conflict (user_id, publication_entry_id) do update
             set visibility = excluded.visibility, read_at = excluded.read_at, work_id = excluded.work_id
@@ -140,9 +158,17 @@ export class PostgresVolumeLibrary implements VolumeLibraryRepository {
           user_id, volume_edition_id, work_id, status, owns_paper, owns_digital,
           memo_content_unit_id, visibility
         ) values (
-          ${record.userUuid}, ${record.volumeEditionId}::uuid, ${record.workId}::uuid,
+          ${record.userUuid}, ${record.volumeEditionId}::uuid,
+          resolve_catalog_redirect('work'::catalog_redirect_resource, ${record.workId}::uuid),
           ${record.status}::volume_reading_status, ${record.ownsPaper}, ${record.ownsDigital},
-          ${record.memoContentUnitId}::uuid, ${record.visibility}::visibility
+          case
+            when ${record.memoContentUnitId}::uuid is null then null
+            else resolve_catalog_redirect(
+              'content_unit'::catalog_redirect_resource,
+              ${record.memoContentUnitId}::uuid
+            )
+          end,
+          ${record.visibility}::visibility
         ) on conflict (user_id, volume_edition_id) do update
         set
           status = excluded.status,

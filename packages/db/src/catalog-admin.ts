@@ -172,6 +172,36 @@ export class PostgresCatalogAdmin implements CatalogAdminRepository {
         'delete from work_creators as source using work_creators as target where source.work_id = $1 and target.work_id = $2 and source.creator_id = target.creator_id and source.role = target.role',
         [command.sourceWorkId, command.targetWorkId],
       );
+      await session.unsafe(
+        'insert into library_entries as target (user_id, work_id, status, visibility, created_at, updated_at) select source.user_id, $2, source.status, source.visibility, source.created_at, source.updated_at from library_entries as source where source.work_id = $1 on conflict (user_id, work_id) do update set status = case when excluded.updated_at >= target.updated_at then excluded.status else target.status end, visibility = case when excluded.updated_at >= target.updated_at then excluded.visibility else target.visibility end, created_at = least(target.created_at, excluded.created_at), updated_at = greatest(target.updated_at, excluded.updated_at)',
+        [command.sourceWorkId, command.targetWorkId],
+      );
+      await session.unsafe('delete from library_entries where work_id = $1', [
+        command.sourceWorkId,
+      ]);
+      await session.unsafe(
+        'insert into work_follow_settings as target (user_id, work_id, mode, updated_at) select source.user_id, $2, source.mode, source.updated_at from work_follow_settings as source where source.work_id = $1 on conflict (user_id, work_id) do update set mode = case when excluded.updated_at >= target.updated_at then excluded.mode else target.mode end, updated_at = greatest(target.updated_at, excluded.updated_at)',
+        [command.sourceWorkId, command.targetWorkId],
+      );
+      await session.unsafe('delete from work_follow_settings where work_id = $1', [
+        command.sourceWorkId,
+      ]);
+      await session.unsafe('update subscription_publications set work_id = $2 where work_id = $1', [
+        command.sourceWorkId,
+        command.targetWorkId,
+      ]);
+      await session.unsafe('update user_volume_records set work_id = $2 where work_id = $1', [
+        command.sourceWorkId,
+        command.targetWorkId,
+      ]);
+      await session.unsafe('update volume_content_mappings set work_id = $2 where work_id = $1', [
+        command.sourceWorkId,
+        command.targetWorkId,
+      ]);
+      await session.unsafe('update volume_editions set work_id = $2 where work_id = $1', [
+        command.sourceWorkId,
+        command.targetWorkId,
+      ]);
       await session.unsafe('delete from work_ingestion_keys where work_id = $1', [
         command.sourceWorkId,
       ]);
@@ -244,6 +274,13 @@ export class PostgresCatalogAdmin implements CatalogAdminRepository {
         'insert into entry_content_mappings (work_id, publication_entry_id, content_unit_id, confirmed) select work_id, publication_entry_id, $2, confirmed from entry_content_mappings where content_unit_id = $1 on conflict (publication_entry_id, content_unit_id) do update set confirmed = entry_content_mappings.confirmed or excluded.confirmed',
         [source.id, target.id],
       );
+      await session.unsafe(
+        "insert into volume_content_mappings as target (volume_edition_id, content_unit_id, work_id, status, created_at, updated_at) select volume_edition_id, $2, work_id, status, created_at, updated_at from volume_content_mappings where content_unit_id = $1 on conflict (volume_edition_id, content_unit_id) do update set status = case when target.status = 'confirmed'::volume_content_mapping_status or excluded.status = 'confirmed'::volume_content_mapping_status then 'confirmed'::volume_content_mapping_status when target.status = 'unconfirmed'::volume_content_mapping_status or excluded.status = 'unconfirmed'::volume_content_mapping_status then 'unconfirmed'::volume_content_mapping_status else 'rejected'::volume_content_mapping_status end, updated_at = greatest(target.updated_at, excluded.updated_at)",
+        [source.id, target.id],
+      );
+      await session.unsafe('delete from volume_content_mappings where content_unit_id = $1', [
+        source.id,
+      ]);
       await session.unsafe('delete from entry_content_mappings where content_unit_id = $1', [
         source.id,
       ]);
@@ -429,7 +466,7 @@ export class PostgresCatalogAdmin implements CatalogAdminRepository {
 
   async #deferCatalogConstraints(session: TransactionSql): Promise<void> {
     await session.unsafe(
-      'set constraints publication_entries_publication_id_work_id_fkey, entry_content_mappings_publication_entry_id_work_id_fkey, entry_content_mappings_content_unit_id_work_id_fkey deferred',
+      'set constraints publication_entries_publication_id_work_id_fkey, entry_content_mappings_publication_entry_id_work_id_fkey, entry_content_mappings_content_unit_id_work_id_fkey, subscription_publications_publication_id_work_id_fkey, volume_content_mappings_volume_edition_id_work_id_fkey, volume_content_mappings_content_unit_id_work_id_fkey, user_volume_records_volume_edition_id_work_id_fkey, user_volume_records_memo_content_unit_id_work_id_fkey deferred',
     );
   }
 

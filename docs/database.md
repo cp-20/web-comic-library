@@ -122,7 +122,7 @@ connector候補は`work_ingestion_keys`のNFKC正規化済み作品名、作者�
 
 管理操作は`catalog_merge_audits`に操作種別、操作者、理由、変更前後、時刻を追記する。`catalog_redirects`はretireした作品または話の旧IDを正規IDへ対応付け、公開queryは旧IDを直接公開せず正規IDへredirectする。
 
-作品統合は掲載先、掲載ページ、話、対応付けを同じtransaction内で正規作品へ移す。話統合は掲載ページ対応を正規話へ集約し、重複mappingでは`confirmed`を失わない。分割は選択された掲載先と話の対応関係が閉じている場合だけ許可し、根拠のない既読対応を作らない。
+作品統合は掲載先、掲載ページ、話、対応付け、現在の読書状態、follow設定、巻の所蔵参照を同じtransaction内で正規作品へ移す。同じ利用者の現在状態が衝突した場合は更新時刻が新しい値を採用する。既読record、読書状態の追記履歴、通知eventは元IDを保持し、`resolve_catalog_redirect`でquery時に正規の作品・話IDへ解決する。話統合は掲載ページと巻の対応を正規話へ集約し、重複mappingでは`confirmed`を失わない。分割は選択された掲載先と話の対応関係が閉じている場合だけ許可し、根拠のない既読対応を作らない。
 
 `catalog_review_items`は解析失敗、種別不明、利用者修正候補を保持する。解析またはvalidation失敗と種別不明候補はdedupe key付きでqueueへ追加し、管理者が解決するまで既存catalog dataを削除しない。
 

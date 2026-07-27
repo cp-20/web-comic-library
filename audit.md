@@ -4,6 +4,26 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
+## 2026-07-27 #047 catalog履歴正規ID解決 GitHub pull request（実施前）
+
+- **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/047-catalog-history-reconciliation`、pull request、CI、container image build。
+- **操作**：検証済みcommitをpushし、main向けdraft PRを作成してCIとImages成功後にsquash mergeする。
+- **危険性**：remote branch、PR、mainへの変更反映、container image公開により後続deploymentが参照できる成果物が更新される。
+- **保護策**：保護されたmainへ直接pushせず、CI・Images成功とPR差分を確認してからsquash mergeする。production database migration、rollout、外部serviceへの接続を実施しない。Secret、token、個人情報をcommit、PR本文、監査ログへ含めない。
+- **結果**：実施前。
+- **cleanup**：merge後に不要なremote作業branchを削除する。
+- **関連**：issue #047。
+
+## 2026-07-27 #047 catalog履歴正規ID解決 PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、catalog redirect、読書・所蔵・通知の匿名test data。
+- **操作**：migrationを適用し、作品・話の統合と分割の前後で既読、所蔵、通知履歴を正規IDへ解決する統合試験を実行する。
+- **危険性**：local TCP port 55432、Docker container、network、匿名test dataを一時的に使用する。
+- **保護策**：production接続情報、実利用者data、Secretを渡さず、repository専用Compose projectだけを使用する。試験後にcontainer、network、volumeを削除する。
+- **結果**：migrationの初期適用・再適用、作品・話の統合と分割、既読・所蔵・通知履歴の正規ID解決、通知の再実行時の重複防止を含む125 testsが成功（0 fail）した。
+- **cleanup**：`docker compose down --volumes`でtest containerとnetworkを削除した。
+- **関連**：issue #047。
+
 ## 2026-07-27 #045 database接続待機 local検証
 
 - **対象**：local Docker network、使い捨てPostgreSQL 16 container、`pg_isready` wait command。
