@@ -753,6 +753,16 @@ Secretの値と個人情報は記録しない。
 - **cleanup**：merge完了時にremote作業branchを削除する。production環境と永続dataは変更しない。
 - **関連**：issue #031、PR #62。
 
+## 2026-07-27 #031 moderation mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #62、main commit `e1a4a77668bb4edcb7a4b89a2cb63602bed9e1ec`、CI、Images workflow、GHCR。
+- **操作**：PR #62のqualityとImages成功後にsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とGHCRへのcontainer image公開により、後続deploymentが当該成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であることとquality・Images成功を確認した。production deployment、production database migration、Secretの変更を実施していない。
+- **結果**：PR #62をsquash mergeした。main CIはcheck、test、Web build、Docker compatibility testを含めて成功し、Imagesはbuild、migration read-only、service checks、GHCR image pushを含めて成功した。
+- **cleanup**：PR merge時にremote作業branchを削除した。local PostgreSQL統合試験のcontainer、network、test volumeを削除した。production環境、database、外部serviceの永続dataは変更していない。
+- **関連**：issue #031、PR #62、CI run #30239703110、Images run #30239703093。
+
 ## 2026-07-27 #030 感想・いいね PR作成
 
 - **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/030-reviews-likes-spoilers`、#030実装commit。
