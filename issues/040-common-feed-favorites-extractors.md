@@ -2,7 +2,7 @@
 id: 040
 title: 共通feed型3サイトのお気に入りextractorを作る
 type: feature
-status: open
+status: blocked
 priority: P1
 depends_on: [009, 011, 039]
 umbrella: 037
@@ -57,3 +57,7 @@ umbrella: 037
 
 - 漫画viewerからの既読取得。
 - 三サイトのaccount credential保存。
+
+## Blocker
+
+catalogのsourceはUUIDで保持する一方、extensionが安全に使用できるsource keyからUUIDへの解決経路がない。候補を誤ったsourceへ紐付けないため、[056](./056-extension-source-resolution.md)で許可済みsource keyのserver側解決を実装するまでextractorの送信処理を開始しない。

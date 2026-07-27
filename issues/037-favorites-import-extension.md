@@ -22,6 +22,7 @@ umbrella: 019
 - [041 ニコニコ漫画のextractor](./041-niconico-favorites-extractor.md)
 - [042 カドコミのextractor](./042-kadocomi-favorites-extractor.md)
 - [055 extension Web origin権限とE2E](./055-extension-web-origin-e2e.md)
+- [056 extension source key解決](./056-extension-source-resolution.md)
 
 ## 完了条件
 
