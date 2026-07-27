@@ -14,7 +14,9 @@ migrationには適用後の制約と主要queryを確認する統合テストを
 
 ## identity storage
 
-Better Auth互換の`user`、`session`、`account`、`verification`を保持し、利用者固有の設定は`profiles`と`profile_followers`へ分ける。`profiles.public_id`は一意、ASCII小文字のID規則、予約語禁止をapplicationとDBの両方で守る。account statusは`active`、`disabled`、`pending_deletion`で、session queryは`profiles`とjoinしてactive以外を認証済みにしない。
+Better Auth互換の`user`、`session`、`account`、`verification`、`two_factor`を保持し、利用者固有の設定は`profiles`と`profile_followers`へ分ける。`profiles.public_id`は一意、ASCII小文字のID規則、予約語禁止をapplicationとDBの両方で守る。account statusは`active`、`disabled`、`pending_deletion`で、session queryは`profiles`とjoinしてactive以外を認証済みにしない。
+
+`session_assurances`はTOTP verificationが成功したsession IDだけを`two_factor`として記録する。session token、Cookie、email、request headerからassuranceを推測してはならない。assuranceの期限はverification時点のsession expiryに固定し、sessionの削除（logoutを含む）はforeign key cascadeでassuranceも無効化する。
 
 `profiles.default_visibility`は未設定を許容する。未設定の閲覧判定はapplicationで`private`として解決し、recordごとの上書きが存在する場合は標準値より優先する。follower関係は`profile_followers`の複合主キーと両方のforeign keyで保証する。
 

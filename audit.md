@@ -652,3 +652,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：main CIとImages workflowはいずれも成功した。
 - **cleanup**：PR merge時にremote作業branchを削除した。production databaseと外部serviceの永続dataは変更していない。
 - **関連**：PR #29、issue #027。
+
+## 2026-07-27 #059 session assurance PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#059 identity/TOTP migration、session assurance query。
+- **操作**：migrationを初期状態から適用・再適用し、通常session、TOTP verification後のassurance、assurance期限、session削除時のcascadeを統合試験する。
+- **危険性**：localのTCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。TOTP secret、backup code、session tokenを出力・保存・監査記録しない。外部service、production database、永続user dataへ接続しない。
+- **結果**：migrationを初期状態から適用・再適用し、magic link session、実TOTP enrollment・verification、署名cookieのadapter検証、session assurance保存、期限切れ時の非強認証化、session削除時のcascadeを確認した。PostgreSQL統合を含む128 testsが成功（0 fail）し、`bun run check`、通常test、Web buildも成功した。
+- **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除した。
+- **関連**：issue #059。

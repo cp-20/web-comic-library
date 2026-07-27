@@ -2,7 +2,6 @@ import {
   createAuthAdapter,
   createR2ObjectClient,
   createR2ProfileIconStorage,
-  readSessionToken,
 } from '@web-comic-library/auth';
 import {
   createPostgresFoundation,
@@ -17,6 +16,7 @@ import {
   createPostgresExtensionToken,
   createPostgresFavoriteImport,
   createPostgresSourcePolicy,
+  createPostgresSessionAssurance,
 } from '@web-comic-library/db';
 
 import { createApp } from './app';
@@ -59,6 +59,7 @@ const webPushSubscriptions = createPostgresWebPushSubscription(databaseUrl, foun
 const emailDigests = createPostgresEmailDigest(databaseUrl, foundation);
 const extensionTokens = createPostgresExtensionToken(databaseUrl, foundation);
 const favoriteImports = createPostgresFavoriteImport(databaseUrl, foundation);
+const sessionAssurances = createPostgresSessionAssurance(databaseUrl);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -108,9 +109,10 @@ const app = createApp({
   volumeLibrary,
   profileIconStorage,
   sourcePolicies,
+  sessionAssurances,
   transactions: foundation,
   async resolveSession(request) {
-    const token = readSessionToken(request);
+    const token = await auth.sessionToken(request);
     return token ? identity.findSessionIdentity(token) : null;
   },
 });
@@ -138,6 +140,7 @@ const stop = (): void => {
     favoriteImports.close(),
     webPushSubscriptions.close(),
     sourcePolicies.close(),
+    sessionAssurances.close(),
   ]).then(() => process.exit(0));
 };
 

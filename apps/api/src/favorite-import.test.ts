@@ -134,7 +134,12 @@ test('extension RPC accepts only import-scoped tokens and batch owners can apply
     favoriteImportSources: sourcePolicies,
     transactions,
     async resolveSession() {
-      return { accountStatus: 'active', email: 'reader@example.test', userUuid: sessionUser };
+      return {
+        accountStatus: 'active',
+        assurance: 'none',
+        email: 'reader@example.test',
+        userUuid: sessionUser,
+      };
     },
   });
   const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });

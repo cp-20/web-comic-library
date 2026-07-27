@@ -1,6 +1,10 @@
 export {
   magicLinkRequestSchema,
   profileParamsSchema,
+  twoFactorEnableRequestSchema,
+  twoFactorEnableResponseSchema,
+  twoFactorVerifyRequestSchema,
+  twoFactorVerifyResponseSchema,
   updateProfileRequestSchema,
 } from './identity';
 export {

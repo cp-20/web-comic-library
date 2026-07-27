@@ -12,6 +12,7 @@ export default function ProfileSettingsPage() {
       <p>公開範囲を選ぶまで、プロフィールと読書記録は非公開です。</p>
       <ProfileForm />
       <Link href="/settings/follows">掲載先とfollow設定</Link>
+      <Link href="/settings/security">二要素認証</Link>
       <Link href="/settings/extension">browser extension連携</Link>
       <LogoutButton />
     </main>

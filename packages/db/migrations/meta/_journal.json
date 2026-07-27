@@ -127,6 +127,13 @@
       "when": 1786233600000,
       "tag": "0017_catalog_history_reconciliation",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1785118785000,
+      "tag": "0018_session_assurance",
+      "breakpoints": true
     }
   ]
 }

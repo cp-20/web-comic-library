@@ -17,6 +17,8 @@ route変更にはHono RPC clientを通すテストを付ける。
 
 Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono RPCの`POST /api/login/magic-link`、`POST /api/login/google`、`POST /api/logout`へ限定する。前者二つは固定された`/settings/profile` callbackだけをauth adapterへ渡し、adapterのrate limitとorigin検証を通す。
 
+TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enable`、`POST /api/settings/two-factor/verify`だけを通す。verification成功時はauth adapterのsession cookieからtokenをWebへ返さずに読み取り、APIがsession IDに対応するassuranceを保存できた場合だけsuccessを返す。生の`/api/auth/two-factor/enable`と`/api/auth/two-factor/verify-totp`は公開しない。
+
 `GET /api/session`は有効なaccountのsessionだけを返す。`GET /api/profiles/{userId}`はapplicationのVisibility判定を通し、存在しない場合と閲覧できない場合はともに404を返す。`PUT /api/settings/profile`と`POST /api/settings/profile/icon`は有効なsessionを必要とし、icon URLをprofile更新入力で受け取らない。icon uploadだけがapplicationのPNG、容量、寸法検証・sanitizationを経由してstorage portへ渡す。
 
 ## library API

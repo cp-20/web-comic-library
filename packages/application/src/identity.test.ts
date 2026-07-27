@@ -29,9 +29,19 @@ test('does not expose an account until a visibility is selected', async () => {
     findVisibleProfile(repository, 'reader-01', { userUuid: 'other' }),
   ).resolves.toBeNull();
   expect(
-    isActiveSession({ accountStatus: 'active', email: 'reader@example.com', userUuid: 'reader' }),
+    isActiveSession({
+      accountStatus: 'active',
+      assurance: 'none',
+      email: 'reader@example.com',
+      userUuid: 'reader',
+    }),
   ).toBe(true);
   expect(
-    isActiveSession({ accountStatus: 'disabled', email: 'reader@example.com', userUuid: 'reader' }),
+    isActiveSession({
+      accountStatus: 'disabled',
+      assurance: 'none',
+      email: 'reader@example.com',
+      userUuid: 'reader',
+    }),
   ).toBe(false);
 });

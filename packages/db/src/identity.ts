@@ -49,10 +49,17 @@ export class PostgresIdentity implements IdentityRepository {
 
   async findSessionIdentity(token: string): Promise<SessionIdentity | null> {
     const rows = await this.#client<SessionIdentity[]>`
-      select profile.account_status as "accountStatus", "user".email, "user".id as "userUuid"
+      select profile.account_status as "accountStatus",
+        case
+          when session_assurance.session_id is null then 'none'
+          else session_assurance.assurance::text
+        end as assurance,
+        "user".email, "user".id as "userUuid"
       from session
       join "user" on "user".id = session.user_id
       join profiles as profile on profile.user_id = "user".id
+      left join session_assurances as session_assurance
+        on session_assurance.session_id = session.id and session_assurance.expires_at > now()
       where session.token = ${token} and session.expires_at > now()
     `;
     return rows[0] ?? null;

@@ -1,5 +1,5 @@
 import { betterAuth } from 'better-auth';
-import { magicLink } from 'better-auth/plugins';
+import { magicLink, twoFactor } from 'better-auth/plugins';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 
@@ -34,19 +34,16 @@ export type AuthConfiguration = Readonly<{
 export type AuthAdapter = Readonly<{
   close(): Promise<void>;
   handler(request: Request): Promise<Response>;
+  sessionToken(request: Request): Promise<string | null>;
 }>;
 
-export const readSessionToken = (request: Request): string | null => {
-  const cookie = request.headers.get('cookie');
-  if (!cookie) return null;
-  const prefix = request.url.startsWith('https://')
-    ? '__Secure-better-auth.session_token'
-    : 'better-auth.session_token';
-  const token = cookie
-    .split(';')
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${prefix}=`));
-  return token ? decodeURIComponent(token.slice(prefix.length + 1)) : null;
+const sessionTokenFromResponse = async (response: Response): Promise<string | null> => {
+  if (!response.ok) return null;
+  const body: unknown = await response.json();
+  if (!body || typeof body !== 'object' || !('session' in body)) return null;
+  const session = body.session;
+  if (!session || typeof session !== 'object' || !('token' in session)) return null;
+  return typeof session.token === 'string' ? session.token : null;
 };
 
 const requireHttpsOrLocalhost = (value: string): string => {
@@ -79,6 +76,20 @@ export const createAuthAdapter = (
         }
       : undefined;
   const auth = betterAuth({
+    account: {
+      fields: {
+        accessToken: 'access_token',
+        accessTokenExpiresAt: 'access_token_expires_at',
+        accountId: 'account_id',
+        createdAt: 'created_at',
+        idToken: 'id_token',
+        providerId: 'provider_id',
+        refreshToken: 'refresh_token',
+        refreshTokenExpiresAt: 'refresh_token_expires_at',
+        updatedAt: 'updated_at',
+        userId: 'user_id',
+      },
+    },
     advanced: {
       cookies: {
         session_token: {
@@ -89,15 +100,36 @@ export const createAuthAdapter = (
           },
         },
       },
-      database: { generateId: 'uuid' },
+      database: { generateId: () => crypto.randomUUID() },
     },
     baseURL,
-    database: { casing: 'snake', db: database, transaction: true, type: 'postgres' },
+    database: { db: database, transaction: true, type: 'postgres' },
     plugins: [
       magicLink({
         expiresIn: 300,
         sendMagicLink: async ({ email, url }) => magicLinkSender.send({ email, url }),
         storeToken: 'hashed',
+      }),
+      twoFactor({
+        allowPasswordless: true,
+        schema: {
+          twoFactor: {
+            fields: {
+              backupCodes: 'backup_codes',
+              failedVerificationCount: 'failed_verification_count',
+              lockedUntil: 'locked_until',
+              secret: 'secret',
+              userId: 'user_id',
+              verified: 'verified',
+            },
+            modelName: 'two_factor',
+          },
+          user: {
+            fields: {
+              twoFactorEnabled: 'two_factor_enabled',
+            },
+          },
+        },
       }),
     ],
     rateLimit: {
@@ -105,10 +137,35 @@ export const createAuthAdapter = (
       window: 60,
       max: 10,
     },
+    session: {
+      fields: {
+        createdAt: 'created_at',
+        expiresAt: 'expires_at',
+        ipAddress: 'ip_address',
+        updatedAt: 'updated_at',
+        userAgent: 'user_agent',
+        userId: 'user_id',
+      },
+      storeSessionInDatabase: true,
+    },
     secret: configuration.secret,
     socialProviders,
     telemetry: { enabled: false },
     trustedOrigins: [...configuration.trustedOrigins],
+    user: {
+      fields: {
+        createdAt: 'created_at',
+        emailVerified: 'email_verified',
+        updatedAt: 'updated_at',
+      },
+    },
+    verification: {
+      fields: {
+        createdAt: 'created_at',
+        expiresAt: 'expires_at',
+        updatedAt: 'updated_at',
+      },
+    },
   });
   return {
     async close(): Promise<void> {
@@ -116,6 +173,15 @@ export const createAuthAdapter = (
     },
     async handler(request: Request): Promise<Response> {
       return auth.handler(request);
+    },
+    async sessionToken(request: Request): Promise<string | null> {
+      const headers = new Headers();
+      const cookie = request.headers.get('cookie');
+      if (cookie) headers.set('cookie', cookie);
+      const response = await auth.handler(
+        new Request(new URL('/api/auth/get-session', request.url), { headers }),
+      );
+      return sessionTokenFromResponse(response);
     },
   };
 };
