@@ -742,3 +742,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：実装branchをpushし、ドラフトPR #60を作成してCIとImages workflowを開始した。初回quality CIは固定ISBNの並列test衝突で失敗したが、Secret・productionへの影響はなく、fixture修正と全PostgreSQL統合試験の成功後に再実行する。
 - **cleanup**：merge完了時にremote作業branchを削除する。production環境と永続dataは変更しない。
 - **関連**：issue #030、PR #60。
+
+## 2026-07-27 #030 感想・いいね mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #60、main commit `87a62f25b18ce38bb65a5f4620b9d9c00ecf4409`、CI、Images workflow、GHCR。
+- **操作**：fixture衝突修正後に成功したPR #60をsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とGHCRへのcontainer image公開により、後続deploymentが当該成果物を参照可能になる。
+- **保護策**：PR merge前にqualityとImagesの成功を確認した。初回quality失敗は固定ISBNの並列test衝突だけであることをログで確認し、ランダムfixture化とCI相当の全PostgreSQL統合試験136 pass、0 failを確認してから再実行した。production deployment、production database migration、Secretの変更を実施していない。
+- **結果**：PR #60をsquash mergeした。main CIとImages workflowはいずれも成功し、Imagesはmigration read-only、service checks、GHCR image pushを完了した。
+- **cleanup**：PR merge時にremote作業branchを削除した。local PostgreSQL統合試験のcontainer、network、test volumeを削除した。production環境、database、外部serviceの永続dataは変更していない。
+- **関連**：issue #030、PR #60、CI run #30237300621、Images run #30237300615。
