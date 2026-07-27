@@ -33,6 +33,7 @@ export interface SourcePolicyQueryPort {
   classifyAgeRating(sourceId: string, externalValue: string | null): Promise<AgeRatingDisposition>;
   findLatestPolicy(sourceId: string): Promise<SourcePolicyRecord | null>;
   listPublicPublicationIds(workId: string): Promise<readonly string[]>;
+  resolveCollectableSourceId(sourceKey: string): Promise<string | null>;
 }
 
 export type SourceCollectionResult<Result> =

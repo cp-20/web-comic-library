@@ -140,6 +140,8 @@ integrationTest(
       ]);
 
       expect(await policies.canCollect(source.id)).toBe(true);
+      expect(await policies.resolveCollectableSourceId(source.key)).toBe(source.id);
+      expect(await policies.resolveCollectableSourceId('unregistered-source')).toBeNull();
       expect(await policies.classifyAgeRating(source.id, 'all-ages')).toBe('public');
       expect(await policies.classifyAgeRating(source.id, 'R18')).toBe('excluded');
       expect(await policies.classifyAgeRating(source.id, 'age-gate')).toBe('review');
@@ -173,6 +175,7 @@ integrationTest(
       });
 
       expect(await policies.canCollect(source.id)).toBe(false);
+      expect(await policies.resolveCollectableSourceId(source.key)).toBeNull();
       expect(await policies.listPublicPublicationIds(work.id)).toEqual([]);
       expect(await findPublicWork(catalog, policies, work.id)).toBeNull();
 

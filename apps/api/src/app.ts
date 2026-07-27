@@ -61,6 +61,8 @@ import {
   createFavoriteImport,
   discardFavoriteImport,
   getFavoriteImport,
+  FavoriteImportSourceRejectedError,
+  resolveFavoriteImportSources,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -136,6 +138,7 @@ export type ApiDependencies = Readonly<{
   emailDigests: EmailDigestSettingsRepository | null;
   extensionTokens: ExtensionTokenRepository | null;
   favoriteImports: FavoriteImportRepository | null;
+  favoriteImportSources: Pick<SourcePolicyQueryPort, 'resolveCollectableSourceId'> | null;
   resendWebhookSecret: string | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
@@ -164,6 +167,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   emailDigests: null,
   extensionTokens: null,
   favoriteImports: null,
+  favoriteImportSources: null,
   resendWebhookSecret: null,
   identity: null,
   library: null,
@@ -717,14 +721,26 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         const token = readBearerToken(context.req.raw);
         const extensionTokens = dependencies.extensionTokens;
         const favorites = dependencies.favoriteImports;
+        const favoriteImportSources = dependencies.favoriteImportSources;
         const transactions = dependencies.transactions;
         if (!token) return context.json({ error: 'unauthenticated' }, 401);
-        if (!extensionTokens || !favorites || !transactions)
+        if (!extensionTokens || !favorites || !favoriteImportSources || !transactions)
           return context.json({ error: 'unavailable' }, 503);
         const userUuid = await authenticateExtensionToken(extensionTokens, token);
         if (!userUuid) return context.json({ error: 'unauthenticated' }, 401);
+        let resolvedFavorites;
+        try {
+          resolvedFavorites = await resolveFavoriteImportSources(
+            favoriteImportSources,
+            context.req.valid('json').favorites,
+          );
+        } catch (error) {
+          if (error instanceof FavoriteImportSourceRejectedError)
+            return context.json({ error: 'source_not_collectable' }, 403);
+          throw error;
+        }
         const batch = await createFavoriteImport(transactions, favorites, {
-          favorites: context.req.valid('json').favorites,
+          favorites: resolvedFavorites,
           userUuid,
         });
         return context.json(

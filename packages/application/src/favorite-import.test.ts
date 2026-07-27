@@ -5,7 +5,9 @@ import type { FavoriteImportCandidate } from '@web-comic-library/domain';
 import {
   applyFavoriteImport,
   createFavoriteImport,
+  FavoriteImportSourceRejectedError,
   type FavoriteImportRepository,
+  resolveFavoriteImportSources,
 } from './favorite-import';
 import type { FollowRepository } from './follow';
 import type { LibraryRepository } from './library';
@@ -16,6 +18,40 @@ const transactions: TransactionPort = {
     return operation(new TransactionContext());
   },
 };
+
+test('resolves only collectable source keys before an import batch is created', async () => {
+  const policies = {
+    async resolveCollectableSourceId(sourceKey: string): Promise<string | null> {
+      return sourceKey === 'shonen-jump-plus' ? 'source-uuid' : null;
+    },
+  };
+  const resolved = await resolveFavoriteImportSources(policies, [
+    {
+      canonicalUrl: 'https://shonenjumpplus.com/works/1',
+      externalWorkId: '1',
+      sourceKey: 'shonen-jump-plus',
+      title: '作品',
+    },
+  ]);
+  expect(resolved).toEqual([
+    {
+      canonicalUrl: 'https://shonenjumpplus.com/works/1',
+      externalWorkId: '1',
+      sourceId: 'source-uuid',
+      title: '作品',
+    },
+  ]);
+  await expect(
+    resolveFavoriteImportSources(policies, [
+      {
+        canonicalUrl: 'https://example.test/works/1',
+        externalWorkId: '1',
+        sourceKey: 'disabled',
+        title: '拒否作品',
+      },
+    ]),
+  ).rejects.toBeInstanceOf(FavoriteImportSourceRejectedError);
+});
 
 test('normalizes only query-free canonical URLs and applies confirmed exact matches idempotently', async () => {
   let batch = null as Awaited<ReturnType<FavoriteImportRepository['findBatch']>>;

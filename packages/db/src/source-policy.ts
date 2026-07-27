@@ -95,6 +95,25 @@ export class PostgresSourcePolicy implements SourcePolicyRepository, SourcePolic
     return canCollectSource(await this.findLatestPolicy(sourceId));
   }
 
+  async resolveCollectableSourceId(sourceKey: string): Promise<string | null> {
+    const rows = await this.#client<{ sourceId: string }[]>`
+      select source.id::text as "sourceId"
+      from sources as source
+      join lateral (
+        select policy.collection, policy.emergency_stopped
+        from source_policy_records as policy
+        where policy.source_id = source.id
+        order by policy.revision desc
+        limit 1
+      ) as policy on true
+      where source.key = ${sourceKey}
+        and policy.collection = 'allowed'
+        and not policy.emergency_stopped
+      limit 1
+    `;
+    return rows[0]?.sourceId ?? null;
+  }
+
   async classifyAgeRating(
     sourceId: string,
     externalValue: string | null,

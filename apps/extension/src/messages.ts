@@ -4,7 +4,7 @@ export type ContentScriptResponse = Readonly<{
   favorites: readonly Readonly<{
     canonicalUrl: string;
     externalWorkId: string | null;
-    sourceId: string;
+    sourceKey: string;
     title: string;
   }>[];
 }>;
@@ -22,8 +22,8 @@ const isFavorite = (value: unknown): value is ContentScriptResponse['favorites']
   typeof value.canonicalUrl === 'string' &&
   'externalWorkId' in value &&
   (typeof value.externalWorkId === 'string' || value.externalWorkId === null) &&
-  'sourceId' in value &&
-  typeof value.sourceId === 'string' &&
+  'sourceKey' in value &&
+  typeof value.sourceKey === 'string' &&
   'title' in value &&
   typeof value.title === 'string';
 

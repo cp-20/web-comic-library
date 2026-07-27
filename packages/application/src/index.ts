@@ -47,13 +47,16 @@ export {
 } from './extension-pairing';
 export {
   type FavoriteImportInput,
+  type FavoriteImportSourceInput,
   type FavoriteImportReadModel,
   type FavoriteImportRepository,
   type FavoriteImportSelection,
+  FavoriteImportSourceRejectedError,
   applyFavoriteImport,
   createFavoriteImport,
   discardFavoriteImport,
   getFavoriteImport,
+  resolveFavoriteImportSources,
 } from './favorite-import';
 export {
   type WebPushDelivery,

@@ -32,6 +32,8 @@ Better Auth互換の`user`、`session`、`account`、`verification`を保持し�
 
 `favorite_import_batches`は利用者、24時間の期限、確認・破棄時刻を保持し、確認済みbatchを再適用できない。`favorite_import_candidates`はsource、外部作品ID、canonical URL、表示title、完全一致・曖昧・未照合のsnapshotを保持する。sourceとcanonical URLはbatch内で一意にし、完全一致にはworkとpublicationのforeign keyを必須にする。
 
+extension inputのsource keyは`source_policy_records`の最新revisionでcollectionが`allowed`かつ緊急停止中でない`source`だけをUUIDへ解決してからcandidateへ保存する。未登録またはpolicyで拒否されたkeyはbatchとcandidateを作成しない。
+
 titleだけの一致は`title_match_work_ids`に候補として保存し、自動適用しない。batchのclaim、`LibraryEntry`の任意upsert、follow設定と掲載先指定は同じapplication transactionで確定する。既読recordと進捗recordはこのtransactionで変更しない。
 
 ## 単行本library storage

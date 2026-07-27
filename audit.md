@@ -4,6 +4,26 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
+## 2026-07-27 #056 source key解決 GitHub pull request
+
+- **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/056-extension-source-resolution`、pull request、CI、container image build。
+- **操作**：検証済みcommitをpushし、main向けdraft PRを作成してCIとImages成功後にsquash mergeする。
+- **危険性**：remote branch、PR、mainへの変更反映、container image公開により後続deploymentが参照できる成果物が更新される。
+- **保護策**：保護されたmainへ直接pushせず、CI・Images成功とPR差分を確認してからsquash mergeする。production database migration、rollout、外部serviceへの接続を実施しない。Secret、token、個人情報をcommit、PR本文、監査ログへ含めない。
+- **結果**：実行前。完了後に結果を追記する。
+- **cleanup**：merge後に不要なremote作業branchを削除する。
+- **関連**：issue #056。
+
+## 2026-07-27 #056 source key解決 PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、catalog source、source policy revision、extension favorite import source key解決。
+- **操作**：migrationを再適用し、許可済みsource keyのUUID解決、未登録keyの拒否、緊急停止後の拒否を統合試験する。
+- **危険性**：localのTCP port 55432、Docker container、network、匿名test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。extension token、Cookie、個人情報をlog、fixture、監査ログへ記録しない。
+- **結果**：migrationの初期適用・再適用、許可済みsource keyのUUID解決、未登録keyの拒否、緊急停止後の拒否を含む124 testsが成功（0 fail）した。
+- **cleanup**：試験後に`docker compose down --volumes`でtest container、network、volumeを削除する。
+- **関連**：issue #056。
+
 ## 2026-07-27 #039 GitHub pull request
 
 - **対象**：GitHubの`cp-20/web-comic-library`、#039実装branch、pull request、CI、container image build。

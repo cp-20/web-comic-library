@@ -2,7 +2,7 @@
 id: 056
 title: extension import用のsource key解決を提供する
 type: feature
-status: open
+status: done
 priority: P1
 depends_on: [008, 009, 039]
 umbrella: 037

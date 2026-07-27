@@ -28,7 +28,7 @@ export const createFavoriteImportRequestSchema = object({
       object({
         canonicalUrl: text,
         externalWorkId: nullable(text),
-        sourceId: id,
+        sourceKey: id,
         title: text,
       }),
     ),
