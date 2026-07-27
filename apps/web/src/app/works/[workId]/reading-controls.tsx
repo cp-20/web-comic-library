@@ -36,13 +36,14 @@ export const ReadingControls = ({ workId }: Readonly<{ workId: string }>) => {
           const form = new FormData(event.currentTarget);
           const status = String(form.get('status'));
           const visibility = String(form.get('visibility'));
+          const shareActivity = form.get('shareActivity') === 'on';
           if (
             !isReadingStatus(status) ||
             (visibility !== 'public' && visibility !== 'followers' && visibility !== 'private')
           )
             return;
           const response = await client.api.library.status.$post({
-            json: { status, visibility, workId },
+            json: { shareActivity, status, visibility, workId },
           });
           setMessage(response.ok ? '読書状態を保存しました。' : '読書状態を保存できませんでした。');
         }}
@@ -61,6 +62,10 @@ export const ReadingControls = ({ workId }: Readonly<{ workId: string }>) => {
           <option value="followers">フォロワー限定</option>
           <option value="public">公開</option>
         </select>
+        <label>
+          <input name="shareActivity" type="checkbox" />
+          この状態変更をfollow中の利用者へ共有する
+        </label>
         <button type="submit">状態を保存</button>
       </form>
       <form

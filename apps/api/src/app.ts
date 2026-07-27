@@ -23,6 +23,7 @@ import type {
   FavoriteImportRepository,
   SessionAssuranceRepository,
   SessionIdentity,
+  SocialRepository,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
 import {
@@ -60,11 +61,15 @@ import {
   authenticateExtensionToken,
   applyFavoriteImport,
   createFavoriteImport,
+  createReadingActivity,
   discardFavoriteImport,
   getFavoriteImport,
   recordTwoFactorAssurance,
   FavoriteImportSourceRejectedError,
   resolveFavoriteImportSources,
+  requestFollow,
+  respondToFollow,
+  unfollow,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -94,6 +99,8 @@ import {
   twoFactorVerifyRequestSchema,
   twoFactorVerifyResponseSchema,
   searchCatalogWorksQuerySchema,
+  socialProfileParamsSchema,
+  timelineQuerySchema,
   updateProfileRequestSchema,
   webPushSubscriptionRequestSchema,
   webPushUnsubscribeRequestSchema,
@@ -103,6 +110,8 @@ import {
   applyFavoriteImportRequestSchema,
   createFavoriteImportRequestSchema,
   favoriteImportParamsSchema,
+  followRequestParamsSchema,
+  followResponseRequestSchema,
 } from '@web-comic-library/contracts';
 import { isCatalogAdmin, type CatalogAdminActor } from '@web-comic-library/domain';
 import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
@@ -152,6 +161,7 @@ export type ApiDependencies = Readonly<{
   volumeLibrary: VolumeLibraryRepository | null;
   sourcePolicies: SourcePolicyQueryPort | null;
   sessionAssurances: SessionAssuranceRepository | null;
+  social: SocialRepository | null;
   profileIconStorage: ProfileIconStorage | null;
   transactions: TransactionPort | null;
   resolveSession(request: Request): Promise<SessionIdentity | null>;
@@ -182,6 +192,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   volumeLibrary: null,
   sourcePolicies: null,
   sessionAssurances: null,
+  social: null,
   profileIconStorage: null,
   transactions: null,
   async resolveSession(): Promise<SessionIdentity | null> {
@@ -637,13 +648,21 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         const transactions = dependencies.transactions;
         if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
         if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
-        return context.json(
-          await setReadingStatus(transactions, repository, {
-            ...context.req.valid('json'),
+        const input = context.req.valid('json');
+        const entry = await setReadingStatus(transactions, repository, {
+          ...input,
+          userUuid: session.userUuid,
+        });
+        const social = dependencies.social;
+        if (input.shareActivity && social) {
+          await createReadingActivity(transactions, social, {
+            shareActivity: true,
+            status: entry.status,
             userUuid: session.userUuid,
-          }),
-          200,
-        );
+            workId: entry.workId,
+          });
+        }
+        return context.json(entry, 200);
       },
     )
     .post(
@@ -708,6 +727,103 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
           userUuid: session.userUuid,
         });
         return context.json({ status: 'ok' as const }, 200);
+      },
+    );
+
+  const socialRoutes = new Hono()
+    .get('/api/timeline', vValidator('query', timelineQuerySchema), async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.social;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository) return context.json({ error: 'unavailable' }, 503);
+      const query = context.req.valid('query');
+      const requestedLimit = query.limit ? Number(query.limit) : 20;
+      const limit = Number.isSafeInteger(requestedLimit)
+        ? Math.min(Math.max(requestedLimit, 1), 50)
+        : 20;
+      return context.json(
+        await repository.listTimeline(session.userUuid, query.cursor ?? null, limit),
+        200,
+      );
+    })
+    .get('/api/settings/follows/users', async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.social;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository) return context.json({ error: 'unavailable' }, 503);
+      return context.json(
+        {
+          followers: await repository.listFollowers(session.userUuid),
+          following: await repository.listFollowing(session.userUuid),
+        },
+        200,
+      );
+    })
+    .post(
+      '/api/profiles/:userId/follow',
+      vValidator('param', socialProfileParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.social;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const followedUserUuid = await repository.findUserUuidByPublicId(
+          context.req.valid('param').userId,
+        );
+        if (!followedUserUuid) return context.json({ error: 'not_found' }, 404);
+        try {
+          return context.json(
+            await requestFollow(transactions, repository, session.userUuid, followedUserUuid),
+            200,
+          );
+        } catch {
+          return context.json({ error: 'follow_unavailable' }, 409);
+        }
+      },
+    )
+    .delete(
+      '/api/profiles/:userId/follow',
+      vValidator('param', socialProfileParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.social;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const followedUserUuid = await repository.findUserUuidByPublicId(
+          context.req.valid('param').userId,
+        );
+        if (!followedUserUuid) return context.json({ error: 'not_found' }, 404);
+        await unfollow(transactions, repository, session.userUuid, followedUserUuid);
+        return context.body(null, 204);
+      },
+    )
+    .post(
+      '/api/settings/follow-requests/:userId',
+      vValidator('param', followRequestParamsSchema),
+      vValidator('json', followResponseRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.social;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const followerUserUuid = context.req.valid('param').userId;
+        try {
+          return context.json(
+            await respondToFollow(
+              transactions,
+              repository,
+              session.userUuid,
+              followerUserUuid,
+              context.req.valid('json').response,
+            ),
+            200,
+          );
+        } catch {
+          return context.json({ error: 'not_found' }, 404);
+        }
       },
     );
 
@@ -1112,6 +1228,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       },
     )
     .route('/', identityRoutes)
+    .route('/', socialRoutes)
     .route('/', extensionRoutes)
     .route('/', favoriteImportRoutes)
     .route('/', publicCatalogRoutes)

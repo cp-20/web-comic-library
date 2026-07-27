@@ -130,6 +130,16 @@ export {
   sourcePolicyEvidenceKinds,
 } from './source-policy';
 export {
+  type ActivityKind,
+  type FollowStatus,
+  type ReadingActivity,
+  type UserFollow,
+  activityKinds,
+  canRespondToFollow,
+  followStatuses,
+  followStatusForProfile,
+} from './social';
+export {
   type FollowMode,
   type FollowReleaseCandidate,
   type SubscriptionPublication,

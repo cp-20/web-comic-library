@@ -92,6 +92,15 @@ export {
   unmarkContentRead,
 } from './library';
 export {
+  type SocialRepository,
+  type FollowTarget,
+  type TimelinePage,
+  createReadingActivity,
+  requestFollow,
+  respondToFollow,
+  unfollow,
+} from './social';
+export {
   type VolumeLibraryReadModel,
   type VolumeLibraryRepository,
   setUserVolumeRecord,
