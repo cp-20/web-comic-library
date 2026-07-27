@@ -672,3 +672,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #54を作成し、CI検証を開始した。
 - **cleanup**：remote branchはmerge完了時に削除する。production環境と永続dataは変更していない。
 - **関連**：issue #059、PR #54。
+
+## 2026-07-27 #059 session assurance mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #54、main commit `b2a150c33c45cfb213a51245a2a9fec9ea5db878`、CI、Images workflow、GHCR。
+- **操作**：PR #54のqualityとImages成功後にsquash mergeし、mainのCIとImages workflowを完了まで監視した。Images初回の外部image pull失敗は安全に再実行した。
+- **危険性**：mainへの変更反映とGHCRへのcontainer image公開により、後続deploymentが当該成果物を参照可能になる。workflow再実行は外部registryへのrequestを追加する。
+- **保護策**：merge前にPRが`CLEAN`であることとCI・Images成功を確認した。初回Images失敗は`postgres:16`のDocker Hub pull接続タイムアウトであり、実装のbuild・migration・service検証の失敗ではないことをログで確認してから再実行した。production deployment、production database migration、Secretの変更を実施していない。
+- **結果**：PR #54をsquash mergeした。main CIは成功し、再実行したmain Images workflowもbuild、migration read-only、service checks、GHCR image pushを含めて成功した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production環境、database、外部認証serviceの永続dataは変更していない。
+- **関連**：issue #059、PR #54、CI run #30233192008、Images run #30233192014。
