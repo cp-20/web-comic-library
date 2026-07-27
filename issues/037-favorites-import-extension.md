@@ -21,6 +21,7 @@ umbrella: 019
 - [040 共通feed型3サイトのextractor](./040-common-feed-favorites-extractors.md)
 - [041 ニコニコ漫画のextractor](./041-niconico-favorites-extractor.md)
 - [042 カドコミのextractor](./042-kadocomi-favorites-extractor.md)
+- [055 extension Web origin権限とE2E](./055-extension-web-origin-e2e.md)
 
 ## 完了条件
 

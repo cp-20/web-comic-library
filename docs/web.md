@@ -40,6 +40,10 @@ bun run build:web
 
 `/settings/follows`は利用者自身の掲載先優先順位と、作品ごとの最速、site優先、掲載先指定、全掲載先の四方式をHono RPC clientで保存する。掲載先指定は対象publication IDを明示し、未選択の掲載先は通知候補にしない。
 
+## extensionお気に入りimport
+
+`/settings/extension/imports/{batchId}`はextensionが作成した24時間有効の候補batchを、ログイン利用者本人だけに表示する。完全一致、未照合、曖昧な複数候補とtitleのみの候補を区別し、完全一致だけを選択できる。一括のfollow方式・読書状態に対し作品単位で上書きでき、標準はfollowだけである。画面はお気に入りから既読または読書進捗を推測・作成しない。
+
 ## アプリ内通知
 
 `/notifications`はログイン利用者自身の通知一覧と未読件数をHono RPC clientで表示し、個別または一括で既読にする。通知本文には非公開情報やネタバレ本文を含めず、種別と既読状態だけを表示する。

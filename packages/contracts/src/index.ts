@@ -41,6 +41,11 @@ export {
   revokeExtensionTokenParamsSchema,
 } from './extension-pairing';
 export {
+  applyFavoriteImportRequestSchema,
+  createFavoriteImportRequestSchema,
+  favoriteImportParamsSchema,
+} from './favorite-import';
+export {
   type FoundationJobPayload,
   foundationJobPayloadSchema,
   parseFoundationJobPayload,

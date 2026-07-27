@@ -28,12 +28,26 @@ export interface ExtensionTokenRepository {
   ): Promise<ExtensionPairingCode | null>;
   createPairingCode(context: TransactionContext, pairing: ExtensionPairingCode): Promise<void>;
   createToken(context: TransactionContext, token: ExtensionToken): Promise<void>;
+  findActiveTokenUserUuid(
+    scope: ExtensionTokenScope,
+    tokenHash: string,
+    now: Date,
+  ): Promise<string | null>;
   revokeToken(context: TransactionContext, userUuid: string, tokenId: string): Promise<boolean>;
 }
 
 const sha256 = async (value: string): Promise<string> => {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, '0')).join('');
+};
+
+export const authenticateExtensionToken = async (
+  repository: ExtensionTokenRepository,
+  token: string,
+  now = new Date(),
+): Promise<string | null> => {
+  if (!token.trim()) return null;
+  return repository.findActiveTokenUserUuid(extensionTokenScope, await sha256(token), now);
 };
 
 const randomSecret = (): string => {

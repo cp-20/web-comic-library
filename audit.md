@@ -4,6 +4,26 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
+## 2026-07-27 #039 GitHub pull request（実施予定）
+
+- **対象**：GitHubの`cp-20/web-comic-library`、#039実装branch、pull request、CI、container image build。
+- **操作**：検証済みcommitをpushし、draft PRを作成してCIとImages成功後にsquash mergeする。
+- **危険性**：remote branch、PR、mainへの変更反映、container image公開により後続deploymentが参照できる成果物が更新される。
+- **保護策**：保護されたmainへ直接pushせず、CI・Images成功とPR差分を確認してからsquash mergeする。Secret、token、個人情報をcommit、PR本文、監査ログへ含めない。
+- **結果**：未実施。
+- **cleanup**：merge後に作業branchを削除する。
+- **関連**：issue #039。
+
+## 2026-07-27 #039 favorite import PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、favorite import migration、library/follow transaction。
+- **操作**：migrationを再適用し、完全一致・曖昧・未照合、batch所有者、単回適用、library/followの同一transaction反映を統合試験する。
+- **危険性**：local TCP port 55432、Docker container、network、匿名test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。token、Cookie、個人情報をlog、fixture、監査ログへ記録しない。
+- **結果**：migrationの初期適用・再適用、完全一致・曖昧・未照合のsnapshot、batch単回適用、library/followのtransaction反映を含む123 testsが成功（0 fail）した。
+- **cleanup**：`docker compose down --volumes`でtest containerとnetworkを削除した。
+- **関連**：issue #039。
+
 ## 2026-07-27 #038 extension pairing PostgreSQL統合試験
 
 - **対象**：local Docker Compose PostgreSQL 16 test database、extension pairing migration、pairing codeと限定scope token。
