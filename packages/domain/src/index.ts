@@ -22,6 +22,13 @@ export {
   transitionReadingStatus,
 } from './library';
 export {
+  type FavoriteImportBatch,
+  type FavoriteImportCandidate,
+  type FavoriteImportMatchKind,
+  type FavoriteImportSettings,
+  favoriteImportMatchKinds,
+} from './favorite-import';
+export {
   type UserVolumeRecord,
   type VolumeContentMappingCorrection,
   type VolumeReadingStatus,

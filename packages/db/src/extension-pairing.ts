@@ -59,6 +59,19 @@ export class PostgresExtensionToken implements ExtensionTokenRepository {
     );
   }
 
+  async findActiveTokenUserUuid(
+    scope: ExtensionToken['scope'],
+    tokenHash: string,
+    now: Date,
+  ): Promise<string | null> {
+    const rows = await this.#client<{ userUuid: string }[]>`
+      select user_id as "userUuid" from extension_tokens
+      where token_hash = ${tokenHash} and scope = ${scope} and revoked_at is null
+        and (expires_at is null or expires_at > ${now})
+    `;
+    return rows[0]?.userUuid ?? null;
+  }
+
   async revokeToken(
     context: TransactionContext,
     userUuid: string,

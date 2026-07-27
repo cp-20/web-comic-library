@@ -33,6 +33,9 @@ test('pairing codes are single-use, expire after five minutes, and mint only imp
     async createToken(_context, token) {
       tokens.push(token);
     },
+    async findActiveTokenUserUuid() {
+      return null;
+    },
     async revokeToken(_context, userUuid, tokenId) {
       const token = tokens.find(
         (candidate) => candidate.id === tokenId && candidate.userUuid === userUuid,

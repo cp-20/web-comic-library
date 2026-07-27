@@ -29,6 +29,12 @@ Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono
 
 `PUT /api/settings/source-preferences`はログイン利用者自身の掲載先優先順位を置換する。`PUT /api/settings/follows`は同じく自身の作品ごとの方式と掲載先指定を一transactionで置換する。どちらもactive sessionを必須とし、他利用者の設定を受け取らない。
 
+## extensionお気に入りimport API
+
+`POST /api/extension/favorite-imports`は`favorites:import` scopeのextension bearer tokenだけを受け付け、source ID、外部作品ID、query・fragmentを持たないcanonical URL、表示titleから24時間有効な確認batchを作成する。tokenは通常のHono routeを認証できない。`GET /api/favorite-imports/{batchId}`、`POST /api/favorite-imports/{batchId}/apply`、`POST /api/favorite-imports/{batchId}/discard`はactive sessionのbatch所有者だけが利用でき、他利用者には404を返す。
+
+照合はsource内の外部作品IDまたはcanonical URLの完全一致だけを自動確定する。title一致は表示用候補に留める。applyは確認済みの完全一致だけを一transactionでfollow設定と、利用者が明示した場合だけ`LibraryEntry`へ反映し、既読・進捗を作成しない。batchは確認後または期限切れ後に再適用できない。
+
 ## 通知API
 
 `GET /api/notifications`はactive sessionの利用者自身の通知だけをcursor paginationと未読件数で返す。`POST /api/notifications/{id}/read`と`POST /api/notifications/read-all`は同じ利用者の通知だけを既読にする。`PUT /api/settings/notification-preferences`は通知種別・経路ごとの有効状態を保存する。

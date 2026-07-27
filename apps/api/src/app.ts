@@ -20,6 +20,7 @@ import type {
   WebPushSubscriptionRepository,
   EmailDigestSettingsRepository,
   ExtensionTokenRepository,
+  FavoriteImportRepository,
   SessionIdentity,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
@@ -55,6 +56,11 @@ import {
   exchangeExtensionPairingCode,
   issueExtensionPairingCode,
   revokeExtensionToken,
+  authenticateExtensionToken,
+  applyFavoriteImport,
+  createFavoriteImport,
+  discardFavoriteImport,
+  getFavoriteImport,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -86,6 +92,9 @@ import {
   emailDigestSettingsRequestSchema,
   exchangeExtensionPairingCodeRequestSchema,
   revokeExtensionTokenParamsSchema,
+  applyFavoriteImportRequestSchema,
+  createFavoriteImportRequestSchema,
+  favoriteImportParamsSchema,
 } from '@web-comic-library/contracts';
 import type { CatalogAdminActor } from '@web-comic-library/domain';
 import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
@@ -126,6 +135,7 @@ export type ApiDependencies = Readonly<{
   webPushPublicKey: string | null;
   emailDigests: EmailDigestSettingsRepository | null;
   extensionTokens: ExtensionTokenRepository | null;
+  favoriteImports: FavoriteImportRepository | null;
   resendWebhookSecret: string | null;
   identity: IdentityRepository | null;
   library: LibraryRepository | null;
@@ -153,6 +163,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   webPushPublicKey: null,
   emailDigests: null,
   extensionTokens: null,
+  favoriteImports: null,
   resendWebhookSecret: null,
   identity: null,
   library: null,
@@ -204,6 +215,13 @@ const canonicalCatalogPath = (redirect: CatalogRedirect): string => {
   return redirect.resource === 'work'
     ? `/works/${redirect.canonicalId}`
     : `/content-units/${redirect.canonicalId}`;
+};
+
+const readBearerToken = (request: Request): string | null => {
+  const authorization = request.headers.get('authorization');
+  if (!authorization?.startsWith('Bearer ')) return null;
+  const token = authorization.slice('Bearer '.length).trim();
+  return token || null;
 };
 
 const toCatalogSearchQuery = (
@@ -691,6 +709,101 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       },
     );
 
+  const favoriteImportRoutes = new Hono()
+    .post(
+      '/api/extension/favorite-imports',
+      vValidator('json', createFavoriteImportRequestSchema),
+      async (context) => {
+        const token = readBearerToken(context.req.raw);
+        const extensionTokens = dependencies.extensionTokens;
+        const favorites = dependencies.favoriteImports;
+        const transactions = dependencies.transactions;
+        if (!token) return context.json({ error: 'unauthenticated' }, 401);
+        if (!extensionTokens || !favorites || !transactions)
+          return context.json({ error: 'unavailable' }, 503);
+        const userUuid = await authenticateExtensionToken(extensionTokens, token);
+        if (!userUuid) return context.json({ error: 'unauthenticated' }, 401);
+        const batch = await createFavoriteImport(transactions, favorites, {
+          favorites: context.req.valid('json').favorites,
+          userUuid,
+        });
+        return context.json(
+          {
+            batchId: batch.id,
+            confirmationUrl: new URL(`/settings/extension/imports/${batch.id}`, context.req.url)
+              .href,
+            expiresAt: batch.expiresAt,
+          },
+          201,
+        );
+      },
+    )
+    .get(
+      '/api/favorite-imports/:batchId',
+      vValidator('param', favoriteImportParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.favoriteImports;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository) return context.json({ error: 'unavailable' }, 503);
+        const result = await getFavoriteImport(
+          repository,
+          context.req.valid('param').batchId,
+          session.userUuid,
+        );
+        return result ? context.json(result, 200) : context.json({ error: 'not_found' }, 404);
+      },
+    )
+    .post(
+      '/api/favorite-imports/:batchId/apply',
+      vValidator('param', favoriteImportParamsSchema),
+      vValidator('json', applyFavoriteImportRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const favorites = dependencies.favoriteImports;
+        const library = dependencies.library;
+        const follow = dependencies.follow;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!favorites || !library || !follow || !transactions)
+          return context.json({ error: 'unavailable' }, 503);
+        const body = context.req.valid('json');
+        const result = await applyFavoriteImport(
+          transactions,
+          { favorites, follow, library },
+          {
+            batchId: context.req.valid('param').batchId,
+            defaults: body.defaults,
+            selections: body.selections,
+            userUuid: session.userUuid,
+          },
+        );
+        if (result === 'not_found') return context.json({ error: 'not_found' }, 404);
+        if (result === 'expired') return context.json({ error: 'expired' }, 410);
+        return context.json({ status: 'applied' as const }, 200);
+      },
+    )
+    .post(
+      '/api/favorite-imports/:batchId/discard',
+      vValidator('param', favoriteImportParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.favoriteImports;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const result = await discardFavoriteImport(
+          transactions,
+          repository,
+          context.req.valid('param').batchId,
+          session.userUuid,
+        );
+        return result === 'discarded'
+          ? context.json({ status: 'discarded' as const }, 200)
+          : context.json({ error: 'not_found' }, 404);
+      },
+    );
+
   const catalogRoutes = admin
     .get('/api/admin/catalog/review-items', async (context) => {
       const actor = context.get('catalogAdminActor');
@@ -887,6 +1000,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
     )
     .route('/', identityRoutes)
     .route('/', extensionRoutes)
+    .route('/', favoriteImportRoutes)
     .route('/', publicCatalogRoutes)
     .route('/', catalogRoutes)
     .get('/api/health', (context) => context.json({ status: 'ok' as const }, 200))

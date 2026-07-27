@@ -2,7 +2,7 @@
 id: 039
 title: お気に入り候補を確認してlibraryへ取り込む
 type: feature
-status: open
+status: done
 priority: P1
 depends_on: [008, 021, 022, 038]
 umbrella: 037
@@ -63,3 +63,11 @@ extensionが抽出したお気に入りをcatalogへ照合し、利用者の確�
 - 定期同期。
 - お気に入り解除の反映。
 - title類似度による自動照合。
+
+## 実装結果
+
+- `FavoriteImportBatch`と候補snapshotを24時間期限、単回apply、所有者制約付きで保存する。
+- 完全一致、曖昧、未照合、titleのみ候補を分け、完全一致だけを選択可能にした。
+- extension tokenの`favorites:import` scopeだけでbatchを作成し、確認画面はsession所有者だけが読取・適用・破棄できる。
+- followだけを標準にし、明示した読書状態だけをlibraryへ保存する。既読・読書進捗は変更しない。
+- Web originを最小権限で固定したunpacked extension E2Eは、配備origin確定後に[055](./055-extension-web-origin-e2e.md)で実施する。

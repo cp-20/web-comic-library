@@ -8,7 +8,22 @@
   <body>
     <main>
       <h1>Web Comic Library</h1>
-      <p id="status">Webでpairing codeを発行して連携してください。</p>
+      <form id="pairing-form">
+        <label>
+          WebのURL
+          <input
+            id="web-origin"
+            name="webOrigin"
+            placeholder="https://library.example"
+            required
+            type="url"
+          />
+        </label>
+        <label>pairing code <input id="pairing-code" name="pairingCode" required /></label>
+        <button type="submit">連携する</button>
+      </form>
+      <button id="import-favorites" type="button">このサイトのお気に入りを確認する</button>
+      <p aria-live="polite" id="status">Webでpairing codeを発行して連携してください。</p>
     </main>
     <script type="module" src="../src/popup.ts"></script>
   </body>

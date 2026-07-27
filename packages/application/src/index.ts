@@ -39,11 +39,22 @@ export {
   type ExtensionPairingCode,
   type ExtensionToken,
   type ExtensionTokenRepository,
+  authenticateExtensionToken,
   exchangeExtensionPairingCode,
   extensionTokenScope,
   issueExtensionPairingCode,
   revokeExtensionToken,
 } from './extension-pairing';
+export {
+  type FavoriteImportInput,
+  type FavoriteImportReadModel,
+  type FavoriteImportRepository,
+  type FavoriteImportSelection,
+  applyFavoriteImport,
+  createFavoriteImport,
+  discardFavoriteImport,
+  getFavoriteImport,
+} from './favorite-import';
 export {
   type WebPushDelivery,
   type WebPushDeliveryOutcome,

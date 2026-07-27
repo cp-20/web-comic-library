@@ -11,7 +11,7 @@ export default defineConfig({
       'https://comic-walker.com/*',
       'https://kadocomi.com/*',
     ],
-    permissions: ['scripting', 'storage'],
+    permissions: ['activeTab', 'scripting', 'storage'],
     version: '0.0.0',
   },
 });

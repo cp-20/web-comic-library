@@ -28,6 +28,12 @@ Better Auth互換の`user`、`session`、`account`、`verification`を保持し�
 
 `user_source_preferences`は利用者ごとの掲載先優先順位を連番で一度だけ保持し、作品ごとに複製しない。`work_follow_settings`は作品単位の方式を、`subscription_publications`は掲載先指定の対象だけを保持する。いずれも利用者とcatalog entityへのforeign keyで所有者と作品整合性を保証する。
 
+## extensionお気に入りimport storage
+
+`favorite_import_batches`は利用者、24時間の期限、確認・破棄時刻を保持し、確認済みbatchを再適用できない。`favorite_import_candidates`はsource、外部作品ID、canonical URL、表示title、完全一致・曖昧・未照合のsnapshotを保持する。sourceとcanonical URLはbatch内で一意にし、完全一致にはworkとpublicationのforeign keyを必須にする。
+
+titleだけの一致は`title_match_work_ids`に候補として保存し、自動適用しない。batchのclaim、`LibraryEntry`の任意upsert、follow設定と掲載先指定は同じapplication transactionで確定する。既読recordと進捗recordはこのtransactionで変更しない。
+
 ## 単行本library storage
 
 `user_volume_records`は利用者・巻版ごとに未読、読書中、既読、紙所蔵、電子所蔵、話の個人memo、公開範囲を保持する。紙と電子は独立したbooleanであり、巻版と話の対応がなくても記録できる。巻版とmemo話はwork IDを含む複合foreign keyで同一作品に制限する。
