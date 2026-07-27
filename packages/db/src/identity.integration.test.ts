@@ -80,10 +80,27 @@ integrationTest(
         assurance: 'none',
         userUuid: readerId,
       });
+      expect(await identity.findCatalogAdminActor(token)).toEqual({
+        assurance: 'none',
+        id: readerId,
+        role: 'user',
+      });
+      await sql`update "user" set role = 'administrator'::catalog_user_role where id = ${readerId}`;
+      expect([
+        ...(await sql`select previous_role::text as "previousRole", role::text as role from user_role_audits where user_id = ${readerId}`),
+      ]).toEqual([{ previousRole: 'user', role: 'administrator' }]);
       expect(await assurances.recordTwoFactorAssurance(token)).toBe(true);
       expect(await identity.findSessionIdentity(token)).toMatchObject({
         assurance: 'two_factor',
       });
+      expect(await identity.findCatalogAdminActor(token)).toEqual({
+        assurance: 'two_factor',
+        id: readerId,
+        role: 'administrator',
+      });
+      expect([
+        ...(await sql`select assurance::text as assurance from session_assurance_audits where session_id = ${sessionId}`),
+      ]).toEqual([{ assurance: 'two_factor' }]);
       await sql`update session_assurances set expires_at = now() - interval '1 second'`;
       expect(await identity.findSessionIdentity(token)).toMatchObject({ assurance: 'none' });
       expect(await assurances.recordTwoFactorAssurance(token)).toBe(true);

@@ -1,5 +1,5 @@
 import type { IdentityRepository, SessionIdentity } from '@web-comic-library/application';
-import type { AccountProfile } from '@web-comic-library/domain';
+import type { AccountProfile, CatalogAdminActor } from '@web-comic-library/domain';
 import postgres from 'postgres';
 import type { Sql } from 'postgres';
 
@@ -61,6 +61,24 @@ export class PostgresIdentity implements IdentityRepository {
       left join session_assurances as session_assurance
         on session_assurance.session_id = session.id and session_assurance.expires_at > now()
       where session.token = ${token} and session.expires_at > now()
+    `;
+    return rows[0] ?? null;
+  }
+
+  async findCatalogAdminActor(token: string): Promise<CatalogAdminActor | null> {
+    const rows = await this.#client<CatalogAdminActor[]>`
+      select case
+          when session_assurance.session_id is null then 'none'
+          else session_assurance.assurance::text
+        end as assurance,
+        "user".id, "user".role::text as role
+      from session
+      join "user" on "user".id = session.user_id
+      join profiles as profile on profile.user_id = "user".id
+      left join session_assurances as session_assurance
+        on session_assurance.session_id = session.id and session_assurance.expires_at > now()
+      where session.token = ${token} and session.expires_at > now()
+        and profile.account_status = 'active'
     `;
     return rows[0] ?? null;
   }

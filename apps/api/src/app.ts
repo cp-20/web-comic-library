@@ -104,7 +104,7 @@ import {
   createFavoriteImportRequestSchema,
   favoriteImportParamsSchema,
 } from '@web-comic-library/contracts';
-import type { CatalogAdminActor } from '@web-comic-library/domain';
+import { isCatalogAdmin, type CatalogAdminActor } from '@web-comic-library/domain';
 import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
 import { Hono } from 'hono';
 import { safeParse } from 'valibot';
@@ -870,7 +870,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
     .get('/api/admin/catalog/review-items', async (context) => {
       const actor = context.get('catalogAdminActor');
       const controller = dependencies.catalogAdmin;
-      if (!actor || actor.role !== 'administrator')
+      if (!actor || !isCatalogAdmin(actor))
         return context.json({ error: 'forbidden' }, unauthorized(actor));
       if (!controller) return context.json({ error: 'unavailable' }, 503);
       return context.json({ items: await controller.listReviewItems() }, 200);
@@ -878,7 +878,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
     .get('/api/admin/catalog/audits', async (context) => {
       const actor = context.get('catalogAdminActor');
       const controller = dependencies.catalogAdmin;
-      if (!actor || actor.role !== 'administrator')
+      if (!actor || !isCatalogAdmin(actor))
         return context.json({ error: 'forbidden' }, unauthorized(actor));
       if (!controller) return context.json({ error: 'unavailable' }, 503);
       return context.json({ audits: await controller.findAuditRecords() }, 200);
@@ -889,7 +889,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       async (context) => {
         const actor = context.get('catalogAdminActor');
         const controller = dependencies.catalogAdmin;
-        if (!actor || actor.role !== 'administrator')
+        if (!actor || !isCatalogAdmin(actor))
           return context.json({ error: 'forbidden' }, unauthorized(actor));
         if (!controller) return context.json({ error: 'unavailable' }, 503);
         const input = context.req.valid('param');
@@ -903,7 +903,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       async (context) => {
         const actor = context.get('catalogAdminActor');
         const controller = dependencies.catalogAdmin;
-        if (!actor || actor.role !== 'administrator')
+        if (!actor || !isCatalogAdmin(actor))
           return context.json({ error: 'forbidden' }, unauthorized(actor));
         if (!controller) return context.json({ error: 'unavailable' }, 503);
         return context.json(await controller.mergeWorks(actor, context.req.valid('json')), 200);
@@ -915,7 +915,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       async (context) => {
         const actor = context.get('catalogAdminActor');
         const controller = dependencies.catalogAdmin;
-        if (!actor || actor.role !== 'administrator')
+        if (!actor || !isCatalogAdmin(actor))
           return context.json({ error: 'forbidden' }, unauthorized(actor));
         if (!controller) return context.json({ error: 'unavailable' }, 503);
         return context.json(
@@ -930,7 +930,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       async (context) => {
         const actor = context.get('catalogAdminActor');
         const controller = dependencies.catalogAdmin;
-        if (!actor || actor.role !== 'administrator')
+        if (!actor || !isCatalogAdmin(actor))
           return context.json({ error: 'forbidden' }, unauthorized(actor));
         if (!controller) return context.json({ error: 'unavailable' }, 503);
         return context.json(await controller.splitWork(actor, context.req.valid('json')), 200);
@@ -942,7 +942,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       async (context) => {
         const actor = context.get('catalogAdminActor');
         const controller = dependencies.catalogAdmin;
-        if (!actor || actor.role !== 'administrator')
+        if (!actor || !isCatalogAdmin(actor))
           return context.json({ error: 'forbidden' }, unauthorized(actor));
         if (!controller) return context.json({ error: 'unavailable' }, 503);
         return context.json(

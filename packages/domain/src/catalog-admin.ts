@@ -1,12 +1,17 @@
 export const catalogAdminAssurances = ['passkey', 'two_factor'] as const;
 
-export type CatalogAdminAssurance = (typeof catalogAdminAssurances)[number];
+export type CatalogAdminAssurance = 'none' | (typeof catalogAdminAssurances)[number];
 
 export type CatalogAdminActor = Readonly<{
   assurance: CatalogAdminAssurance;
   id: string;
   role: 'administrator' | 'user';
 }>;
+
+export const isCatalogAdmin = (actor: CatalogAdminActor): boolean =>
+  actor.role === 'administrator' &&
+  actor.assurance !== 'none' &&
+  catalogAdminAssurances.includes(actor.assurance);
 
 const requireText = (value: string, field: string): string => {
   const trimmed = value.trim();
@@ -23,7 +28,7 @@ export const requireCatalogAdmin = (actor: CatalogAdminActor): CatalogAdminActor
     throw new Error('catalog administration requires an administrator');
   }
 
-  if (!catalogAdminAssurances.includes(actor.assurance)) {
+  if (actor.assurance === 'none' || !catalogAdminAssurances.includes(actor.assurance)) {
     throw new Error('catalog administration requires passkey or two-factor assurance');
   }
 

@@ -2,7 +2,7 @@
 id: 058
 title: catalog管理者のroleと強い認証sessionを接続する
 type: platform
-status: blocked
+status: completed
 priority: P0
 depends_on: [020, 059]
 umbrella: 007

@@ -134,6 +134,13 @@
       "when": 1785118785000,
       "tag": "0018_session_assurance",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1785205185000,
+      "tag": "0019_catalog_admin_identity",
+      "breakpoints": true
     }
   ]
 }

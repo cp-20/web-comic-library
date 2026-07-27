@@ -18,6 +18,8 @@ Better Auth互換の`user`、`session`、`account`、`verification`、`two_facto
 
 `session_assurances`はTOTP verificationが成功したsession IDだけを`two_factor`として記録する。session token、Cookie、email、request headerからassuranceを推測してはならない。assuranceの期限はverification時点のsession expiryに固定し、sessionの削除（logoutを含む）はforeign key cascadeでassuranceも無効化する。
 
+`user.role`は`user`または`administrator`を明示的に保持する。role変更は`user_role_audits`へ、session assuranceの記録・更新は`session_assurance_audits`へ追記する。catalog管理者の解決はactive session、role、未期限切れの`passkey`または`two_factor` assuranceだけをjoinして行い、request由来の値で昇格させない。
+
 `profiles.default_visibility`は未設定を許容する。未設定の閲覧判定はapplicationで`private`として解決し、recordごとの上書きが存在する場合は標準値より優先する。follower関係は`profile_followers`の複合主キーと両方のforeign keyで保証する。
 
 ## library storage
