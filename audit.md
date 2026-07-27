@@ -692,3 +692,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：通常user・弱いsessionの拒否、administratorと二要素認証済みsessionの解決、role変更とassurance記録の履歴、session削除後の無効化を確認した。PostgreSQL統合を含む128 testsが成功（0 fail）した。
 - **cleanup**：`docker compose down --volumes`でtest container、network、test volumeを削除した。
 - **関連**：issue #058。
+
+## 2026-07-27 #058 catalog管理認可 mergeとmain検証
+
+- **対象**：GitHubの`cp-20/web-comic-library`、PR #56、main commit `cc72e42183230f3f00b6b3047d3e00449389adce`、CI、Images workflow、GHCR。
+- **操作**：PR #56のqualityとImages成功後にsquash mergeし、mainのCIとImages workflowを完了まで監視した。
+- **危険性**：mainへの変更反映とGHCRへのcontainer image公開により、後続deploymentが当該成果物を参照可能になる。
+- **保護策**：merge前にPRが`CLEAN`であることとCI・Images成功を確認した。production deployment、production database migration、Secretの変更を実施していない。
+- **結果**：PR #56をsquash mergeした。main CIとImages workflowはいずれも成功し、Imagesはmigration read-only、service checks、GHCR image pushを完了した。
+- **cleanup**：PR merge時にremote作業branchを削除した。production環境、database、外部認証serviceの永続dataは変更していない。
+- **関連**：issue #058、PR #56、CI run #30234120995、Images run #30234120989。
