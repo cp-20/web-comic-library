@@ -21,6 +21,9 @@ test('does not expose an account until a visibility is selected', async () => {
     async isFollower() {
       return false;
     },
+    async isBlockedEitherDirection() {
+      return false;
+    },
     async saveProfile() {
       throw new Error('not used');
     },

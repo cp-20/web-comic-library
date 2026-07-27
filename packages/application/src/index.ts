@@ -148,6 +148,16 @@ export {
   splitWork,
 } from './catalog-admin';
 export {
+  type ModerationQueuePage,
+  type ModerationRepository,
+  blockUser,
+  muteUser,
+  performModeration,
+  submitReport,
+  unblockUser,
+  unmuteUser,
+} from './moderation';
+export {
   type CatalogCreatorReadModel,
   type CatalogQueryPort,
   type CatalogSearchQuery,

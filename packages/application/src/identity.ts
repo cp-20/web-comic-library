@@ -23,6 +23,7 @@ export type ProfileViewer = Readonly<{
 export interface IdentityRepository {
   findProfileByPublicId(publicId: string): Promise<AccountProfile | null>;
   findProfileByUserUuid(userUuid: string): Promise<AccountProfile | null>;
+  isBlockedEitherDirection(firstUserUuid: string, secondUserUuid: string): Promise<boolean>;
   isFollower(followerUserUuid: string, followedUserUuid: string): Promise<boolean>;
   saveProfile(profile: AccountProfile): Promise<AccountProfile>;
 }
@@ -43,6 +44,12 @@ export const findVisibleProfile = async (
 ): Promise<AccountProfile | null> => {
   const profile = await repository.findProfileByPublicId(publicId);
   if (!profile || profile.accountStatus !== 'active') return null;
+  if (
+    viewer.userUuid !== null &&
+    (await repository.isBlockedEitherDirection(viewer.userUuid, profile.userUuid))
+  ) {
+    return null;
+  }
   const context: VisibilityContext = {
     isFollower:
       viewer.userUuid === null

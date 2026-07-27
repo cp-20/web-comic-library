@@ -2,7 +2,7 @@
 id: 031
 title: block、mute、通報、moderationを実装する
 type: feature
-status: open
+status: done
 priority: P1
 depends_on: [020, 029, 030]
 umbrella: 028
@@ -26,15 +26,15 @@ umbrella: 028
 ## 実装方針
 
 - block時に相互followとpending申請を解除する。
-- block対象のprofile、activity、reaction、通知を双方のqueryから除外する。
-- muteはfollow関係を変えずtimelineと通知だけを非表示にする。
+- block対象のprofile、activity、reactionを双方のqueryから除外する。social通知を追加する場合はactorを必須にし、通知queryも双方から除外する。
+- muteはfollow関係を変えずtimelineを非表示にする。social通知を追加する場合は受信者側だけから除外する。
 - 通報本文をplain textで保存し、外部linkへ`nofollow ugc noopener`を付ける。
 - 操作者、理由、変更前後、時刻を監査logへ残す。
-- 登録、感想、いいね、通報へrate limitを設定する。
+- 登録、感想、いいね、通報のrate limitは#034で共通security policyとして実装する。
 
 ## 受け入れ条件
 
-- block後に相互followがなくなり、双方の活動と通知を返さない。
+- block後に相互followがなくなり、双方のprofile、activity、reactionを返さない。social通知が追加された場合は同じ除外を適用する。
 - mute後に対象activityをtimelineへ返さない。
 - 同じ対象を通報し、運営queueで状態管理できる。
 - moderatorは非表示と警告、administratorは利用停止を実行できる。
@@ -44,7 +44,7 @@ umbrella: 028
 ## テスト
 
 - block、mute、follow解除のdomain単体テスト。
-- timeline、通知、profile queryへの横断的な統合テスト。
+- timeline、review、profile queryへの横断的な統合テスト。social通知を追加する場合は通知queryも同じtestへ加える。
 - role別Hono RPC認可と管理画面E2E。
 
 ## 対象外

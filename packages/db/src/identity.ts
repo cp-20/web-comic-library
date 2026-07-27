@@ -93,6 +93,17 @@ export class PostgresIdentity implements IdentityRepository {
     return rows[0]?.found ?? false;
   }
 
+  async isBlockedEitherDirection(firstUserUuid: string, secondUserUuid: string): Promise<boolean> {
+    const rows = await this.#client<{ found: boolean }[]>`
+      select exists(
+        select 1 from user_blocks
+        where (blocker_user_id = ${firstUserUuid} and blocked_user_id = ${secondUserUuid})
+          or (blocker_user_id = ${secondUserUuid} and blocked_user_id = ${firstUserUuid})
+      ) as found
+    `;
+    return rows[0]?.found ?? false;
+  }
+
   async saveProfile(profile: AccountProfile): Promise<AccountProfile> {
     const rows = await this.#client<ProfileRow[]>`
       insert into profiles (

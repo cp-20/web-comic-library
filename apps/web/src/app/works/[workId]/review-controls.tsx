@@ -151,6 +151,29 @@ export const ReviewControls = ({ workId }: Readonly<{ workId: string }>) => {
               >
                 いいね（{review.reactionCount}）
               </button>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const reason = String(new FormData(event.currentTarget).get('reason') ?? '');
+                  void (async () => {
+                    const response = await client.api.reports.$post({
+                      json: { reason, targetId: review.id, targetKind: 'activity' },
+                    });
+                    setMessage(
+                      response.ok ? '通報を受け付けました。' : '通報を送信できませんでした。',
+                    );
+                  })();
+                }}
+              >
+                <label htmlFor={`review-report-reason-${review.id}`}>通報理由</label>
+                <textarea
+                  id={`review-report-reason-${review.id}`}
+                  maxLength={2_000}
+                  name="reason"
+                  required
+                />
+                <button type="submit">感想を通報する</button>
+              </form>
             </li>
           ))}
         </ul>

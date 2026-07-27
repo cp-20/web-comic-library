@@ -5,7 +5,7 @@ export type CatalogAdminAssurance = 'none' | (typeof catalogAdminAssurances)[num
 export type CatalogAdminActor = Readonly<{
   assurance: CatalogAdminAssurance;
   id: string;
-  role: 'administrator' | 'user';
+  role: 'administrator' | 'moderator' | 'user';
 }>;
 
 export const isCatalogAdmin = (actor: CatalogAdminActor): boolean =>

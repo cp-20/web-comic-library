@@ -51,6 +51,50 @@ export const ProfileFollow = ({ userId }: Readonly<{ userId: string }>) => {
       >
         followを解除
       </button>
+      <button
+        onClick={() => {
+          void (async () => {
+            const response = await client.api.profiles[':userId'].mute.$post({ param: { userId } });
+            setMessage(response.ok ? 'muteしました。' : 'muteできませんでした。');
+          })();
+        }}
+        type="button"
+      >
+        muteする
+      </button>
+      <button
+        onClick={() => {
+          void (async () => {
+            const response = await client.api.profiles[':userId'].block.$post({
+              param: { userId },
+            });
+            setMessage(
+              response.ok
+                ? 'blockしました。相互のfollow申請も解除されます。'
+                : 'blockできませんでした。',
+            );
+          })();
+        }}
+        type="button"
+      >
+        blockする
+      </button>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const reason = String(new FormData(event.currentTarget).get('reason') ?? '');
+          void (async () => {
+            const response = await client.api.reports.$post({
+              json: { reason, targetId: userId, targetKind: 'profile' },
+            });
+            setMessage(response.ok ? '通報を受け付けました。' : '通報を送信できませんでした。');
+          })();
+        }}
+      >
+        <label htmlFor="profile-report-reason">通報理由</label>
+        <textarea id="profile-report-reason" maxLength={2_000} name="reason" required />
+        <button type="submit">プロフィールを通報する</button>
+      </form>
       <p>{message}</p>
     </section>
   );

@@ -166,6 +166,25 @@ export {
   notificationKinds,
 } from './notification';
 export {
+  type ModerationAction,
+  type ModerationActionKind,
+  type ModerationActor,
+  type ModerationRole,
+  type Report,
+  type ReportStatus,
+  type ReportTargetKind,
+  type UserBlock,
+  type UserMute,
+  canModerate,
+  canSuspend,
+  createReport,
+  moderationActionKinds,
+  moderationRoles,
+  reportStatuses,
+  reportTargetKinds,
+  requireModerationReason,
+} from './moderation';
+export {
   type WebPushSubscription,
   createWebPushSubscription,
   webPushDeliveryIdempotencyKey,
