@@ -729,7 +729,7 @@ Secretの値と個人情報は記録しない。
 - **操作**：migrationを初期状態から適用・再適用し、話に紐付く公開感想、未ログイン時の本文非返却、既読後の本文返却、reactionの一意制約を統合試験する。
 - **危険性**：local TCP port 55432、Docker container、network、test dataを一時的に使用する。
 - **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。本文、session token、Cookie、emailなどの値を出力・保存・監査記録しない。外部service、production database、永続user dataへ接続しない。
-- **結果**：migrationを初期状態から適用・再適用し、未ログイン時に公開感想の本文を返さないこと、既読後に本文を返すこと、同じ利用者のreactionを二重登録しないことを確認した。統合試験は1 pass、0 failだった。
+- **結果**：migrationを初期状態から適用・再適用し、未ログイン時に公開感想の本文を返さないこと、既読後に本文を返すこと、同じ利用者のreactionを二重登録しないことを確認した。固定ISBNによる並列test衝突をランダムfixtureへ修正後、CI相当の全PostgreSQL統合試験は136 pass、0 failだった。
 - **cleanup**：実行後に`docker compose down --volumes`でtest container、network、test volumeを削除する。
 - **関連**：issue #030。
 
@@ -739,6 +739,6 @@ Secretの値と個人情報は記録しない。
 - **操作**：検証済みの実装をGitHubへpushし、ドラフトPRを作成してCIとImages workflowを開始する。
 - **危険性**：外部GitHub上に実装・migration・監査記録が公開され、CIが実行される。
 - **保護策**：production database、外部service、Secret、永続user dataに接続しない。`bun run check`、`bun test`、Web build、local PostgreSQL統合試験が成功した状態だけをpushし、CI成功確認前にはmainへmergeしない。
-- **結果**：実装branchをpushし、ドラフトPR #60を作成してCIとImages workflowを開始した。
+- **結果**：実装branchをpushし、ドラフトPR #60を作成してCIとImages workflowを開始した。初回quality CIは固定ISBNの並列test衝突で失敗したが、Secret・productionへの影響はなく、fixture修正と全PostgreSQL統合試験の成功後に再実行する。
 - **cleanup**：merge完了時にremote作業branchを削除する。production環境と永続dataは変更しない。
 - **関連**：issue #030、PR #60。

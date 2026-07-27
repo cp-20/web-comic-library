@@ -35,6 +35,13 @@ integrationTest(
     const workId = crypto.randomUUID();
     const contentUnitId = crypto.randomUUID();
     const volumeEditionId = crypto.randomUUID();
+    const isbn = `978${crypto
+      .randomUUID()
+      .replaceAll('-', '')
+      .split('')
+      .map((character) => String((character.codePointAt(0) ?? 0) % 10))
+      .join('')
+      .slice(0, 10)}`;
     try {
       await sql`
         insert into "user" (id, name, email, email_verified, image, created_at, updated_at)
@@ -54,7 +61,7 @@ integrationTest(
       `;
       await sql`
         insert into volume_editions (id, work_id, isbn, title, publication_status)
-        values (${volumeEditionId}::uuid, ${workId}::uuid, '9781234567890', 'Volume 1', 'active')
+        values (${volumeEditionId}::uuid, ${workId}::uuid, ${isbn}, 'Volume 1', 'active')
       `;
 
       await expect(requestFollow(foundation, social, followerId, authorId)).resolves.toMatchObject({
