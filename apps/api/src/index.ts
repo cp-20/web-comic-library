@@ -19,9 +19,10 @@ import {
   createPostgresSourcePolicy,
   createPostgresSessionAssurance,
   createPostgresSocial,
+  createPostgresModeration,
 } from '@web-comic-library/db';
 
-import { createApp, createCatalogAdminController } from './app';
+import { createApp, createCatalogAdminController, createModerationController } from './app';
 
 const port = Number(process.env.PORT ?? '3001');
 const databaseUrl = process.env.DATABASE_URL;
@@ -64,6 +65,7 @@ const extensionTokens = createPostgresExtensionToken(databaseUrl, foundation);
 const favoriteImports = createPostgresFavoriteImport(databaseUrl, foundation);
 const sessionAssurances = createPostgresSessionAssurance(databaseUrl);
 const social = createPostgresSocial(databaseUrl, foundation);
+const moderation = createPostgresModeration(databaseUrl, foundation);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -100,6 +102,7 @@ const app = createApp({
   auth,
   catalog,
   catalogAdmin: createCatalogAdminController(foundation, catalogAdmin),
+  moderation: createModerationController(foundation, moderation),
   follow,
   notifications,
   emailDigests,
@@ -153,6 +156,7 @@ const stop = (): void => {
     sourcePolicies.close(),
     sessionAssurances.close(),
     social.close(),
+    moderation.close(),
   ]).then(() => process.exit(0));
 };
 

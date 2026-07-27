@@ -58,11 +58,16 @@ export interface SocialRepository {
   ): Promise<void>;
   findFollow(followerUserUuid: string, followedUserUuid: string): Promise<UserFollow | null>;
   findFollowTarget(userUuid: string): Promise<FollowTarget | null>;
-  findReviewActivity(id: string): Promise<ReviewActivity | null>;
-  findUserUuidByPublicId(publicId: string): Promise<string | null>;
+  findReviewActivity(id: string, viewerUserUuid: string | null): Promise<ReviewActivity | null>;
+  findUserUuidByPublicId(publicId: string, viewerUserUuid: string | null): Promise<string | null>;
+  isBlockedEitherDirection(firstUserUuid: string, secondUserUuid: string): Promise<boolean>;
   listFollowers(userUuid: string): Promise<readonly UserFollow[]>;
   listFollowing(userUuid: string): Promise<readonly UserFollow[]>;
-  listReviewActivities(workId: string, target: ReviewTarget): Promise<readonly ReviewListItem[]>;
+  listReviewActivities(
+    viewerUserUuid: string | null,
+    workId: string,
+    target: ReviewTarget,
+  ): Promise<readonly ReviewListItem[]>;
   listReviewReadState(userUuid: string, workId: string): Promise<ReviewReadState>;
   listTimeline(userUuid: string, cursor: string | null, limit: number): Promise<TimelinePage>;
   saveFollow(context: TransactionContext, follow: UserFollow): Promise<UserFollow>;
@@ -89,6 +94,9 @@ export const requestFollow = async (
   now: Date = new Date(),
 ): Promise<UserFollow> => {
   if (followerUserUuid === followedUserUuid) throw new Error('cannot follow yourself');
+  if (await repository.isBlockedEitherDirection(followerUserUuid, followedUserUuid)) {
+    throw new Error('profile is unavailable');
+  }
   const target = await repository.findFollowTarget(followedUserUuid);
   if (!target || target.accountStatus !== 'active') throw new Error('profile is unavailable');
   const existing = await repository.findFollow(followerUserUuid, followedUserUuid);
@@ -186,7 +194,7 @@ export const listReviews = async (
   workId: string,
   target: ReviewTarget,
 ): Promise<readonly ReviewReadModel[]> => {
-  const items = await repository.listReviewActivities(workId, target);
+  const items = await repository.listReviewActivities(viewerUserUuid, workId, target);
   const visibleItems = items.filter(
     ({ review }) => review.visibility === 'public' || review.userUuid === viewerUserUuid,
   );
@@ -203,7 +211,7 @@ export const revealReview = async (
   viewerUserUuid: string | null,
   id: string,
 ): Promise<Pick<ReviewActivity, 'body' | 'id'> | null> => {
-  const review = await repository.findReviewActivity(id);
+  const review = await repository.findReviewActivity(id, viewerUserUuid);
   if (!review || (review.visibility !== 'public' && review.userUuid !== viewerUserUuid))
     return null;
   return { body: review.body, id: review.id };
@@ -216,7 +224,7 @@ export const addReaction = async (
   activityId: string,
   now: Date = new Date(),
 ): Promise<boolean> => {
-  const review = await repository.findReviewActivity(activityId);
+  const review = await repository.findReviewActivity(activityId, userUuid);
   if (!review || (review.visibility !== 'public' && review.userUuid !== userUuid)) {
     throw new Error('review is unavailable');
   }

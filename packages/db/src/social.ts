@@ -206,21 +206,49 @@ export class PostgresSocial implements SocialRepository {
     return rows[0] ?? null;
   }
 
-  async findReviewActivity(id: string): Promise<ReviewActivity | null> {
+  async findReviewActivity(
+    id: string,
+    viewerUserUuid: string | null,
+  ): Promise<ReviewActivity | null> {
     const rows = await this.#client<ReviewRow[]>`
       select ${this.#client.unsafe(reviewColumns)}
       from activities as activity
       left join activity_reactions as reaction on reaction.activity_id = activity.id
+        and not exists (
+          select 1 from user_blocks
+          where ${viewerUserUuid}::text is not null and (
+            (blocker_user_id = ${viewerUserUuid} and blocked_user_id = reaction.user_id)
+            or (blocker_user_id = reaction.user_id and blocked_user_id = ${viewerUserUuid})
+          )
+        )
       where activity.id = ${id}::uuid and activity.kind = 'review'::activity_kind
+        and activity.hidden_at is null
+        and not exists (
+          select 1 from user_blocks
+          where ${viewerUserUuid}::text is not null and (
+            (blocker_user_id = ${viewerUserUuid} and blocked_user_id = activity.user_id)
+            or (blocker_user_id = activity.user_id and blocked_user_id = ${viewerUserUuid})
+          )
+        )
       group by activity.id
     `;
     return rows[0] ? toReview(rows[0]) : null;
   }
 
-  async findUserUuidByPublicId(publicId: string): Promise<string | null> {
+  async findUserUuidByPublicId(
+    publicId: string,
+    viewerUserUuid: string | null,
+  ): Promise<string | null> {
     const rows = await this.#client<{ userUuid: string }[]>`
       select user_id as "userUuid" from profiles
       where public_id = ${publicId} and account_status = 'active'
+        and not exists (
+          select 1 from user_blocks
+          where ${viewerUserUuid}::text is not null and (
+            (blocker_user_id = ${viewerUserUuid} and blocked_user_id = profiles.user_id)
+            or (blocker_user_id = profiles.user_id and blocked_user_id = ${viewerUserUuid})
+          )
+        )
     `;
     return rows[0]?.userUuid ?? null;
   }
@@ -246,6 +274,7 @@ export class PostgresSocial implements SocialRepository {
   }
 
   async listReviewActivities(
+    viewerUserUuid: string | null,
     workId: string,
     target: ReviewTarget,
   ): Promise<readonly ReviewListItem[]> {
@@ -254,16 +283,46 @@ export class PostgresSocial implements SocialRepository {
           select ${this.#client.unsafe(reviewColumns)}
           from activities as activity
           left join activity_reactions as reaction on reaction.activity_id = activity.id
+            and not exists (
+              select 1 from user_blocks
+              where ${viewerUserUuid}::text is not null and (
+                (blocker_user_id = ${viewerUserUuid} and blocked_user_id = reaction.user_id)
+                or (blocker_user_id = reaction.user_id and blocked_user_id = ${viewerUserUuid})
+              )
+            )
           where activity.kind = 'review'::activity_kind and activity.work_id = ${workId}::uuid
             and activity.content_unit_id = ${target.contentUnitId}::uuid
+            and activity.hidden_at is null
+            and not exists (
+              select 1 from user_blocks
+              where ${viewerUserUuid}::text is not null and (
+                (blocker_user_id = ${viewerUserUuid} and blocked_user_id = activity.user_id)
+                or (blocker_user_id = activity.user_id and blocked_user_id = ${viewerUserUuid})
+              )
+            )
           group by activity.id order by activity.created_at desc, activity.id desc
         `
       : await this.#client<ReviewRow[]>`
           select ${this.#client.unsafe(reviewColumns)}
           from activities as activity
           left join activity_reactions as reaction on reaction.activity_id = activity.id
+            and not exists (
+              select 1 from user_blocks
+              where ${viewerUserUuid}::text is not null and (
+                (blocker_user_id = ${viewerUserUuid} and blocked_user_id = reaction.user_id)
+                or (blocker_user_id = reaction.user_id and blocked_user_id = ${viewerUserUuid})
+              )
+            )
           where activity.kind = 'review'::activity_kind and activity.work_id = ${workId}::uuid
             and activity.volume_edition_id = ${target.volumeEditionId}::uuid
+            and activity.hidden_at is null
+            and not exists (
+              select 1 from user_blocks
+              where ${viewerUserUuid}::text is not null and (
+                (blocker_user_id = ${viewerUserUuid} and blocked_user_id = activity.user_id)
+                or (blocker_user_id = activity.user_id and blocked_user_id = ${viewerUserUuid})
+              )
+            )
           group by activity.id order by activity.created_at desc, activity.id desc
         `;
     return rows.map((row) => ({ reactionCount: row.reactionCount, review: toReview(row) }));
@@ -302,7 +361,16 @@ export class PostgresSocial implements SocialRepository {
           join library_entries as entry on entry.user_id = activity.user_id and entry.work_id = activity.work_id
           join profiles as profile on profile.user_id = activity.user_id
           where activity.kind <> 'review'::activity_kind and profile.account_status = 'active'
+            and activity.hidden_at is null
             and coalesce(entry.visibility, profile.default_visibility, 'private'::visibility) in ('public', 'followers')
+            and not exists (
+              select 1 from user_blocks where
+                (blocker_user_id = ${userUuid} and blocked_user_id = activity.user_id)
+                or (blocker_user_id = activity.user_id and blocked_user_id = ${userUuid})
+            )
+            and not exists (
+              select 1 from user_mutes where muter_user_id = ${userUuid} and muted_user_id = activity.user_id
+            )
             and (activity.created_at, activity.id) < (${decoded.createdAt}, ${decoded.id}::uuid)
           order by activity.created_at desc, activity.id desc limit ${limit + 1}
         `
@@ -315,7 +383,16 @@ export class PostgresSocial implements SocialRepository {
           join library_entries as entry on entry.user_id = activity.user_id and entry.work_id = activity.work_id
           join profiles as profile on profile.user_id = activity.user_id
           where activity.kind <> 'review'::activity_kind and profile.account_status = 'active'
+            and activity.hidden_at is null
             and coalesce(entry.visibility, profile.default_visibility, 'private'::visibility) in ('public', 'followers')
+            and not exists (
+              select 1 from user_blocks where
+                (blocker_user_id = ${userUuid} and blocked_user_id = activity.user_id)
+                or (blocker_user_id = activity.user_id and blocked_user_id = ${userUuid})
+            )
+            and not exists (
+              select 1 from user_mutes where muter_user_id = ${userUuid} and muted_user_id = activity.user_id
+            )
           order by activity.created_at desc, activity.id desc limit ${limit + 1}
         `;
     const hasNext = rows.length > limit;
@@ -344,6 +421,17 @@ export class PostgresSocial implements SocialRepository {
     const row = rows[0];
     if (!row) throw new Error('follow save did not return a follow');
     return toFollow(row);
+  }
+
+  async isBlockedEitherDirection(firstUserUuid: string, secondUserUuid: string): Promise<boolean> {
+    const rows = await this.#client<{ found: boolean }[]>`
+      select exists(
+        select 1 from user_blocks
+        where (blocker_user_id = ${firstUserUuid} and blocked_user_id = ${secondUserUuid})
+          or (blocker_user_id = ${secondUserUuid} and blocked_user_id = ${firstUserUuid})
+      ) as found
+    `;
+    return rows[0]?.found ?? false;
   }
 
   async saveReaction(context: TransactionContext, reaction: ActivityReaction): Promise<boolean> {

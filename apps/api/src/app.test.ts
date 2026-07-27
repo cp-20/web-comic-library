@@ -21,7 +21,13 @@ import type { AuthAdapter } from '@web-comic-library/auth';
 import type { ReviewActivity } from '@web-comic-library/domain';
 import { hc } from 'hono/client';
 
-import { app, createApp, type ApiType, type CatalogAdminController } from './app';
+import {
+  app,
+  createApp,
+  type ApiType,
+  type CatalogAdminController,
+  type ModerationController,
+} from './app';
 
 describe('health endpoint', () => {
   test('is callable through Hono RPC', async () => {
@@ -163,6 +169,137 @@ describe('catalog administration RPC', () => {
   });
 });
 
+describe('moderation RPC', () => {
+  const report = {
+    createdAt: new Date('2026-07-27T00:00:00Z'),
+    id: '11111111-1111-4111-8111-111111111111',
+    reason: 'plain text report',
+    reporterUserUuid: 'reporter-1',
+    status: 'open' as const,
+    targetId: 'activity-1',
+    targetKind: 'activity' as const,
+    updatedAt: new Date('2026-07-27T00:00:00Z'),
+  };
+  const controller: ModerationController = {
+    async block() {
+      return true;
+    },
+    async listActions() {
+      return [];
+    },
+    async listReports() {
+      return { items: [report] };
+    },
+    async moderate(input) {
+      return {
+        action: input.action,
+        actorUserUuid: input.actor.id,
+        after: {},
+        before: {},
+        createdAt: new Date('2026-07-27T00:00:00Z'),
+        id: 'action-1',
+        reason: input.reason,
+        reportId: input.reportId,
+        targetId: input.targetId,
+        targetKind: input.targetKind,
+      };
+    },
+    async mute() {
+      return true;
+    },
+    async report(input) {
+      return { ...report, ...input };
+    },
+    async unblock() {
+      return true;
+    },
+    async unmute() {
+      return true;
+    },
+  };
+
+  test('allows a moderator to inspect and hide a report but reserves suspension and restoration for administrators', async () => {
+    const moderatorApp = createApp({
+      moderation: controller,
+      async resolveCatalogAdmin() {
+        return { assurance: 'none', id: 'moderator-1', role: 'moderator' };
+      },
+    });
+    expect((await moderatorApp.request('/api/admin/moderation/reports')).status).toBe(200);
+    const hidden = await moderatorApp.request(
+      `/api/admin/moderation/reports/${report.id}/actions`,
+      {
+        body: JSON.stringify({
+          action: 'hide',
+          reason: 'policy violation',
+          targetId: 'activity-1',
+          targetKind: 'activity',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      },
+    );
+    expect(hidden.status).toBe(200);
+    const suspended = await moderatorApp.request(
+      `/api/admin/moderation/reports/${report.id}/actions`,
+      {
+        body: JSON.stringify({
+          action: 'suspend',
+          reason: 'repeat violation',
+          targetId: 'profile-1',
+          targetKind: 'profile',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      },
+    );
+    expect(suspended.status).toBe(403);
+    const restored = await moderatorApp.request(
+      `/api/admin/moderation/reports/${report.id}/actions`,
+      {
+        body: JSON.stringify({
+          action: 'restore',
+          reason: 'restoration request',
+          targetId: 'profile-1',
+          targetKind: 'profile',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      },
+    );
+    expect(restored.status).toBe(403);
+  });
+
+  test('rejects regular users and accepts an authenticated plain text report', async () => {
+    const regularApp = createApp({
+      moderation: controller,
+      async resolveCatalogAdmin() {
+        return { assurance: 'none', id: 'reader-1', role: 'user' };
+      },
+      async resolveSession() {
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.test',
+          userUuid: 'reporter-1',
+        };
+      },
+    });
+    expect((await regularApp.request('/api/admin/moderation/reports')).status).toBe(403);
+    const submitted = await regularApp.request('/api/reports', {
+      body: JSON.stringify({
+        reason: 'plain text report',
+        targetId: 'activity-1',
+        targetKind: 'activity',
+      }),
+      headers: { 'content-type': 'application/json' },
+      method: 'POST',
+    });
+    expect(submitted.status).toBe(201);
+    expect(await submitted.json()).toMatchObject({ reporterUserUuid: 'reporter-1' });
+  });
+});
+
 describe('public catalog RPC', () => {
   const publicWork = {
     aliases: ['よみかた'],
@@ -285,6 +422,9 @@ describe('profile and session RPC', () => {
     async isFollower() {
       return false;
     },
+    async isBlockedEitherDirection() {
+      return false;
+    },
     async saveProfile(input: typeof profile) {
       return input;
     },
@@ -341,6 +481,9 @@ describe('profile and session RPC', () => {
         return saved;
       },
       async isFollower() {
+        return false;
+      },
+      async isBlockedEitherDirection() {
         return false;
       },
       async saveProfile(input: typeof profile) {
@@ -1039,6 +1182,9 @@ describe('review RPC', () => {
       },
       async findUserUuidByPublicId() {
         return null;
+      },
+      async isBlockedEitherDirection() {
+        return false;
       },
       async listFollowers() {
         return [];

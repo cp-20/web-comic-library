@@ -44,6 +44,8 @@ bun run build:web
 
 `/profiles/{userId}`はprofileのfollowまたは解除をHono RPC clientで行う。`/settings/follows`は受け取ったfollow申請の承認・拒否と自分のfollow一覧を表示する。`/timeline`はaccepted followの現在も閲覧可能なactivityだけをcursor paginationで表示し、非公開化されたactivityをHTMLへ残さない。
 
+`/profiles/{userId}`はblock、mute、profile通報もHono RPC clientだけを通して実行する。blockは相互followを解除し、blockまたはmuteした対象をtimelineへ残さない。感想の通報フォームは対象activity IDとplain text理由だけを送る。`/admin/moderation`はmoderator以上の通報queueと操作理由の入力を提供し、通報本文をtextとして表示する。本文内の外部URLは`target="_blank"`と`rel="nofollow ugc noopener"`を付け、HTMLとして解釈しない。
+
 `/works/{workId}`は話または巻を指定して感想を投稿・表示する。初期表示で伏せられた感想の本文をHTMLへ含めず、利用者の明示操作後だけreveal APIで取得してテキストとして表示する。感想本文を`dangerouslySetInnerHTML`、metadata、OG、SNS共有文へ渡さない。
 
 ## extensionお気に入りimport

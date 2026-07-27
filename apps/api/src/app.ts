@@ -25,6 +25,8 @@ import type {
   SessionIdentity,
   SocialRepository,
   ReviewTarget,
+  ModerationRepository,
+  ModerationQueuePage,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
 import {
@@ -78,6 +80,12 @@ import {
   requestFollow,
   respondToFollow,
   unfollow,
+  blockUser,
+  unblockUser,
+  muteUser,
+  unmuteUser,
+  submitReport,
+  performModeration,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -124,8 +132,22 @@ import {
   reviewListQuerySchema,
   reviewParamsSchema,
   updateReviewRequestSchema,
+  moderationActionRequestSchema,
+  moderationActionsQuerySchema,
+  moderationReportParamsSchema,
+  moderationReportsQuerySchema,
+  reportRequestSchema,
 } from '@web-comic-library/contracts';
-import { isCatalogAdmin, type CatalogAdminActor } from '@web-comic-library/domain';
+import {
+  canModerate,
+  isCatalogAdmin,
+  type CatalogAdminActor,
+  type ModerationAction,
+  type ModerationActionKind,
+  type ModerationActor,
+  type Report,
+  type ReportStatus,
+} from '@web-comic-library/domain';
 import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
 import { Hono } from 'hono';
 import { safeParse } from 'valibot';
@@ -155,10 +177,38 @@ export interface CatalogAdminController {
   ): Promise<CatalogAuditRecord>;
 }
 
+export interface ModerationController {
+  block(blockerUserUuid: string, blockedUserUuid: string): Promise<boolean>;
+  listActions(reportId: string | null): Promise<readonly ModerationAction[]>;
+  listReports(status: ReportStatus | null): Promise<ModerationQueuePage>;
+  moderate(
+    input: Readonly<{
+      action: ModerationActionKind;
+      actor: ModerationActor;
+      reason: string;
+      reportId: string | null;
+      targetId: string;
+      targetKind: 'activity' | 'profile';
+    }>,
+  ): Promise<ModerationAction>;
+  mute(muterUserUuid: string, mutedUserUuid: string): Promise<boolean>;
+  report(
+    input: Readonly<{
+      reason: string;
+      reporterUserUuid: string;
+      targetId: string;
+      targetKind: Report['targetKind'];
+    }>,
+  ): Promise<Report>;
+  unblock(blockerUserUuid: string, blockedUserUuid: string): Promise<boolean>;
+  unmute(muterUserUuid: string, mutedUserUuid: string): Promise<boolean>;
+}
+
 export type ApiDependencies = Readonly<{
   auth: AuthAdapter | null;
   catalogAdmin: CatalogAdminController | null;
   catalog: CatalogQueryPort | null;
+  moderation: ModerationController | null;
   follow: FollowRepository | null;
   notifications: NotificationRepository | null;
   webPushSubscriptions: WebPushSubscriptionRepository | null;
@@ -190,6 +240,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   auth: null,
   catalogAdmin: null,
   catalog: null,
+  moderation: null,
   follow: null,
   notifications: null,
   webPushSubscriptions: null,
@@ -242,6 +293,36 @@ export const createCatalogAdminController = (
   },
   async splitWork(actor, input): Promise<CatalogAuditRecord> {
     return splitWork(transactions, repository, { ...input, actor });
+  },
+});
+
+export const createModerationController = (
+  transactions: TransactionPort,
+  repository: ModerationRepository,
+): ModerationController => ({
+  async block(blockerUserUuid, blockedUserUuid): Promise<boolean> {
+    return blockUser(transactions, repository, blockerUserUuid, blockedUserUuid);
+  },
+  async listActions(reportId): Promise<readonly ModerationAction[]> {
+    return repository.listModerationActions(reportId);
+  },
+  async listReports(status): Promise<ModerationQueuePage> {
+    return repository.listReports(status);
+  },
+  async moderate(input): Promise<ModerationAction> {
+    return performModeration(transactions, repository, input);
+  },
+  async mute(muterUserUuid, mutedUserUuid): Promise<boolean> {
+    return muteUser(transactions, repository, muterUserUuid, mutedUserUuid);
+  },
+  async report(input): Promise<Report> {
+    return submitReport(transactions, repository, input);
+  },
+  async unblock(blockerUserUuid, blockedUserUuid): Promise<boolean> {
+    return unblockUser(transactions, repository, blockerUserUuid, blockedUserUuid);
+  },
+  async unmute(muterUserUuid, mutedUserUuid): Promise<boolean> {
+    return unmuteUser(transactions, repository, muterUserUuid, mutedUserUuid);
   },
 });
 
@@ -941,6 +1022,7 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
         const followedUserUuid = await repository.findUserUuidByPublicId(
           context.req.valid('param').userId,
+          session.userUuid,
         );
         if (!followedUserUuid) return context.json({ error: 'not_found' }, 404);
         try {
@@ -964,12 +1046,123 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
         const followedUserUuid = await repository.findUserUuidByPublicId(
           context.req.valid('param').userId,
+          session.userUuid,
         );
         if (!followedUserUuid) return context.json({ error: 'not_found' }, 404);
         await unfollow(transactions, repository, session.userUuid, followedUserUuid);
         return context.body(null, 204);
       },
     )
+    .post(
+      '/api/profiles/:userId/block',
+      vValidator('param', socialProfileParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const social = dependencies.social;
+        const moderation = dependencies.moderation;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!social || !moderation) return context.json({ error: 'unavailable' }, 503);
+        const targetUserUuid = await social.findUserUuidByPublicId(
+          context.req.valid('param').userId,
+          session.userUuid,
+        );
+        if (!targetUserUuid) return context.json({ error: 'not_found' }, 404);
+        try {
+          const created = await moderation.block(session.userUuid, targetUserUuid);
+          return context.json(
+            { status: created ? ('blocked' as const) : ('exists' as const) },
+            200,
+          );
+        } catch {
+          return context.json({ error: 'block_unavailable' }, 409);
+        }
+      },
+    )
+    .delete(
+      '/api/profiles/:userId/block',
+      vValidator('param', socialProfileParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const social = dependencies.social;
+        const moderation = dependencies.moderation;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!social || !moderation) return context.json({ error: 'unavailable' }, 503);
+        const targetUserUuid = await social.findUserUuidByPublicId(
+          context.req.valid('param').userId,
+          null,
+        );
+        if (!targetUserUuid) return context.json({ error: 'not_found' }, 404);
+        const removed = await moderation.unblock(session.userUuid, targetUserUuid);
+        return context.json(
+          { status: removed ? ('unblocked' as const) : ('not_found' as const) },
+          200,
+        );
+      },
+    )
+    .post(
+      '/api/profiles/:userId/mute',
+      vValidator('param', socialProfileParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const social = dependencies.social;
+        const moderation = dependencies.moderation;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!social || !moderation) return context.json({ error: 'unavailable' }, 503);
+        const targetUserUuid = await social.findUserUuidByPublicId(
+          context.req.valid('param').userId,
+          session.userUuid,
+        );
+        if (!targetUserUuid) return context.json({ error: 'not_found' }, 404);
+        try {
+          const created = await moderation.mute(session.userUuid, targetUserUuid);
+          return context.json({ status: created ? ('muted' as const) : ('exists' as const) }, 200);
+        } catch {
+          return context.json({ error: 'mute_unavailable' }, 409);
+        }
+      },
+    )
+    .delete(
+      '/api/profiles/:userId/mute',
+      vValidator('param', socialProfileParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const social = dependencies.social;
+        const moderation = dependencies.moderation;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!social || !moderation) return context.json({ error: 'unavailable' }, 503);
+        const targetUserUuid = await social.findUserUuidByPublicId(
+          context.req.valid('param').userId,
+          session.userUuid,
+        );
+        if (!targetUserUuid) return context.json({ error: 'not_found' }, 404);
+        const removed = await moderation.unmute(session.userUuid, targetUserUuid);
+        return context.json(
+          { status: removed ? ('unmuted' as const) : ('not_found' as const) },
+          200,
+        );
+      },
+    )
+    .post('/api/reports', vValidator('json', reportRequestSchema), async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const moderation = dependencies.moderation;
+      const social = dependencies.social;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!moderation) return context.json({ error: 'unavailable' }, 503);
+      const input = context.req.valid('json');
+      const targetId =
+        input.targetKind === 'profile' && social
+          ? await social.findUserUuidByPublicId(input.targetId, session.userUuid)
+          : input.targetId;
+      if (!targetId) return context.json({ error: 'not_found' }, 404);
+      return context.json(
+        await moderation.report({
+          ...input,
+          reporterUserUuid: session.userUuid,
+          targetId,
+        }),
+        201,
+      );
+    })
     .post(
       '/api/settings/follow-requests/:userId',
       vValidator('param', followRequestParamsSchema),
@@ -1251,6 +1444,67 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
           await controller.resolveReviewItem(actor, context.req.valid('param').id),
           200,
         );
+      },
+    )
+    .get(
+      '/api/admin/moderation/reports',
+      vValidator('query', moderationReportsQuerySchema),
+      async (context) => {
+        const actor = context.get('catalogAdminActor');
+        const controller = dependencies.moderation;
+        if (!actor || !canModerate(actor))
+          return context.json({ error: 'forbidden' }, unauthorized(actor));
+        if (!controller) return context.json({ error: 'unavailable' }, 503);
+        return context.json(
+          await controller.listReports(context.req.valid('query').status ?? null),
+          200,
+        );
+      },
+    )
+    .get(
+      '/api/admin/moderation/actions',
+      vValidator('query', moderationActionsQuerySchema),
+      async (context) => {
+        const actor = context.get('catalogAdminActor');
+        const controller = dependencies.moderation;
+        if (!actor || !canModerate(actor))
+          return context.json({ error: 'forbidden' }, unauthorized(actor));
+        if (!controller) return context.json({ error: 'unavailable' }, 503);
+        return context.json(
+          { actions: await controller.listActions(context.req.valid('query').reportId ?? null) },
+          200,
+        );
+      },
+    )
+    .post(
+      '/api/admin/moderation/reports/:id/actions',
+      vValidator('param', moderationReportParamsSchema),
+      vValidator('json', moderationActionRequestSchema),
+      async (context) => {
+        const actor = context.get('catalogAdminActor');
+        const controller = dependencies.moderation;
+        if (!actor || !canModerate(actor))
+          return context.json({ error: 'forbidden' }, unauthorized(actor));
+        if (!controller) return context.json({ error: 'unavailable' }, 503);
+        const input = context.req.valid('json');
+        if (
+          (input.action === 'suspend' || input.action === 'restore') &&
+          actor.role !== 'administrator'
+        ) {
+          return context.json({ error: 'forbidden' }, 403);
+        }
+        try {
+          return context.json(
+            await controller.moderate({
+              ...input,
+              actor: { id: actor.id, role: actor.role },
+              reportId: context.req.valid('param').id,
+            }),
+            200,
+          );
+        } catch {
+          return context.json({ error: 'moderation_unavailable' }, 409);
+        }
       },
     );
 

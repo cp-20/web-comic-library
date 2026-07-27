@@ -79,6 +79,9 @@ const createRepository = (visibility: 'public' | 'followers' | 'private' | null)
     async findUserUuidByPublicId(publicId) {
       return publicId === 'reader' ? 'reader' : null;
     },
+    async isBlockedEitherDirection() {
+      return false;
+    },
     async listFollowers() {
       return [];
     },

@@ -44,6 +44,13 @@ export {
   updateReviewRequestSchema,
 } from './social';
 export {
+  moderationActionRequestSchema,
+  moderationActionsQuerySchema,
+  moderationReportParamsSchema,
+  moderationReportsQuerySchema,
+  reportRequestSchema,
+} from './moderation';
+export {
   notificationListQuerySchema,
   notificationParamsSchema,
   setNotificationPreferenceRequestSchema,

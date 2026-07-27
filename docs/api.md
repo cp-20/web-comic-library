@@ -64,3 +64,7 @@ TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enabl
 `GET /api/timeline`はactive sessionのaccepted followから、現在も公開またはfollowers公開である読書activityだけをcreated-atとIDのstable cursorで返す。`POST /api/library/status`は`shareActivity`がtrueの場合だけ状態変更activityを作成する。
 
 `GET /api/catalog/works/{workId}/reviews`は話または巻のどちらか一方をqueryで指定する。初期read modelは、未login、未読位置、または投稿者指定のネタバレでは本文を含まない`hidden` variantを返す。`POST /api/reviews/{id}/reveal`だけが明示操作後の公開本文を返し、非公開感想は投稿者本人以外に返さない。`POST`、`PUT`、`DELETE /api/reviews`はactive session本人の感想だけを作成・編集・削除する。`POST`と`DELETE /api/reviews/{id}/reactions`は本人のいいねを切り替え、同じ利用者と感想の組を重複登録しない。
+
+`POST`と`DELETE /api/profiles/{userId}/block`は相互followとpending申請を同じtransactionで解除する。`POST`と`DELETE /api/profiles/{userId}/mute`はfollowを維持したままtimelineから対象を除外する。blockされた組はprofile、review、reaction、timeline、follow操作に対して存在を返さない。`POST /api/reports`はactive sessionのplain text通報だけを受け付け、同じ報告者・対象の再通報はopenへ戻す。
+
+`GET /api/admin/moderation/reports`と`GET /api/admin/moderation/actions`はmoderator以上だけが利用できる。`POST /api/admin/moderation/reports/{id}/actions`は理由を必須にして非表示・警告・利用停止・解除を記録し、利用停止はadministratorだけを許可する。routeはsessionのroleを入力から受け取らず、composition rootで解決したactorだけを使用する。

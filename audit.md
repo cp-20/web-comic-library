@@ -733,6 +733,26 @@ Secretの値と個人情報は記録しない。
 - **cleanup**：実行後に`docker compose down --volumes`でtest container、network、test volumeを削除する。
 - **関連**：issue #030。
 
+## 2026-07-27 #031 moderation PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#031 block、mute、report、moderation migrationとsocial query。
+- **操作**：migrationを初期状態から適用・再適用し、block時の相互follow削除、profile・review・reaction・timeline除外、mute時のfollow維持とtimeline除外を統合試験する。
+- **危険性**：local TCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さずrepository専用Compose projectだけを使用する。session token、Cookie、emailなどの値を出力・保存・監査記録しない。production database、外部service、永続user dataへ接続しない。
+- **結果**：migrationを初期状態から適用・再適用し、block時の相互followとprofile followerの削除、profile・review・reaction・timelineの双方除外、unblock後のfollow復帰、mute時のfollow維持とtimeline除外、通報の再open、activity非表示、administratorによる利用停止と監査証跡を確認した。初回はfixture cleanupが監査logの外部キー制約で失敗したため、監査recordを先に削除するtest cleanupへ修正した。再実行したPostgreSQL統合を含む142 testsが成功（0 fail）した。
+- **cleanup**：実行後に`docker compose down --volumes`でtest container、network、test volumeを削除する。
+- **関連**：issue #031。
+
+## 2026-07-27 #031 moderation PR作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/031-moderation`、#031実装commit。
+- **操作**：検証済みのblock、mute、通報、moderation migration・API・Web画面・監査記録をGitHubへpushし、ドラフトPRを作成してCIとImages workflowを開始する。
+- **危険性**：外部GitHub上に実装・migration・監査記録が公開され、CIが実行される。
+- **保護策**：production database、外部service、Secret、永続user dataに接続しない。`bun run check`、sandbox外の`bun test`、Web build、local PostgreSQL統合試験が成功した状態だけをpushし、CI成功確認前にはmainへmergeしない。
+- **結果**：branchをpushし、ドラフトPR #62を作成してCIとImages workflowを開始した。
+- **cleanup**：merge完了時にremote作業branchを削除する。production環境と永続dataは変更しない。
+- **関連**：issue #031、PR #62。
+
 ## 2026-07-27 #030 感想・いいね PR作成
 
 - **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/030-reviews-likes-spoilers`、#030実装commit。
