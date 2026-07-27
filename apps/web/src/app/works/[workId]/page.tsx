@@ -1,4 +1,5 @@
 import { ReadingControls } from './reading-controls';
+import { ReviewControls } from './review-controls';
 import { WorkDetails } from './work-details';
 
 export const generateMetadata = async ({
@@ -17,6 +18,7 @@ export default async function WorkPage({
     <main>
       <WorkDetails workId={workId} />
       <ReadingControls workId={workId} />
+      <ReviewControls workId={workId} />
     </main>
   );
 }

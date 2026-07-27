@@ -131,13 +131,20 @@ export {
 } from './source-policy';
 export {
   type ActivityKind,
+  type ActivityReaction,
   type FollowStatus,
   type ReadingActivity,
+  type ReviewActivity,
+  type ReviewReadModel,
+  type ReviewReadState,
   type UserFollow,
   activityKinds,
   canRespondToFollow,
   followStatuses,
   followStatusForProfile,
+  isReviewSpoilerFor,
+  toReviewReadModel,
+  validateReviewActivity,
 } from './social';
 export {
   type FollowMode,

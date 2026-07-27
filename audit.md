@@ -722,3 +722,23 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #58をsquash mergeした。main CIと再実行したImages workflowはいずれも成功し、Imagesはmigration read-only、service checks、GHCR image pushを完了した。
 - **cleanup**：PR merge時にremote作業branchを削除した。production環境、database、外部認証serviceの永続dataは変更していない。
 - **関連**：issue #029、PR #58、CI run #30235550001、Images run #30235549993。
+
+## 2026-07-27 #030 感想・いいね PostgreSQL統合試験
+
+- **対象**：local Docker Compose PostgreSQL 16 test database、#030 review/reaction migration、既読位置による感想query。
+- **操作**：migrationを初期状態から適用・再適用し、話に紐付く公開感想、未ログイン時の本文非返却、既読後の本文返却、reactionの一意制約を統合試験する。
+- **危険性**：local TCP port 55432、Docker container、network、test dataを一時的に使用する。
+- **保護策**：production接続情報を渡さず、repository専用Compose projectだけを使用する。本文、session token、Cookie、emailなどの値を出力・保存・監査記録しない。外部service、production database、永続user dataへ接続しない。
+- **結果**：migrationを初期状態から適用・再適用し、未ログイン時に公開感想の本文を返さないこと、既読後に本文を返すこと、同じ利用者のreactionを二重登録しないことを確認した。統合試験は1 pass、0 failだった。
+- **cleanup**：実行後に`docker compose down --volumes`でtest container、network、test volumeを削除する。
+- **関連**：issue #030。
+
+## 2026-07-27 #030 感想・いいね PR作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/030-reviews-likes-spoilers`、#030実装commit。
+- **操作**：検証済みの実装をGitHubへpushし、ドラフトPRを作成してCIとImages workflowを開始する。
+- **危険性**：外部GitHub上に実装・migration・監査記録が公開され、CIが実行される。
+- **保護策**：production database、外部service、Secret、永続user dataに接続しない。`bun run check`、`bun test`、Web build、local PostgreSQL統合試験が成功した状態だけをpushし、CI成功確認前にはmainへmergeしない。
+- **結果**：PR作成後に記録する。
+- **cleanup**：merge完了時にremote作業branchを削除する。production環境と永続dataは変更しない。
+- **関連**：issue #030。

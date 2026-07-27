@@ -24,6 +24,7 @@ import type {
   SessionAssuranceRepository,
   SessionIdentity,
   SocialRepository,
+  ReviewTarget,
   SourcePolicyQueryPort,
 } from '@web-comic-library/application';
 import {
@@ -62,6 +63,13 @@ import {
   applyFavoriteImport,
   createFavoriteImport,
   createReadingActivity,
+  createReviewActivity,
+  addReaction,
+  deleteReviewActivity,
+  listReviews,
+  removeReaction,
+  revealReview,
+  updateReviewActivity,
   discardFavoriteImport,
   getFavoriteImport,
   recordTwoFactorAssurance,
@@ -112,6 +120,10 @@ import {
   favoriteImportParamsSchema,
   followRequestParamsSchema,
   followResponseRequestSchema,
+  createReviewRequestSchema,
+  reviewListQuerySchema,
+  reviewParamsSchema,
+  updateReviewRequestSchema,
 } from '@web-comic-library/contracts';
 import { isCatalogAdmin, type CatalogAdminActor } from '@web-comic-library/domain';
 import { verifyResendEmailFeedback } from '@web-comic-library/notifications';
@@ -246,6 +258,23 @@ const readBearerToken = (request: Request): string | null => {
   if (!authorization?.startsWith('Bearer ')) return null;
   const token = authorization.slice('Bearer '.length).trim();
   return token || null;
+};
+
+const toReviewTarget = (
+  input: Readonly<{
+    contentUnitId?: string | null | undefined;
+    volumeEditionId?: string | null | undefined;
+  }>,
+): ReviewTarget | null => {
+  const contentUnitId = input.contentUnitId ?? null;
+  const volumeEditionId = input.volumeEditionId ?? null;
+  if (contentUnitId !== null && volumeEditionId === null) {
+    return { contentUnitId, volumeEditionId: null };
+  }
+  if (contentUnitId === null && volumeEditionId !== null) {
+    return { contentUnitId: null, volumeEditionId };
+  }
+  return null;
 };
 
 const forwardAuthRequest = (
@@ -731,6 +760,148 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
     );
 
   const socialRoutes = new Hono()
+    .get(
+      '/api/catalog/works/:workId/reviews',
+      vValidator('param', catalogWorkParamsSchema),
+      vValidator('query', reviewListQuerySchema),
+      async (context) => {
+        const repository = dependencies.social;
+        if (!repository) return context.json({ error: 'unavailable' }, 503);
+        const target = toReviewTarget(context.req.valid('query'));
+        if (!target) return context.json({ error: 'invalid_review_target' }, 400);
+        const session = await dependencies.resolveSession(context.req.raw);
+        return context.json(
+          {
+            reviews: await listReviews(
+              repository,
+              isActiveSession(session) ? session.userUuid : null,
+              context.req.valid('param').workId,
+              target,
+            ),
+          },
+          200,
+        );
+      },
+    )
+    .post('/api/reviews', vValidator('json', createReviewRequestSchema), async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.social;
+      const transactions = dependencies.transactions;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+      const input = context.req.valid('json');
+      const target = toReviewTarget(input);
+      if (!target) return context.json({ error: 'invalid_review_target' }, 400);
+      try {
+        return context.json(
+          await createReviewActivity(transactions, repository, {
+            ...input,
+            ...target,
+            userUuid: session.userUuid,
+          }),
+          201,
+        );
+      } catch {
+        return context.json({ error: 'review_unavailable' }, 409);
+      }
+    })
+    .put(
+      '/api/reviews/:id',
+      vValidator('param', reviewParamsSchema),
+      vValidator('json', updateReviewRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.social;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        try {
+          return context.json(
+            await updateReviewActivity(
+              transactions,
+              repository,
+              session.userUuid,
+              context.req.valid('param').id,
+              context.req.valid('json'),
+            ),
+            200,
+          );
+        } catch {
+          return context.json({ error: 'not_found' }, 404);
+        }
+      },
+    )
+    .delete('/api/reviews/:id', vValidator('param', reviewParamsSchema), async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.social;
+      const transactions = dependencies.transactions;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+      const deleted = await deleteReviewActivity(
+        transactions,
+        repository,
+        session.userUuid,
+        context.req.valid('param').id,
+      );
+      return deleted ? context.body(null, 204) : context.json({ error: 'not_found' }, 404);
+    })
+    .post('/api/reviews/:id/reveal', vValidator('param', reviewParamsSchema), async (context) => {
+      const repository = dependencies.social;
+      if (!repository) return context.json({ error: 'unavailable' }, 503);
+      const session = await dependencies.resolveSession(context.req.raw);
+      const review = await revealReview(
+        repository,
+        isActiveSession(session) ? session.userUuid : null,
+        context.req.valid('param').id,
+      );
+      return review ? context.json(review, 200) : context.json({ error: 'not_found' }, 404);
+    })
+    .post(
+      '/api/reviews/:id/reactions',
+      vValidator('param', reviewParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.social;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        try {
+          const created = await addReaction(
+            transactions,
+            repository,
+            session.userUuid,
+            context.req.valid('param').id,
+          );
+          return context.json(
+            { status: created ? ('created' as const) : ('exists' as const) },
+            200,
+          );
+        } catch {
+          return context.json({ error: 'not_found' }, 404);
+        }
+      },
+    )
+    .delete(
+      '/api/reviews/:id/reactions',
+      vValidator('param', reviewParamsSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.social;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        const deleted = await removeReaction(
+          transactions,
+          repository,
+          session.userUuid,
+          context.req.valid('param').id,
+        );
+        return context.json(
+          { status: deleted ? ('deleted' as const) : ('not_found' as const) },
+          200,
+        );
+      },
+    )
     .get('/api/timeline', vValidator('query', timelineQuerySchema), async (context) => {
       const session = await dependencies.resolveSession(context.req.raw);
       const repository = dependencies.social;

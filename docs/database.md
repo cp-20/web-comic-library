@@ -20,7 +20,9 @@ Better Auth互換の`user`、`session`、`account`、`verification`、`two_facto
 
 `user.role`は`user`または`administrator`を明示的に保持する。role変更は`user_role_audits`へ、session assuranceの記録・更新は`session_assurance_audits`へ追記する。catalog管理者の解決はactive session、role、未期限切れの`passkey`または`two_factor` assuranceだけをjoinして行い、request由来の値で昇格させない。
 
-`user_follows`はfollower、followed user、`pending`、`accepted`、`rejected`の状態を保持する。公開profileへのfollowは即時`accepted`、それ以外は本人の明示応答まで`pending`とする。`activities`は元の`library_entries`を複合foreign keyで参照し、timeline queryは現在のaccount状態、accepted follow、recordとprofileの現在の公開範囲をjoinする。したがって記録を非公開へ変更すると過去activityも第三者のtimelineから除外される。
+`user_follows`はfollower、followed user、`pending`、`accepted`、`rejected`の状態を保持する。公開profileへのfollowは即時`accepted`、それ以外は本人の明示応答まで`pending`とする。`activities`は利用者と作品をforeign keyで参照し、読書状態activityのtimeline queryは現在のaccount状態、accepted follow、`library_entries`とprofileの現在の公開範囲をjoinする。したがって記録を非公開へ変更すると過去activityも第三者のtimelineから除外される。
+
+`activities`の`review`種別は話または巻のどちらか一方、plain text本文、投稿者指定ネタバレ、公開範囲を保持する。読書状態activityは本文・対象・公開範囲を持たず、reviewは読書状態を持たないcheck制約で混在を防ぐ。review queryはapplicationで対象の既読recordまたは巻の`read`状態と比較し、伏せる場合は本文をread modelへ載せない。`activity_reactions`はactivityと利用者の複合主キーでいいねを一意にする。
 
 `profiles.default_visibility`は未設定を許容する。未設定の閲覧判定はapplicationで`private`として解決し、recordごとの上書きが存在する場合は標準値より優先する。follower関係は`profile_followers`の複合主キーと両方のforeign keyで保証する。
 

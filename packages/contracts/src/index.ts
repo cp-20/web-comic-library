@@ -34,10 +34,14 @@ export {
 export { catalogWorkParamsSchema, searchCatalogWorksQuerySchema } from './catalog';
 export { setFollowSettingsRequestSchema, setSourcePreferencesRequestSchema } from './follow';
 export {
+  createReviewRequestSchema,
   followResponseRequestSchema,
   followRequestParamsSchema,
+  reviewListQuerySchema,
+  reviewParamsSchema,
   socialProfileParamsSchema,
   timelineQuerySchema,
+  updateReviewRequestSchema,
 } from './social';
 export {
   notificationListQuerySchema,

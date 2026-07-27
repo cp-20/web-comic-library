@@ -2,7 +2,7 @@
 id: 030
 title: 感想、いいね、ネタバレ制御を実装する
 type: feature
-status: open
+status: done
 priority: P1
 depends_on: [020, 021, 023]
 umbrella: 028
