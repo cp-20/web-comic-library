@@ -2,9 +2,9 @@
 id: 049
 title: 作品概要と公開metadataを管理する
 type: feature
-status: open
+status: blocked
 priority: P1
-depends_on: [008, 017]
+depends_on: [008, 017, 058]
 umbrella: 007
 ---
 
@@ -17,6 +17,10 @@ umbrella: 007
 ## 背景
 
 #017で公開作品の検索、作者、掲載先、Web話、単行本を表示した。現行の`Work`には概要を保存するfieldと根拠がなく、connectorから推測した本文や非公開dataを表示してはならないため、概要管理は独立した変更として扱う。
+
+## Blocked
+
+概要の公開可否を管理者確認で変更し、更新履歴を監査するには、production APIでadministrator roleとpasskeyまたは二要素認証のsession assuranceを解決する必要がある。仮の管理者判定を導入せず、#058の完了後に再開する。
 
 ## スコープ
 
