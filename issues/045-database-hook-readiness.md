@@ -2,7 +2,7 @@
 id: 045
 title: database依存の同期Jobに接続待機を追加する
 type: quality
-status: open
+status: done
 priority: P1
 depends_on: [006]
 umbrella: 001

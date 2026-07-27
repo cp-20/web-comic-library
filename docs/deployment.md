@@ -16,6 +16,8 @@ GitHub Actionsはpull requestと`main`へのpushでtargetをbuildし、non-root�
 `migration` targetはworker imageと同じproduction dependencyを使うため、配備時はworker imageのcommandをmigration commandへ置き換える。
 imageはpublic repositoryへ関連付け、認証情報のない環境からpullできる公開packageとして配布する。
 
+PostgreSQLの初期化PreSync Jobとmigration PreSync Jobは、`pg_isready`でDNS解決と接続受付を5秒間隔・最大300秒まで待機してから接続する。migrationはPostgreSQL clientを持つinit containerで待機するため、一時的なdatabase起動待ちはmigration containerの失敗回数へ含めない。
+
 ## Asterion
 
 Kubernetes manifestの正本は`cp-20/asterion-manifest`の`web-comic-library` directoryに置く。
