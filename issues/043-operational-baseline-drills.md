@@ -2,7 +2,7 @@
 id: 043
 title: 運用baselineと定期drillを検証する
 type: quality
-status: open
+status: blocked
 priority: P0
 depends_on: [006]
 umbrella: 001
@@ -56,3 +56,7 @@ umbrella: 001
 - 常時稼働する外部standby。
 - 複数node化。
 - 99.5％を超えるSLA保証。
+
+## Blocker
+
+2026-07-27時点でPrometheusとbase backupの稼働期間は約2日8時間であり、連続7日間のbaselineが未達である。7日経過後にread-only観測を再開し、比較用件数を記録してから、別Namespaceへのrestore drillと明示的なalert試験を監査記録付きで実施する。

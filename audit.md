@@ -4,6 +4,16 @@ production環境、外部service、Secret、database、永続dataへ影響する
 
 Secretの値と個人情報は記録しない。
 
+## 2026-07-27 #043 運用baseline事前確認
+
+- **対象**：Asterion production Kubernetes、Prometheus、PostgreSQL backup metadata、Web Comic Library APIとworkerのread-only health/metrics。
+- **操作**：SSHと`kubectl get`、Prometheus read query、PostgreSQLのread-only system viewだけで、連続7日間の観測可能期間、backup状態、restore drill前の比較用件数を確認する。
+- **危険性**：production監視・databaseへ接続し、誤ったcommandはworkloadやdataへ影響し得る。
+- **保護策**：mutation command、port-forward、alert障害試験、restore、Secret参照を行わない。read-only queryを対象namespaceとsystem viewへ限定し、Secret値・個人情報・認証headerをlogと監査記録へ出さない。
+- **結果**：Prometheus serviceとbase backup CronJobは約2日8時間、Web/API/workerは約2日11時間の稼働だった。backup Jobは直近成功を確認したが、連続7日間のbaselineは未達である。production resourceとdatabaseを変更せず、restore drillと意図的なalert試験は実施しなかった。
+- **cleanup**：read-only確認後にSSH接続を終了し、production resourceを作成・変更しない。
+- **関連**：issue #043。
+
 ## 2026-07-27 #040 共通feedお気に入りページ公開構造確認
 
 - **対象**：少年ジャンプ＋、コミックDAYS、となりのヤングジャンプの公開Web pageと、local extension fixture。
