@@ -4,6 +4,10 @@ title: 作品カタログと更新収集を提供する
 type: umbrella
 status: open
 priority: P0
+execution: tracking
+review_required: true
+review_status: approved
+reviewed_at: 2026-07-28T10:52:32.226Z
 depends_on: []
 ---
 
@@ -26,8 +30,10 @@ depends_on: []
 - [016 書誌情報](./016-bibliography.md)
 - [017 検索と作品ページ](./017-catalog-search-web.md)
 - [018 10サイト対応とbackfill](./018-source-expansion-backfill.md)
+- [048 利用者の巻・話対応候補の審査](./048-volume-admin-and-user-correction-submission.md)
 - [049 作品概要と公開metadata](./049-work-synopsis-public-metadata.md)
 - [058 catalog管理者のroleと強い認証session](./058-catalog-admin-assurance.md)
+- [061 connector巡回worker](./061-connector-worker-runtime.md)
 
 ## 完了条件
 

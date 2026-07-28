@@ -4,6 +4,10 @@ title: 収集候補を統合してrelease eventを生成する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [008, 010]
 umbrella: 007
 ---

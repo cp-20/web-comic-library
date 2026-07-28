@@ -14,6 +14,10 @@ package操作には`bun add`、一時CLIには`bunx`を使う。
 
 npm、pnpm、Yarn、Node.jsランタイムは併設しない。
 
+application、build script、repository内CLIのruntimeはBunに統一する。protocol-levelの継続負荷試験には
+test toolとしてk6を使ってよい。k6はapplication dependencyへ追加せず、利用issueでversion、入力、
+threshold、Secretを含まないartifact、local/CIの実行方法を固定する。
+
 ## formatとlint
 
 oxfmtをformatter、oxlintをlinterに使う。

@@ -4,6 +4,10 @@ title: 更新をアプリ内、Push、メールで通知する
 type: umbrella
 status: done
 priority: P0
+execution: tracking
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: []
 ---
 

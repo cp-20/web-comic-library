@@ -3,7 +3,11 @@ id: 005
 title: Web、API、workerをAsterionへ配備する
 type: platform
 status: done
-priority: P0
+priority: P3
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [002, 003, 004]
 umbrella: 001
 ---

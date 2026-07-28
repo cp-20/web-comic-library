@@ -18,6 +18,8 @@ packages/
   connectors/   漫画サイトadapter
   auth/         認証adapter
   notifications/ 通知adapter
+tools/
+  issues/       Markdown issueを閲覧・更新するlocal Web/CLI tool
 ```
 
 ## 依存方向
@@ -38,6 +40,11 @@ api -> contracts
 - workspace間はpackageの`exports`を使い、別packageの`src`へdeep importしない。
 
 oxlintで逆向き依存と循環依存を拒否する。
+
+`tools/issues`は本番applicationから独立したrepository toolとする。依存方向は
+`http / ui / cli -> presentation / storage`とし、storageだけが`issues/*.md`を読み書きする。
+Webはbrowserへ全本文を一括送信せず、一覧用summaryと選択したissueの詳細を別APIで返す。CLIも同じ
+schema検証とatomic updateを使い、別の更新規則を持たない。
 
 ## Hono RPC
 

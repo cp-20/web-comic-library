@@ -4,6 +4,10 @@ title: 読書活動と共有を提供する
 type: umbrella
 status: done
 priority: P1
+execution: tracking
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: []
 ---
 

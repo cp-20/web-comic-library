@@ -4,6 +4,10 @@ title: カタログの修正、統合、分割を管理する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [014]
 umbrella: 007
 ---

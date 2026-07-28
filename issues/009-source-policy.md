@@ -4,6 +4,10 @@ title: 取得元の利用条件と年齢区分を管理する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [004]
 umbrella: 007
 ---

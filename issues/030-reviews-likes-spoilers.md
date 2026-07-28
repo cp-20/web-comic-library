@@ -4,6 +4,10 @@ title: 感想、いいね、ネタバレ制御を実装する
 type: feature
 status: done
 priority: P1
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [020, 021, 023]
 umbrella: 028
 ---

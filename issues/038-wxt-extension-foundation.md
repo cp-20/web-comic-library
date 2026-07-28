@@ -4,6 +4,10 @@ title: WXT extension基盤と安全なaccount連携を作る
 type: platform
 status: done
 priority: P1
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [002, 003, 020]
 umbrella: 037
 ---

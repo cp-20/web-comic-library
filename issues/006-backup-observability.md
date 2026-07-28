@@ -3,7 +3,11 @@ id: 006
 title: バックアップ、監視、障害通知を整備する
 type: platform
 status: done
-priority: P0
+priority: P3
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [005]
 umbrella: 001
 ---

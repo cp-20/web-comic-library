@@ -6,3 +6,6 @@ dist/
 .output/
 *.tsbuildinfo
 audit.md
+.env.local
+playwright-report/
+test-results/

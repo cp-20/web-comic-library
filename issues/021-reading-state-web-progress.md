@@ -4,6 +4,10 @@ title: 読書状態とWeb話の既読を管理する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [008, 020]
 umbrella: 019
 ---

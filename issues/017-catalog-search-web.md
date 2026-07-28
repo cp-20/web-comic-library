@@ -4,6 +4,10 @@ title: 作品検索と作品ページを提供する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [008, 021]
 umbrella: 007
 ---

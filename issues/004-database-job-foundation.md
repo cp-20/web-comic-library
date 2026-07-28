@@ -4,6 +4,10 @@ title: PostgreSQL migrationとjob基盤を作る
 type: platform
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [003]
 umbrella: 001
 ---

@@ -2,6 +2,20 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    const apiOrigin = process.env.API_ORIGIN;
+
+    if (!apiOrigin) {
+      return [];
+    }
+
+    return [
+      {
+        destination: `${apiOrigin}/api/:path*`,
+        source: '/api/:path*',
+      },
+    ];
+  },
   async headers() {
     return [
       {

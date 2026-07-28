@@ -4,6 +4,10 @@ title: SNS共有、公開URL、OG画像を実装する
 type: feature
 status: done
 priority: P1
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [017, 020, 021, 030]
 umbrella: 028
 ---

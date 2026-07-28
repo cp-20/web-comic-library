@@ -3,7 +3,11 @@ id: 045
 title: database依存の同期Jobに接続待機を追加する
 type: quality
 status: done
-priority: P1
+priority: P3
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [006]
 umbrella: 001
 ---

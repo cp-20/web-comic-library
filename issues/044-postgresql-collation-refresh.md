@@ -3,7 +3,11 @@ id: 044
 title: PostgreSQLのcollation versionを更新する
 type: quality
 status: done
-priority: P0
+priority: P3
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [006]
 umbrella: 001
 ---

@@ -4,7 +4,11 @@ title: 許可済み10サイトとニコニコ漫画backfillへ拡張する
 type: umbrella
 status: blocked
 priority: P2
-depends_on: [009, 010, 011, 012, 013, 014]
+execution: tracking
+review_required: true
+review_status: pending
+reviewed_at: null
+depends_on: [009, 010, 011, 012, 013, 014, 061]
 umbrella: 007
 ---
 
@@ -16,10 +20,15 @@ umbrella: 007
 
 ## 子issue
 
+- [066 ヤンマガWeb permission](./066-yanmaga-permission-decision.md)
 - [050 ヤンマガWeb connector](./050-yanmaga-web-connector.md)
+- [067 サンデーうぇぶり permission](./067-sunday-webry-permission-decision.md)
 - [051 サンデーうぇぶり connector](./051-sunday-webry-connector.md)
+- [068 マガポケ permission](./068-magapoke-permission-decision.md)
 - [052 マガポケ connector](./052-magapoke-connector.md)
+- [069 ガンガンONLINE permission](./069-gangan-online-permission-decision.md)
 - [053 ガンガンONLINE connector](./053-gangan-online-connector.md)
+- [070 アルファポリス permission](./070-alphapolis-permission-decision.md)
 - [054 アルファポリス connector](./054-alphapolis-connector.md)
 
 ## 完了条件
@@ -32,8 +41,8 @@ umbrella: 007
 
 ## 共通方針
 
-- API、feed、公開一覧HTML、公開作品HTML、埋め込みJSONの順に選ぶ。
-- browserが必要な候補は自動対応せず、別の公式手段か代替siteを選ぶ。
+- 権利者が保存・再公開を文書で許可した、認証不要の公式JSON metadata APIだけを追加する。
+- HTML、browser操作、内部API、mobile app解析が必要な候補は実装せず、許可済みの別siteへ差し替える。
 - siteごとのpolicy、connector、fixture、metricsを同じ子issueへ含める。
 - backfillは通知を生成せず、通常巡回を常に優先する。
 
@@ -44,4 +53,20 @@ umbrella: 007
 
 ## Blocker
 
-全子issue（#050〜#054）が、公式利用規約による自動収集の禁止または明示許可の不在により`blocked`である。公式の許可済み取得手段または書面による許可が得られるまで、対象サイトをconnectorへ追加しない。
+#066〜#070のpermissionは承認済みだが、#050〜#054のconnectorと、それらをproduction巡回する#061が
+未完了であるため、10siteのbackfillを開始できない。
+
+## 解除条件
+
+#061と#050〜#054が`done`になり、許可された10siteをproduction巡回できること。または、
+許可されなかったsiteを許可済みsiteの新しいpermission/connector issueへ差し替えること。
+
+## 解除後の着手点
+
+解除条件を先に満たした子issue一件のsource policy evidenceとAPI schemaを実装し、#061のregistryへ
+追加する。
+
+## 禁止する代替
+
+robots.txtだけを許可根拠にする、HTML/browser/internal APIを解析する、10 siteという件数のために
+未許可sourceを追加する方法は採用しない。
