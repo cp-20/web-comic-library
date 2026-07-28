@@ -2,7 +2,7 @@
 id: 029
 title: 利用者followとtimelineを実装する
 type: feature
-status: completed
+status: done
 priority: P1
 depends_on: [020, 021]
 umbrella: 028

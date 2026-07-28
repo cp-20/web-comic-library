@@ -2,7 +2,7 @@
 id: 028
 title: 読書活動と共有を提供する
 type: umbrella
-status: open
+status: done
 priority: P1
 depends_on: []
 ---
