@@ -12,6 +12,7 @@ import type {
   SplitWorkCommand,
   TransactionPort,
   IdentityRepository,
+  OgImageStorage,
   LibraryRepository,
   VolumeLibraryRepository,
   CatalogQueryPort,
@@ -129,6 +130,7 @@ import {
   followRequestParamsSchema,
   followResponseRequestSchema,
   createReviewRequestSchema,
+  activityParamsSchema,
   reviewListQuerySchema,
   reviewParamsSchema,
   updateReviewRequestSchema,
@@ -225,6 +227,7 @@ export type ApiDependencies = Readonly<{
   sessionAssurances: SessionAssuranceRepository | null;
   social: SocialRepository | null;
   profileIconStorage: ProfileIconStorage | null;
+  ogImageStorage: OgImageStorage | null;
   transactions: TransactionPort | null;
   resolveSession(request: Request): Promise<SessionIdentity | null>;
   resolveCatalogAdmin(request: Request): Promise<CatalogAdminActor | null>;
@@ -257,6 +260,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   sessionAssurances: null,
   social: null,
   profileIconStorage: null,
+  ogImageStorage: null,
   transactions: null,
   async resolveSession(): Promise<SessionIdentity | null> {
     return null;
@@ -332,6 +336,31 @@ const canonicalCatalogPath = (redirect: CatalogRedirect): string => {
   return redirect.resource === 'work'
     ? `/works/${redirect.canonicalId}`
     : `/content-units/${redirect.canonicalId}`;
+};
+
+const escapeXml = (value: string): string =>
+  value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+
+const ogSvg = (title: string, subtitle: string): Uint8Array<ArrayBuffer> =>
+  Uint8Array.from(
+    new TextEncoder().encode(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#111827"/>
+  <text x="80" y="260" fill="#ffffff" font-family="sans-serif" font-size="64">${escapeXml(title).slice(0, 80)}</text>
+  <text x="80" y="350" fill="#cbd5e1" font-family="sans-serif" font-size="32">${escapeXml(subtitle).slice(0, 120)}</text>
+</svg>`),
+  );
+
+const ogImageKey = async (workId: string, title: string, subtitle: string): Promise<string> => {
+  const bytes = new TextEncoder().encode(`${workId}\u0000${title}\u0000${subtitle}`);
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  const version = [...digest].map((value) => value.toString(16).padStart(2, '0')).join('');
+  return `og-images/${version}.svg`;
 };
 
 const readBearerToken = (request: Request): string | null => {
@@ -886,6 +915,18 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         return context.json({ error: 'review_unavailable' }, 409);
       }
     })
+    .get(
+      '/api/activities/:id/share',
+      vValidator('param', activityParamsSchema),
+      async (context) => {
+        const repository = dependencies.social;
+        if (!repository) return context.json({ error: 'unavailable' }, 503);
+        const activity = await repository.findPublicActivityShare(context.req.valid('param').id);
+        return activity
+          ? context.json({ activity }, 200)
+          : context.json({ error: 'not_found' }, 404);
+      },
+    )
     .put(
       '/api/reviews/:id',
       vValidator('param', reviewParamsSchema),
@@ -1523,6 +1564,33 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         );
         return context.json({ works }, 200, {
           'cache-control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        });
+      },
+    )
+    .get(
+      '/api/og/works/:workId.svg',
+      vValidator('param', catalogWorkParamsSchema),
+      async (context) => {
+        const catalog = dependencies.catalog;
+        const policies = dependencies.sourcePolicies;
+        if (!catalog || !policies) return context.json({ error: 'unavailable' }, 503);
+        const work = await findPublicWork(catalog, policies, context.req.valid('param').workId);
+        if (!work) return context.json({ error: 'not_found' }, 404);
+        const title = work.title;
+        const subtitle = `${work.creators.map((creator) => creator.name).join('、')} | Web Comic Library`;
+        const bytes = ogSvg(title, subtitle);
+        const storage = dependencies.ogImageStorage;
+        if (storage) {
+          const url = await storage.putIfAbsent(
+            await ogImageKey(work.id, title, subtitle),
+            'image/svg+xml',
+            bytes,
+          );
+          return context.redirect(url, 302);
+        }
+        return context.body(bytes, 200, {
+          'cache-control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+          'content-type': 'image/svg+xml; charset=utf-8',
         });
       },
     )

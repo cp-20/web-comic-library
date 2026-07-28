@@ -34,6 +34,7 @@ export {
 export { catalogWorkParamsSchema, searchCatalogWorksQuerySchema } from './catalog';
 export { setFollowSettingsRequestSchema, setSourcePreferencesRequestSchema } from './follow';
 export {
+  activityParamsSchema,
   createReviewRequestSchema,
   followResponseRequestSchema,
   followRequestParamsSchema,

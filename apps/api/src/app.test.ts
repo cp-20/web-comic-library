@@ -1177,6 +1177,9 @@ describe('review RPC', () => {
       async findFollowTarget() {
         return null;
       },
+      async findPublicActivityShare() {
+        return null;
+      },
       async findReviewActivity(id) {
         return reviews.get(id) ?? null;
       },

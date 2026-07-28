@@ -1,3 +1,4 @@
+import { ShareButton } from '../../share-button';
 import { ReadingControls } from './reading-controls';
 import { ReviewControls } from './review-controls';
 import { WorkDetails } from './work-details';
@@ -6,7 +7,11 @@ export const generateMetadata = async ({
   params,
 }: Readonly<{ params: Promise<{ workId: string }> }>) => {
   const { workId } = await params;
-  return { alternates: { canonical: `/works/${workId}` }, title: '作品 | Web Comic Library' };
+  return {
+    alternates: { canonical: `/works/${workId}` },
+    openGraph: { images: [`/api/og/works/${workId}.svg`], type: 'website' },
+    title: '作品 | Web Comic Library',
+  };
 };
 
 export default async function WorkPage({
@@ -17,6 +22,7 @@ export default async function WorkPage({
   return (
     <main>
       <WorkDetails workId={workId} />
+      <ShareButton title="作品 | Web Comic Library" url={`/works/${workId}`} />
       <ReadingControls workId={workId} />
       <ReviewControls workId={workId} />
     </main>

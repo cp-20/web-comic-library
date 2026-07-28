@@ -4,6 +4,7 @@ export {
   sanitizeProfileIcon,
   uploadProfileIcon,
 } from './profile-icon';
+export { type OgImageStorage } from './og-image';
 export {
   type IdentityRepository,
   type ProfileViewer,
@@ -94,6 +95,7 @@ export {
 export {
   type SocialRepository,
   type FollowTarget,
+  type PublicActivityShare,
   type ReviewListItem,
   type ReviewTarget,
   type TimelinePage,

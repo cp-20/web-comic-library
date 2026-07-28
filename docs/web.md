@@ -38,6 +38,8 @@ bun run build:web
 
 `/`は作品名、別名、読み仮名、作者名を検索し、掲載先、連載状態、掲載種別と並び順を組み合わせる。`/works/{workId}`はcanonical URLとOG titleを持ち、公開済みの作者、掲載先、Web話、単行本だけをHono RPC client経由で表示する。retire済みの旧作品IDはcatalog redirect APIの正規URLへ遷移する。漫画本文は表示・配信せず、公式閲覧URLへ新しいタブで遷移する。
 
+`/works/{workId}`、`/profiles/{userId}`、`/activities/{activityId}`はcanonical URLを持つ共有対象である。共有操作はWeb Share APIを優先し、未対応時はcopy、X、Bluesky、LINEのencoded linkを表示する。`/activities/{activityId}`は匿名共有専用APIが404を返した場合に内容を表示しない。OG画像とmetadataには作品名、利用者名、読書状態だけを使い、感想本文、spoiler、既読位置、非公開profile情報を入れない。
+
 ## follow設定
 
 `/settings/follows`は利用者自身の掲載先優先順位と、作品ごとの最速、site優先、掲載先指定、全掲載先の四方式をHono RPC clientで保存する。掲載先指定は対象publication IDを明示し、未選択の掲載先は通知候補にしない。

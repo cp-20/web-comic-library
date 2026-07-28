@@ -1,10 +1,11 @@
-import type { ProfileIconStorage } from '@web-comic-library/application';
+import type { OgImageStorage, ProfileIconStorage } from '@web-comic-library/application';
 
 export interface R2ObjectClient {
+  objectExists(key: string): Promise<boolean>;
   putObject(
     input: Readonly<{
       body: Uint8Array;
-      contentType: 'image/png';
+      contentType: 'image/png' | 'image/svg+xml';
       key: string;
     }>,
   ): Promise<void>;
@@ -21,6 +22,11 @@ export type R2ObjectClientOptions = Readonly<{
 }>;
 
 export type R2ProfileIconStorageOptions = Readonly<{
+  client: R2ObjectClient;
+  publicBaseUrl: string;
+}>;
+
+export type R2OgImageStorageOptions = Readonly<{
   client: R2ObjectClient;
   publicBaseUrl: string;
 }>;
@@ -48,6 +54,30 @@ export class R2ProfileIconStorage implements ProfileIconStorage {
 export const createR2ProfileIconStorage = (
   options: R2ProfileIconStorageOptions,
 ): R2ProfileIconStorage => new R2ProfileIconStorage(options);
+
+export class R2OgImageStorage implements OgImageStorage {
+  readonly #client: R2ObjectClient;
+  readonly #publicBaseUrl: URL;
+
+  constructor(options: R2OgImageStorageOptions) {
+    this.#client = options.client;
+    this.#publicBaseUrl = new URL(options.publicBaseUrl);
+    if (this.#publicBaseUrl.protocol !== 'https:') {
+      throw new Error('R2 OG image public base URL must use HTTPS');
+    }
+  }
+
+  async putIfAbsent(key: string, contentType: 'image/svg+xml', bytes: Uint8Array): Promise<string> {
+    if (!/^og-images\/[a-z0-9-]+\.svg$/u.test(key)) throw new Error('OG image key is invalid');
+    if (!(await this.#client.objectExists(key))) {
+      await this.#client.putObject({ body: bytes, contentType, key });
+    }
+    return new URL(key, this.#publicBaseUrl).href;
+  }
+}
+
+export const createR2OgImageStorage = (options: R2OgImageStorageOptions): R2OgImageStorage =>
+  new R2OgImageStorage(options);
 
 const encoder = new TextEncoder();
 
@@ -109,7 +139,7 @@ export class R2S3ObjectClient implements R2ObjectClient {
   }
 
   async putObject(
-    input: Readonly<{ body: Uint8Array; contentType: 'image/png'; key: string }>,
+    input: Readonly<{ body: Uint8Array; contentType: 'image/png' | 'image/svg+xml'; key: string }>,
   ): Promise<void> {
     const now = new Date();
     const { amzDate, dateStamp } = dateParts(now);
@@ -156,6 +186,49 @@ export class R2S3ObjectClient implements R2ObjectClient {
       method: 'PUT',
     });
     if (!response.ok) throw new Error(`R2 object upload failed with status ${response.status}`);
+  }
+
+  async objectExists(key: string): Promise<boolean> {
+    const now = new Date();
+    const { amzDate, dateStamp } = dateParts(now);
+    const objectPath = `/${this.#bucket}/${key.split('/').map(encodeURIComponent).join('/')}`;
+    const url = new URL(objectPath, this.#endpoint);
+    const payloadHash = await sha256('');
+    const canonicalHeaders = `host:${url.host}\nx-amz-content-sha256:${payloadHash}\nx-amz-date:${amzDate}\n`;
+    const signedHeaders = 'host;x-amz-content-sha256;x-amz-date';
+    const canonicalRequest = [
+      'HEAD',
+      url.pathname,
+      '',
+      canonicalHeaders,
+      signedHeaders,
+      payloadHash,
+    ].join('\n');
+    const credentialScope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = [
+      'AWS4-HMAC-SHA256',
+      amzDate,
+      credentialScope,
+      await sha256(canonicalRequest),
+    ].join('\n');
+    const dateKey = await hmac(encoder.encode(`AWS4${this.#secretAccessKey}`), dateStamp);
+    const regionKey = await hmac(dateKey, 'auto');
+    const serviceKey = await hmac(regionKey, 's3');
+    const signingKey = await hmac(serviceKey, 'aws4_request');
+    const signature = hex((await hmac(signingKey, stringToSign)).buffer);
+    const response = await this.#fetch(url, {
+      headers: {
+        authorization:
+          `AWS4-HMAC-SHA256 Credential=${this.#accessKeyId}/${credentialScope}, ` +
+          `SignedHeaders=${signedHeaders}, Signature=${signature}`,
+        'x-amz-content-sha256': payloadHash,
+        'x-amz-date': amzDate,
+      },
+      method: 'HEAD',
+    });
+    if (response.status === 404) return false;
+    if (!response.ok) throw new Error(`R2 object lookup failed with status ${response.status}`);
+    return true;
   }
 }
 

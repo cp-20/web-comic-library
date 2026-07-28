@@ -49,6 +49,8 @@ TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enabl
 
 `GET /api/catalog/works`は`q`、`source`、`status`、`kind`、`sort`で公開作品を検索する。`q`はNFKC正規化し、title、別名、読み仮名、作者名を対象にする。`GET /api/catalog/works/{workId}`は公開済みの作品詳細だけを返す。両routeは最新のsource policyがcollectionを許可し、緊急停止中でなく、年齢区分が`public`の掲載先だけを返し、CDN cache可能なresponse headerを付ける。人気順は直近30日間のlibrary entry数で決めるが、利用者情報と件数はresponseに含めない。
 
+`GET /api/og/works/{workId}.svg`は同じ公開作品判定を通った作品名と作者名だけでSVGを生成する。R2が構成されている場合は公開内容のSHA-256 version keyを先にHEADし、未保存時だけPUTして公開asset URLへ302する。本文、掲載ページ、読書進捗、profileの非公開情報はこのrouteとR2 objectへ渡さない。
+
 ## catalog管理API
 
 `/api/admin/catalog/*`は管理者専用とする。routeはsessionを直接解釈せず、composition rootから渡す管理者解決portを使う。解決されたactorは`administrator` roleかつ`passkey`または`two_factor`の強い認証状態でなければならない。
@@ -62,6 +64,8 @@ TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enabl
 `POST`と`DELETE /api/profiles/{userId}/follow`はactive sessionの利用者だけがprofileをfollowまたは解除する。`POST /api/settings/follow-requests/{userUuid}`は申請先本人だけが`accepted`または`rejected`へ応答する。`GET /api/settings/follows/users`は本人のfollowersとfollowingだけを返す。
 
 `GET /api/timeline`はactive sessionのaccepted followから、現在も公開またはfollowers公開である読書activityだけをcreated-atとIDのstable cursorで返す。`POST /api/library/status`は`shareActivity`がtrueの場合だけ状態変更activityを作成する。
+
+`GET /api/activities/{id}/share`は匿名共有用の最小payloadだけを返す。読書activityは現在のlibrary entryまたはprofile標準公開範囲が`public`、reviewはreview自体が`public`で、かつaccountがactiveかつactivityが非表示でない場合に限る。閲覧不可と不存在はともに404とし、review本文・spoiler flag・既読位置を返さない。
 
 `GET /api/catalog/works/{workId}/reviews`は話または巻のどちらか一方をqueryで指定する。初期read modelは、未login、未読位置、または投稿者指定のネタバレでは本文を含まない`hidden` variantを返す。`POST /api/reviews/{id}/reveal`だけが明示操作後の公開本文を返し、非公開感想は投稿者本人以外に返さない。`POST`、`PUT`、`DELETE /api/reviews`はactive session本人の感想だけを作成・編集・削除する。`POST`と`DELETE /api/reviews/{id}/reactions`は本人のいいねを切り替え、同じ利用者と感想の組を重複登録しない。
 

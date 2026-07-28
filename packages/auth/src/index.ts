@@ -6,10 +6,13 @@ import { Pool } from 'pg';
 export {
   type R2ObjectClient,
   type R2ObjectClientOptions,
+  type R2OgImageStorageOptions,
   type R2ProfileIconStorageOptions,
+  R2OgImageStorage,
   R2ProfileIconStorage,
   R2S3ObjectClient,
   createR2ObjectClient,
+  createR2OgImageStorage,
   createR2ProfileIconStorage,
 } from './profile-icon-storage';
 

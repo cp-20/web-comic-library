@@ -73,6 +73,9 @@ const createRepository = (visibility: 'public' | 'followers' | 'private' | null)
     async findFollowTarget() {
       return { accountStatus: 'active' as const, visibility };
     },
+    async findPublicActivityShare() {
+      return null;
+    },
     async findReviewActivity(id) {
       return reviews.get(id) ?? null;
     },

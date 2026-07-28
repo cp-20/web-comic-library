@@ -48,6 +48,8 @@ export const updateReviewRequestSchema = object({
 
 export const reviewParamsSchema = object({ id: reviewId });
 
+export const activityParamsSchema = object({ id: reviewId });
+
 export const reviewListQuerySchema = object({
   contentUnitId: optional(reviewId),
   volumeEditionId: optional(reviewId),
