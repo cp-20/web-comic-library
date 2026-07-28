@@ -26,6 +26,9 @@ const reviewTarget = (form: HTMLFormElement) => {
     : { contentUnitId: targetId, volumeEditionId: null };
 };
 
+const isRevealedReview = (value: unknown): value is Readonly<{ body: string }> =>
+  typeof value === 'object' && value !== null && 'body' in value && typeof value.body === 'string';
+
 export const ReviewControls = ({ workId }: Readonly<{ workId: string }>) => {
   const [message, setMessage] = useState<string | null>(null);
   const [reviews, setReviews] = useState<readonly Review[]>([]);
@@ -129,11 +132,22 @@ export const ReviewControls = ({ workId }: Readonly<{ workId: string }>) => {
                           setMessage('感想を開けませんでした。');
                           return;
                         }
-                        const revealed = await response.json();
+                        const revealed: unknown = await response.json();
+                        if (!isRevealedReview(revealed)) {
+                          setMessage('感想を開けませんでした。');
+                          return;
+                        }
                         setRevealedBodies((current) => ({
                           ...current,
                           [review.id]: revealed.body,
                         }));
+                        setReviews((current) =>
+                          current.map((item) =>
+                            item.id === review.id
+                              ? { ...item, body: revealed.body, state: 'visible' }
+                              : item,
+                          ),
+                        );
                       })();
                     }}
                     type="button"

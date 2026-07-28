@@ -27,6 +27,18 @@ button {
   padding: 0.5rem;
 }
 
+a,
+button,
+input,
+select,
+textarea {
+  min-height: 2.75rem;
+}
+
+a {
+  display: inline-block;
+}
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,

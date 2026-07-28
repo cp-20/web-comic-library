@@ -69,7 +69,8 @@ export default function ModerationPage() {
 
   const submit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     const reportId = String(form.get('reportId') ?? '');
     const action = actionFrom(form.get('action'));
     const targetKind = targetKindFrom(form.get('targetKind'));
@@ -91,9 +92,9 @@ export default function ModerationPage() {
         setMessage(`操作を記録できませんでした (${response.status})。`);
         return;
       }
-      setMessage('操作と監査記録を保存しました。');
-      event.currentTarget.reset();
+      formElement.reset();
       await loadReports();
+      setMessage('操作と監査記録を保存しました。');
     } catch {
       setMessage('接続に失敗しました。認証状態とネットワークを確認してください。');
     }
