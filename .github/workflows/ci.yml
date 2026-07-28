@@ -50,6 +50,14 @@ jobs:
       - run: bun run check
       - run: bun test
       - run: bun run build:web
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:e2e
+      - uses: actions/upload-artifact@v5
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
       - run: docker build --file Dockerfile.compatibility --tag web-comic-library-compatibility .
       - run: >-
           docker run --rm --network host
