@@ -16,7 +16,7 @@ Better Authのpasskeyまたは二要素認証が成功したsessionだけを、a
 
 ## 背景
 
-現在のmagic linkとGoogle OAuthはactive sessionを作るが、session tableに二要素認証完了の記録がない。Better AuthのTOTP pluginもverification後に通常sessionを作るため、session時刻、Cookieの存在、email、request headerから強い認証を推測してはならない。
+Google OAuthはactive sessionを作るが、session tableに二要素認証完了の記録がない。Better AuthのTOTP pluginもverification後に通常sessionを作るため、session時刻、Cookieの存在、email、request headerから強い認証を推測してはならない。
 
 ## スコープ
 

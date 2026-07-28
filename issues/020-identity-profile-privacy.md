@@ -17,7 +17,7 @@ umbrella: 019
 ## スコープ
 
 - Better AuthのHono integration。
-- メールlinkとGoogle OAuthによる登録とlogin。
+- Google OAuthによる登録とlogin。
 - `User`、`Profile`、session、account状態のstorage。
 - 表示名、一意なuser ID、自己紹介、icon。
 - 公開、follower限定、非公開の`Visibility`。
@@ -35,7 +35,7 @@ umbrella: 019
 
 ## 受け入れ条件
 
-- メールlinkとGoogle OAuthで登録、login、logoutできる。
+- Google OAuthで登録、login、logoutできる。
 - user IDの重複と予約語を拒否できる。
 - profileを公開範囲に従って取得できる。
 - 未設定accountを第三者が閲覧できない。

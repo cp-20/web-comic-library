@@ -20,7 +20,7 @@ bun run build:web
 
 ## loginとプロフィール設定
 
-`/login`はHono RPC clientでmagic linkとGoogle OAuth開始APIを呼び、OAuth URLへの遷移だけをbrowserで行う。`/settings/profile`では初回にユーザーID、表示名、自己紹介、標準公開範囲を選ぶ。保存前のaccountは第三者へ表示しない。
+`/login`はHono RPC clientでGoogle OAuth開始APIだけを呼び、OAuth URLへの遷移だけをbrowserで行う。`/settings/profile`では初回にユーザーID、表示名、自己紹介、標準公開範囲を選ぶ。保存前のaccountは第三者へ表示しない。
 
 `/settings/security`はHono RPC clientでTOTP enrollment URIとbackup codeを一度だけ表示し、認証アプリの6桁コードをverification APIへ送る。verification後のresponseはsession tokenを含めない。
 

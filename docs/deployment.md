@@ -27,7 +27,7 @@ Cloudflare Tunnelは`comic.cp20.dev/api/*`をAPIへ送り、それ以外の同�
 
 SecretはSOPSで暗号化し、平文をGit履歴とmanifestへ含めない。
 
-APIには`DATABASE_URL`、`BETTER_AUTH_SECRET`、`BETTER_AUTH_URL`、`MAGIC_LINK_DELIVERY_URL`をSecretまたは設定として与える。Google OAuthは`GOOGLE_CLIENT_ID`と`GOOGLE_CLIENT_SECRET`を必ず組で設定する。profile iconとOG image cacheを有効にする場合は`R2_ENDPOINT`、`R2_BUCKET`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`R2_PUBLIC_BASE_URL`の全てを設定する。OG imageは公開内容のversion keyを使用し、R2 objectの存在確認後に未保存の場合だけPUTする。R2 access keyとauth secretはSOPS Secretのみで管理し、URL以外をログ、監査記録、Gitへ出さない。
+APIには`DATABASE_URL`、`BETTER_AUTH_SECRET`、`BETTER_AUTH_URL`、`GOOGLE_CLIENT_ID`、`GOOGLE_CLIENT_SECRET`を設定する。Google OAuth credentialは必ず組で与え、片方または両方がないAPIは起動しない。profile iconとOG image cacheを有効にする場合は`R2_ENDPOINT`、`R2_BUCKET`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY`、`R2_PUBLIC_BASE_URL`の全てを設定する。OG imageは公開内容のversion keyを使用し、R2 objectの存在確認後に未保存の場合だけPUTする。R2 access keyとauth secretはSOPS Secretのみで管理し、URL以外をログ、監査記録、Gitへ出さない。
 
 Web Pushを有効にする場合はAPIへ`VAPID_PUBLIC_KEY`、workerへ`VAPID_PUBLIC_KEY`、`VAPID_PRIVATE_KEY`、`VAPID_SUBJECT`をSOPS Secretで与える。三つの値は同じVAPID key pairから設定し、秘密鍵をAPI、Web、ログ、監査記録へ渡さない。
 

@@ -100,7 +100,6 @@ import {
   catalogReviewItemParamsSchema,
   mergeContentUnitsRequestSchema,
   mergeWorksRequestSchema,
-  magicLinkRequestSchema,
   markContentReadRequestSchema,
   markContentReadThroughRequestSchema,
   markPublicationReadRequestSchema,
@@ -1755,23 +1754,6 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
     );
 
   return baseApp
-    .post('/api/login/magic-link', vValidator('json', magicLinkRequestSchema), async (context) => {
-      const auth = dependencies.auth;
-      if (!auth) return context.json({ error: 'unavailable' }, 503);
-      return auth.handler(
-        new Request(new URL('/api/auth/sign-in/magic-link', context.req.url), {
-          body: JSON.stringify({
-            callbackURL: '/settings/profile',
-            email: context.req.valid('json').email,
-          }),
-          headers: {
-            'content-type': 'application/json',
-            origin: new URL(context.req.url).origin,
-          },
-          method: 'POST',
-        }),
-      );
-    })
     .post('/api/login/google', async (context) => {
       const auth = dependencies.auth;
       if (!auth) return context.json({ error: 'unavailable' }, 503);
