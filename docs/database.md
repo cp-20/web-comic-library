@@ -16,6 +16,8 @@ migrationには適用後の制約と主要queryを確認する統合テストを
 
 Better Auth互換の`user`、`session`、`account`、`verification`、`two_factor`を保持し、利用者固有の設定は`profiles`と`profile_followers`へ分ける。`profiles.public_id`は一意、ASCII小文字のID規則、予約語禁止をapplicationとDBの両方で守る。account statusは`active`、`disabled`、`pending_deletion`で、session queryは`profiles`とjoinしてactive以外を認証済みにしない。
 
+`account_data_exports`は本人のJSON exportだけを短期保存し、download tokenはSHA-256 hashだけを保持する。payloadは期限後に削除する。`account_deletion_ledger`はuser rowへのforeign keyを持たず、削除要求、30日後の削除期限、完了時刻を保持するため、backup復元後もworkerが削除を再適用できる。
+
 `session_assurances`はTOTP verificationが成功したsession IDだけを`two_factor`として記録する。session token、Cookie、email、request headerからassuranceを推測してはならない。assuranceの期限はverification時点のsession expiryに固定し、sessionの削除（logoutを含む）はforeign key cascadeでassuranceも無効化する。
 
 `user.role`は`user`、`moderator`、`administrator`を明示的に保持する。role変更は`user_role_audits`へ、session assuranceの記録・更新は`session_assurance_audits`へ追記する。catalog管理者の解決はactive session、role、未期限切れの`passkey`または`two_factor` assuranceだけをjoinして行い、request由来の値で昇格させない。catalogの変更はadministratorかつ強いassuranceだけを許可し、moderationの非表示・警告はmoderator以上、利用停止・解除はadministratorだけを許可する。

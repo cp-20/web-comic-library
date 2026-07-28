@@ -4,6 +4,7 @@ export { PostgresCatalogAdmin, createPostgresCatalogAdmin } from './catalog-admi
 export { PostgresConnectorState, createPostgresConnectorState } from './connector-state';
 export { PostgresIngestion, createPostgresIngestion } from './ingestion';
 export { PostgresIdentity, createPostgresIdentity } from './identity';
+export { PostgresAccountData, createPostgresAccountData } from './account-data';
 export { PostgresSessionAssurance, createPostgresSessionAssurance } from './session-assurance';
 export { PostgresSocial, createPostgresSocial } from './social';
 export { PostgresModeration, createPostgresModeration } from './moderation';

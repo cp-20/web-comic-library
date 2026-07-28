@@ -1,6 +1,10 @@
 import { createPostgresJobQueueMetrics } from '@web-comic-library/db';
 import { createResendEmailSender, createWebPushSender } from '@web-comic-library/notifications';
 
+import {
+  createAccountDataExportWorkerHandler,
+  createAccountDataPurgeWorkerHandler,
+} from './account-data';
 import { createBibliographyWorkerHandler } from './bibliography';
 import { createEmailDigestWorkerHandler } from './email-digest';
 import { createWorkerMetrics, startMetricsServer } from './metrics';
@@ -51,6 +55,8 @@ const runner = await startWorker(
   createBibliographyWorkerHandler(databaseUrl),
   createNotificationWorkerHandler(databaseUrl, webPushSender),
   emailDigestHandler,
+  createAccountDataExportWorkerHandler(databaseUrl),
+  createAccountDataPurgeWorkerHandler(databaseUrl),
 );
 const jobQueueMetrics = createPostgresJobQueueMetrics(databaseUrl);
 const metrics = createWorkerMetrics(jobQueueMetrics);

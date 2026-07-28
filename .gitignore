@@ -5,3 +5,4 @@ dist/
 .wxt/
 .output/
 *.tsbuildinfo
+audit.md

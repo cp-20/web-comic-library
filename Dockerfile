@@ -1,6 +1,9 @@
 ARG BUN_VERSION=1.3.14
 
 FROM oven/bun:${BUN_VERSION}-slim AS source
+RUN apt-get update \
+  && apt-get upgrade --yes --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY . .
 

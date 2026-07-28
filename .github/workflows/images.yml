@@ -53,6 +53,18 @@ jobs:
           -c 'test "$(id -u)" -ne 0 &&
           test ! -e /app/node_modules/typescript &&
           test ! -e /app/node_modules/playwright'
+      - name: Scan container images for high and critical vulnerabilities
+        run: |
+          for component in web api worker; do
+            docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.68.1 \
+              image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL \
+              "web-comic-library-${component}"
+          done
+          # WAL-G ships a statically linked upstream Go binary. Scan the database image's
+          # OS packages here; its pinned upstream binary checksum is verified at build time.
+          docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.68.1 \
+            image --exit-code 1 --ignore-unfixed --pkg-types os --severity HIGH,CRITICAL \
+            web-comic-library-database
       - name: Run migration read-only
         run: >-
           docker run --rm --read-only --tmpfs /tmp

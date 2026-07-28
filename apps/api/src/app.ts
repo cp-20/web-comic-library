@@ -29,6 +29,8 @@ import type {
   ModerationRepository,
   ModerationQueuePage,
   SourcePolicyQueryPort,
+  AccountDataRepository,
+  JobQueuePort,
 } from '@web-comic-library/application';
 import {
   findVisibleProfile,
@@ -87,6 +89,9 @@ import {
   unmuteUser,
   submitReport,
   performModeration,
+  findAccountDataExport,
+  requestAccountDataExport,
+  requestAccountDeletion,
 } from '@web-comic-library/application';
 import type { AuthAdapter } from '@web-comic-library/auth';
 import {
@@ -139,6 +144,9 @@ import {
   moderationReportParamsSchema,
   moderationReportsQuerySchema,
   reportRequestSchema,
+  accountDataExportParamsSchema,
+  accountDataExportQuerySchema,
+  accountDeletionRequestSchema,
 } from '@web-comic-library/contracts';
 import {
   canModerate,
@@ -228,6 +236,8 @@ export type ApiDependencies = Readonly<{
   social: SocialRepository | null;
   profileIconStorage: ProfileIconStorage | null;
   ogImageStorage: OgImageStorage | null;
+  accountData: AccountDataRepository | null;
+  jobs: JobQueuePort | null;
   transactions: TransactionPort | null;
   resolveSession(request: Request): Promise<SessionIdentity | null>;
   resolveCatalogAdmin(request: Request): Promise<CatalogAdminActor | null>;
@@ -261,6 +271,8 @@ const unauthenticatedDependencies: ApiDependencies = {
   social: null,
   profileIconStorage: null,
   ogImageStorage: null,
+  accountData: null,
+  jobs: null,
   transactions: null,
   async resolveSession(): Promise<SessionIdentity | null> {
     return null;
@@ -370,6 +382,22 @@ const readBearerToken = (request: Request): string | null => {
   return token || null;
 };
 
+type RateLimitBucket = Readonly<{ count: number; resetAt: number }>;
+
+const mutationMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+const rateLimitScope = (path: string): Readonly<{ limit: number; scope: string }> | null => {
+  if (path === '/api/reviews') return { limit: 10, scope: 'review' };
+  if (/^\/api\/reviews\/[^/]+\/reactions$/u.test(path)) return { limit: 30, scope: 'reaction' };
+  if (path === '/api/reports') return { limit: 5, scope: 'report' };
+  return null;
+};
+
+const clientAddress = (request: Request): string =>
+  request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+  request.headers.get('x-real-ip') ||
+  'unknown';
+
 const toReviewTarget = (
   input: Readonly<{
     contentUnitId?: string | null | undefined;
@@ -443,6 +471,54 @@ const toCatalogSearchQuery = (
 export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
   const dependencies: ApiDependencies = { ...unauthenticatedDependencies, ...overrides };
   const baseApp = new Hono();
+  const rateLimits = new Map<string, RateLimitBucket>();
+
+  baseApp.use(async (context, next) => {
+    await next();
+    context.header(
+      'content-security-policy',
+      "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'",
+    );
+    context.header('cross-origin-opener-policy', 'same-origin');
+    context.header('cross-origin-resource-policy', 'same-origin');
+    context.header('referrer-policy', 'strict-origin-when-cross-origin');
+    context.header('x-content-type-options', 'nosniff');
+    context.header('x-frame-options', 'DENY');
+  });
+
+  baseApp.use(async (context, next) => {
+    const request = context.req.raw;
+    if (
+      mutationMethods.has(request.method) &&
+      request.headers.has('cookie') &&
+      context.req.path !== '/api/webhooks/resend' &&
+      context.req.path !== '/api/logout' &&
+      !context.req.path.startsWith('/api/auth/')
+    ) {
+      const origin = request.headers.get('origin');
+      if (origin !== new URL(request.url).origin) {
+        return context.json({ error: 'csrf_rejected' }, 403);
+      }
+    }
+    await next();
+  });
+
+  baseApp.use(async (context, next) => {
+    if (!mutationMethods.has(context.req.method)) return next();
+    const scope = rateLimitScope(context.req.path);
+    if (!scope) return next();
+    const now = Date.now();
+    const key = `${scope.scope}:${clientAddress(context.req.raw)}`;
+    const existing = rateLimits.get(key);
+    const bucket =
+      !existing || existing.resetAt <= now ? { count: 0, resetAt: now + 60_000 } : existing;
+    if (bucket.count >= scope.limit) {
+      context.header('retry-after', String(Math.ceil((bucket.resetAt - now) / 1000)));
+      return context.json({ error: 'rate_limited' }, 429);
+    }
+    rateLimits.set(key, { ...bucket, count: bucket.count + 1 });
+    await next();
+  });
 
   baseApp.post('/api/webhooks/resend', async (context) => {
     const repository = dependencies.emailDigests;
@@ -564,6 +640,74 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
         return context.json({ error: 'invalid_icon' }, 400);
       }
     })
+    .post('/api/settings/data-exports', async (context) => {
+      const session = await dependencies.resolveSession(context.req.raw);
+      const repository = dependencies.accountData;
+      const jobs = dependencies.jobs;
+      const transactions = dependencies.transactions;
+      if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+      if (!repository || !jobs || !transactions) return context.json({ error: 'unavailable' }, 503);
+      const requested = await requestAccountDataExport(
+        transactions,
+        repository,
+        session.userUuid,
+        new Date(),
+      );
+      await jobs.enqueue({
+        idempotencyKey: `account-data-export:${requested.export.id}`,
+        payload: { exportId: requested.export.id, userUuid: session.userUuid },
+        taskIdentifier: 'account_data_export',
+      });
+      const url = new URL(`/api/settings/data-exports/${requested.export.id}`, context.req.url);
+      url.searchParams.set('token', requested.downloadToken);
+      return context.json(
+        { downloadUrl: `${url.pathname}${url.search}`, expiresAt: requested.export.expiresAt },
+        202,
+      );
+    })
+    .get(
+      '/api/settings/data-exports/:id',
+      vValidator('param', accountDataExportParamsSchema),
+      vValidator('query', accountDataExportQuerySchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.accountData;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository) return context.json({ error: 'unavailable' }, 503);
+        const dataExport = await findAccountDataExport(
+          repository,
+          session.userUuid,
+          context.req.valid('param').id,
+          context.req.valid('query').token,
+          new Date(),
+        );
+        if (!dataExport) return context.json({ error: 'not_found' }, 404);
+        if (dataExport.status !== 'ready' || dataExport.payload === null) {
+          return context.json({ status: dataExport.status }, 202);
+        }
+        context.header('cache-control', 'no-store');
+        context.header(
+          'content-disposition',
+          `attachment; filename="web-comic-library-export-${dataExport.id}.json"`,
+        );
+        return context.body(JSON.stringify(dataExport.payload), 200, {
+          'content-type': 'application/json; charset=utf-8',
+        });
+      },
+    )
+    .post(
+      '/api/settings/account-deletion',
+      vValidator('json', accountDeletionRequestSchema),
+      async (context) => {
+        const session = await dependencies.resolveSession(context.req.raw);
+        const repository = dependencies.accountData;
+        const transactions = dependencies.transactions;
+        if (!isActiveSession(session)) return context.json({ error: 'unauthenticated' }, 401);
+        if (!repository || !transactions) return context.json({ error: 'unavailable' }, 503);
+        await requestAccountDeletion(transactions, repository, session.userUuid, new Date());
+        return context.json({ status: 'pending_deletion' as const }, 202);
+      },
+    )
     .put(
       '/api/settings/source-preferences',
       vValidator('json', setSourcePreferencesRequestSchema),
