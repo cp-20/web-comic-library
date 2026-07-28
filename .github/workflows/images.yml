@@ -56,7 +56,7 @@ jobs:
       - name: Scan container images for high and critical vulnerabilities
         run: |
           for component in web api worker database; do
-            docker run --rm --network host aquasec/trivy:0.68.1 \
+            docker run --rm --volume /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.68.1 \
               image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL \
               "web-comic-library-${component}"
           done

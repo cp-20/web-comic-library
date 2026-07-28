@@ -74,9 +74,12 @@ integrationTest(
       `;
       expect(await repository.purgeDueAccounts(new Date())).toEqual([userId]);
       expect(await identity.findProfileByUserUuid(userId)).toBeNull();
-      expect(
-        await sql`select status::text as status, completed_at as "completedAt" from account_deletion_ledger where user_id = ${userId}`,
-      ).toEqual([expect.objectContaining({ status: 'purged', completedAt: expect.any(Date) })]);
+      const ledger = await sql<Readonly<{ completedAt: Date; status: string }>[]>`
+        select status::text as status, completed_at as "completedAt"
+        from account_deletion_ledger where user_id = ${userId}
+      `;
+      expect(ledger).toHaveLength(1);
+      expect(ledger[0]).toMatchObject({ completedAt: expect.any(Date), status: 'purged' });
     } finally {
       await sql`delete from "user" where id = ${userId}`;
       await sql`delete from account_deletion_ledger where user_id = ${userId}`;
