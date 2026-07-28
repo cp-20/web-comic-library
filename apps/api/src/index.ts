@@ -21,6 +21,8 @@ import {
   createPostgresSessionAssurance,
   createPostgresSocial,
   createPostgresModeration,
+  createPostgresAccountData,
+  createPostgresJobQueue,
 } from '@web-comic-library/db';
 
 import { createApp, createCatalogAdminController, createModerationController } from './app';
@@ -67,6 +69,8 @@ const favoriteImports = createPostgresFavoriteImport(databaseUrl, foundation);
 const sessionAssurances = createPostgresSessionAssurance(databaseUrl);
 const social = createPostgresSocial(databaseUrl, foundation);
 const moderation = createPostgresModeration(databaseUrl, foundation);
+const accountData = createPostgresAccountData(databaseUrl, foundation);
+const jobs = createPostgresJobQueue(databaseUrl);
 const auth = createAuthAdapter(
   {
     baseUrl,
@@ -116,6 +120,8 @@ const app = createApp({
   catalog,
   catalogAdmin: createCatalogAdminController(foundation, catalogAdmin),
   moderation: createModerationController(foundation, moderation),
+  accountData,
+  jobs,
   follow,
   notifications,
   emailDigests,
@@ -171,6 +177,8 @@ const stop = (): void => {
     sessionAssurances.close(),
     social.close(),
     moderation.close(),
+    accountData.close(),
+    jobs.close(),
   ]).then(() => process.exit(0));
 };
 

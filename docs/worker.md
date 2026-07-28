@@ -20,6 +20,8 @@ workerを起動する前に`bun run --cwd packages/db migrate`でDrizzleとGraph
 
 `bibliography_sync`は`workId`、ISBN、`initial`または`incremental`のmodeを受け、openBDとNDLをtransaction外で照会してから書誌同期use caseを呼ぶ。定期同期のproducerは同じ版・同期時刻でstableなidempotency keyを指定する。初回は通知抑止、後続に新規検出した版だけが通知候補になる。
 
+`account_data_export`は本人が要求したexport IDとuser UUIDだけを受け、DB内の本人dataをJSON化して24時間以内だけdownload可能にする。毎日`account_data_purge`は期限切れexportを破棄し、30日を過ぎた削除台帳のuser dataを削除して完了時刻を台帳へ残す。台帳はuser rowを参照しないため、backup復元後も削除を再適用できる。
+
 `notification_release`はrelease event IDを受け、利用者のfollow方式、掲載先優先順位、種別・経路設定を照合してアプリ内通知を保存する。deliveryは冪等性keyで一度だけ保存し、`notification_suppressed`のeventは通知を作らない。Pushとメール送信は後続issueの別consumerで扱う。
 
 VAPIDの公開鍵、秘密鍵、subjectがすべて設定されたworkerは、同じrelease eventからWeb Push用notificationとsubscriptionごとのdeliveryを生成する。Push payloadはnotification IDと`/notifications`だけで、作品名、本文、認証情報を含めない。404/410はsubscriptionを無効化し、それ以外の送信失敗はjob再試行として扱う。

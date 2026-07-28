@@ -1,4 +1,14 @@
 export {
+  type AccountDataExport,
+  type AccountDataRepository,
+  type RequestedAccountDataExport,
+  findAccountDataExport,
+  generateAccountDataExport,
+  purgeDueAccountData,
+  requestAccountDataExport,
+  requestAccountDeletion,
+} from './account-data';
+export {
   type ProfileIconStorage,
   type ProfileIconUpload,
   sanitizeProfileIcon,

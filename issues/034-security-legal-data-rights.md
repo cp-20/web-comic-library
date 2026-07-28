@@ -2,7 +2,7 @@
 id: 034
 title: security、法務、利用者dataの権利を実装する
 type: feature
-status: open
+status: done
 priority: P0
 depends_on: [020, 031]
 umbrella: 033

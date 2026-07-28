@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type {
   CatalogAuditRecord,
+  AccountDataRepository,
   CatalogQueryPort,
   CatalogReviewItem,
   EmailDigestSettingsRepository,
@@ -13,6 +14,7 @@ import type {
   SocialRepository,
   SourcePolicyQueryPort,
   TransactionPort,
+  JobQueuePort,
   VolumeLibraryRepository,
   WebPushSubscriptionRepository,
 } from '@web-comic-library/application';
@@ -48,6 +50,88 @@ describe('health endpoint', () => {
     expect(response.status).toBe(200);
     expect(body).toContain('web_comic_library_api_requests_total');
     expect(body).not.toContain('url=');
+  });
+});
+
+describe('account data and HTTP security', () => {
+  test('queues a private export, rejects cookie CSRF, rate limits reports, and sends security headers', async () => {
+    const repository: AccountDataRepository = {
+      async buildDataExport() {
+        return { profile: { displayName: 'reader' } };
+      },
+      async createDataExport(_context, input) {
+        return { expiresAt: input.expiresAt, id: input.id, payload: null, status: 'queued' };
+      },
+      async findDataExport(_userUuid, id) {
+        return {
+          expiresAt: new Date('2026-08-01T00:00:00Z'),
+          id,
+          payload: { profile: { displayName: 'reader' } },
+          status: 'ready',
+        };
+      },
+      async markDataExportReady() {
+        return true;
+      },
+      async purgeDueAccounts() {
+        return [];
+      },
+      async purgeExpiredDataExports() {},
+      async requestAccountDeletion() {},
+    };
+    const jobs: JobQueuePort = {
+      async enqueue() {
+        return 'queued';
+      },
+    };
+    const transactions: TransactionPort = {
+      async transaction<T>(operation: (context: TransactionContext) => Promise<T>): Promise<T> {
+        return operation(new TransactionContext());
+      },
+    };
+    const protectedApp = createApp({
+      accountData: repository,
+      jobs,
+      transactions,
+      async resolveSession() {
+        return {
+          accountStatus: 'active',
+          assurance: 'none',
+          email: 'reader@example.com',
+          userUuid: '11111111-1111-4111-8111-111111111111',
+        };
+      },
+    });
+    const csrfRejected = await protectedApp.request('/api/settings/data-exports', {
+      headers: { cookie: 'session=value' },
+      method: 'POST',
+    });
+    expect(csrfRejected.status).toBe(403);
+    const exportResponse = await protectedApp.request('/api/settings/data-exports', {
+      method: 'POST',
+    });
+    expect(exportResponse.status).toBe(202);
+    expect(exportResponse.headers.get('content-security-policy')).toContain(
+      "frame-ancestors 'none'",
+    );
+    const body: Readonly<{ downloadUrl: string }> = await exportResponse.json();
+    const downloaded = await protectedApp.request(body.downloadUrl);
+    expect(downloaded.status).toBe(200);
+    expect(await downloaded.json()).toEqual({ profile: { displayName: 'reader' } });
+
+    const reports = Array.from({ length: 6 }, () =>
+      protectedApp.request('/api/reports', {
+        body: JSON.stringify({
+          reason: 'plain text',
+          targetId: 'activity-1',
+          targetKind: 'activity',
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      }),
+    );
+    const results = await Promise.all(reports);
+    expect(results[5]?.status).toBe(429);
   });
 });
 

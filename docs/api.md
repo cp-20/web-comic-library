@@ -21,6 +21,10 @@ TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enabl
 
 `GET /api/session`は有効なaccountのsessionだけを返す。`GET /api/profiles/{userId}`はapplicationのVisibility判定を通し、存在しない場合と閲覧できない場合はともに404を返す。`PUT /api/settings/profile`と`POST /api/settings/profile/icon`は有効なsessionを必要とし、icon URLをprofile更新入力で受け取らない。icon uploadだけがapplicationのPNG、容量、寸法検証・sanitizationを経由してstorage portへ渡す。
 
+`POST /api/settings/data-exports`はactive session本人のJSON exportを非同期jobへ投入し、24時間有効なtoken付きdownload URLだけを返す。URLは同じaccountのsessionとtokenを両方必要とし、exportにはsession、account provider token、二要素認証、Web Push subscriptionを含めない。`POST /api/settings/account-deletion`は明示confirmationを要求し、sessionを失効してprofileを`pending_deletion`へ遷移させる。
+
+cookieを伴うstate-changing API requestは同一origin headerを必須とする。感想、いいね、通報はIP単位の短時間rate limitを適用し、超過時は429と`Retry-After`を返す。API responseはCSP、frame拒否、MIME sniffing拒否などのsecurity headerを付ける。
+
 ## library API
 
 `POST /api/library/status`は手動読書状態を変更し、`POST /api/library/reads`、`POST /api/library/reads/through`、`DELETE /api/library/reads`は論理話の既読、一括既読、取消をtransactionで実行する。`POST /api/library/publication-reads`は未確認mappingでも読んだ掲載ページだけを記録する。全routeはactive sessionを要求し、公開範囲はrecordごとの値として保存する。

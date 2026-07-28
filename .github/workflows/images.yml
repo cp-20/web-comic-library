@@ -53,6 +53,13 @@ jobs:
           -c 'test "$(id -u)" -ne 0 &&
           test ! -e /app/node_modules/typescript &&
           test ! -e /app/node_modules/playwright'
+      - name: Scan container images for high and critical vulnerabilities
+        run: |
+          for component in web api worker database; do
+            docker run --rm --network host aquasec/trivy:0.68.1 \
+              image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL \
+              "web-comic-library-${component}"
+          done
       - name: Run migration read-only
         run: >-
           docker run --rm --read-only --tmpfs /tmp
