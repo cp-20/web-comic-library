@@ -1,64 +1,113 @@
 ---
 id: 036
-title: 運用試験を完了して一般公開する
+title: 初期リリースの機能・安全性証跡をreviewして公開を判断する
 type: quality
-status: open
+status: blocked
 priority: P1
-depends_on: [006, 018, 025, 027, 031, 034, 035]
+execution: human
+review_required: true
+review_status: pending
+reviewed_at: null
+depends_on: [018, 025, 027, 031, 034, 060]
 umbrella: 033
 ---
 
-# 運用試験を完了して一般公開する
+# 初期リリースの機能・安全性証跡をreviewして公開を判断する
 
-## 目的
+## 人が操作する理由
 
-障害、backfill、通知、復元を本番相当条件で試験し、招待制betaの結果から一般公開を判断する。
+公開可否は、未解決riskと事業上の許容範囲を踏まえて責任者が判断し、判断日時と根拠を記録する必要がある。
 
-## スコープ
+## Codexでは実行できない理由
 
-- connector連続失敗の自動停止と通知。
-- worker停止中に蓄積したjobの再開。
-- 通常巡回を優先したbackfill。
-- PostgreSQLのpoint-in-time restore。
-- Web、API、worker、cloudflaredのPod障害試験。
-- Asterion停止時のR2から一時VPSへの復旧演習。
-- 招待制beta、feedback受付、公開判定記録。
-- resource容量と追加費用の確認。
+Codexには公開を承認する組織上の権限がなく、責任者に代わってriskを受容することもできない。
+
+## 目的と利用場面
+
+運営者が同じrelease候補SHAについて、主要機能、security、privacyの証跡を確認し、初期リリースの
+go/no-goを記録する。
+
+## 背景と現状の問題
+
+自動testだけでは権利・security判断を代替できない。一方、accessibility、restore、worker再開、
+Pod failover、継続監視、24時間capacityを初期リリースのgateにすると、利用者へ主要機能を届ける前に
+運用成熟度の検証によって初期リリースが不要に遅延する。これらは#043、#063〜#065、#074、#078、#083〜#086で
+release後に追跡し、このissueは初期リリースに必要な最終reviewだけを担当する。
+
+release前に同一候補へ実施できる証跡だけで判断する。
+
+## 実施判断と代替案
+
+- codeやdrillをこのissue内で実行・修正せず、依存issueの完了済み証跡を確認する。実施と公開判断を
+  分離し、未達項目を口頭で免除しないためである。
+- 証跡は`docs/releases/public-readiness.md`へ集約し、Secretを含む操作詳細は非Git管理の`audit.md`に残す。
+- no-goの場合は修正issueを作って候補SHAを更新し、影響する人手issueを再実施する。結果を見てthresholdを
+  緩めない。
+
+## スコープと変更対象
+
+| file                                    | 操作 | 変更内容                                                                                   |
+| --------------------------------------- | ---- | ------------------------------------------------------------------------------------------ |
+| `docs/releases/public-readiness.md`     | 作成 | 候補SHA、依存issue、証跡link、公開条件、未解決risk、go/no-go、判断責任者、日時を記録する。 |
+| `issues/036-operations-launch-drill.md` | 変更 | 判定結果とrelease記録linkを追記し、`done`へ進める。                                        |
+
+application、manifest、runbook、alertはこのissueで変更しない。
+
+## 公開判断手順
+
+1. 全`depends_on`が`done`で、同じ候補commit SHAとimage digestを参照していることを確認する。
+2. 候補SHAの`bun run check`、`bun test`、`bun run build:web`、container checkの結果を記録する。
+3. Google login、Web話・単行本の読書管理、通知、公開範囲、ネタバレ、block、通報、catalog管理の
+   自動test結果を依存issueから確認する。
+4. 未解決issueを`data_loss`、`privacy_security`、`task_blocking`、`minor`へ分類する。前3分類が
+   一件でもあればno-goにする。
+5. 公開条件ごとに証跡link、pass/fail、判断責任者を記録し、go/no-goと日時を確定する。
+6. no-goなら修正issue、再実施する人手issue、次の候補SHAを記録する。
 
 ## 公開条件
 
-- 許可済み10サイトとニコニコ漫画の活動中ユーザー投稿作品を収録している。
+- 許可済み10サイトとニコニコ漫画の対象作品を、許可contractの範囲だけで収録できる。
+- Google OAuthの新規login、再login、logout、初回profile設定をrelease originで確認できる。
 - Web話と単行本の読書管理、三経路の通知、公開範囲、ネタバレ、block、通報が動作する。
-- 作品、話、分割掲載の統合と分割を管理画面から行える。
-- restoreを一度完了している。
-- Asterionに2GiB以上のmemoryと1 core相当のCPU余力がある。
-- PostgreSQL PVCとnode diskの使用率が70％未満である。
-- 家庭外監視と障害通知が動作する。
-- Argo CDとAdminerがCloudflare Accessで保護されるか、外部経路がない。
-- 通常月の追加インフラ費が1,000円以内である。
-
-## 実装方針
-
-- 試験ごとに手順、開始状態、観測結果、復旧時間を記録する。
-- 失敗した条件を緩和して公開せず、修正issueを作って再試験する。
-- 月間稼働率99.5％はSLOとし、SLAとして表示しない。
-- 全過去のニコニコ漫画backfill完了を公開条件にしない。
+- 作品、話、分割掲載の統合・分割と利用者候補の審査を強いadministrator sessionで行える。
+- 主要journeyの既存自動testに重大な失敗がない。
 
 ## 受け入れ条件
 
-- worker再開後にjobを重複処理しない。
-- connector構造変更時に既存dataを削除しない。
-- point-in-time restore後にAPIとworkerを4時間以内に再接続できる。
-- Pod単位の停止からKubernetesまたはArgo CDが復旧させる。
-- 招待制betaの重大不具合を解消し、公開条件の証跡をrelease記録へ残す。
+- 全公開条件に同じ候補SHAの証跡、pass/fail、判断責任者がある。
+- `data_loss`、`privacy_security`、`task_blocking`の未解決issueが0件である。
+- no-go時は理由、修正issue、再実施対象が記録され、公開操作を行わない。
+- go時は候補SHA、image digest、判断責任者、日時、既知minor riskを再確認できる。
 
 ## テスト
 
-- backup restore、Pod停止、Tunnel停止、worker backlog、backfill負荷の運用試験。
-- 公開beta相当負荷での24時間soak test。
-- 外部監視からのalert到達確認。
+- `bun run check`
+- `bun test`
+- `bun run build:web`
+- 全依存issueの完了済みreportの照合
 
 ## 対象外
 
-- ニコニコ漫画の全過去作品取込完了。
-- 収益化機能。
+- release後Web Vitalsと利用者feedbackの実測。
+- drill、負荷、実機確認の実施。
+- application、manifest、runbook、alertの修正。
+- SLA契約、収益化、公開操作そのもの。
+- 継続監視、restore、worker/connector再開、Pod/VPS failover、24時間loadとcapacity判定。
+- 自動・手動accessibility検証。
+
+## Blocker
+
+2026-07-28時点で#018と#060を含む直接依存が未完了で、同じ候補SHAの初期リリース証跡がそろっていない。
+
+## 解除条件
+
+全`depends_on`が`done`で、各reportが同じ候補SHAまたは影響なしと明示したSHAを参照すること。
+
+## 解除後の着手点
+
+`docs/releases/public-readiness.md`を作成し、候補SHA、image digest、依存issue一覧を固定する。
+
+## 禁止する代替
+
+未reviewのissueを口頭で免除する、異なる候補SHAの結果を混在させる、結果後にthresholdを緩める、
+no-go分類をminorへ変更して公開する方法を禁止する。

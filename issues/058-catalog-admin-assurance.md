@@ -2,8 +2,12 @@
 id: 058
 title: catalog管理者のroleと強い認証sessionを接続する
 type: platform
-status: completed
+status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [020, 059]
 umbrella: 007
 ---

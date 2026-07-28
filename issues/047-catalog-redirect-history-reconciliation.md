@@ -4,6 +4,10 @@ title: カタログ統合後の読書・所蔵・通知履歴を正規IDへ解�
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [015, 021, 023, 024]
 umbrella: 007
 ---

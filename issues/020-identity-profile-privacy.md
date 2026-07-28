@@ -4,6 +4,10 @@ title: 認証、profile、公開範囲を実装する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [004]
 umbrella: 019
 ---

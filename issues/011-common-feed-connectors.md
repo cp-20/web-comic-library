@@ -4,6 +4,10 @@ title: 共通feed型の3サイトを収集する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [010]
 umbrella: 007
 ---

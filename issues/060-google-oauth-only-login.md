@@ -4,6 +4,10 @@ title: Google OAuth専用のloginへ移行する
 type: feature
 status: done
 priority: P1
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [020]
 umbrella: 019
 ---

@@ -4,6 +4,10 @@ title: extension import用のsource key解決を提供する
 type: feature
 status: done
 priority: P1
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [008, 009, 039]
 umbrella: 037
 ---

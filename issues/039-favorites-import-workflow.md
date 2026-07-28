@@ -4,6 +4,10 @@ title: お気に入り候補を確認してlibraryへ取り込む
 type: feature
 status: done
 priority: P1
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [008, 021, 022, 038]
 umbrella: 037
 ---

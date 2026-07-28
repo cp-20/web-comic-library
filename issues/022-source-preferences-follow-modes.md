@@ -4,6 +4,10 @@ title: 掲載先優先順位と四つのfollow方式を実装する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [021]
 umbrella: 019
 ---

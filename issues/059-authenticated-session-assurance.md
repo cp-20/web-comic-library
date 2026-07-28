@@ -2,8 +2,12 @@
 id: 059
 title: 二要素認証済みsessionのassuranceを検証可能に保存する
 type: platform
-status: completed
+status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [020]
 umbrella: 019
 ---

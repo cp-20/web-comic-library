@@ -4,6 +4,10 @@ title: アカウントと読書管理を提供する
 type: umbrella
 status: open
 priority: P0
+execution: tracking
+review_required: true
+review_status: approved
+reviewed_at: 2026-07-28T10:52:40.929Z
 depends_on: []
 ---
 

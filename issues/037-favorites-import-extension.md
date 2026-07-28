@@ -2,8 +2,12 @@
 id: 037
 title: 漫画siteのお気に入りを取り込むbrowser extensionを提供する
 type: umbrella
-status: open
+status: review
 priority: P1
+execution: tracking
+review_required: true
+review_status: pending
+reviewed_at: null
 depends_on: []
 umbrella: 019
 ---
@@ -24,6 +28,8 @@ umbrella: 019
 - [055 extension Web origin権限とE2E](./055-extension-web-origin-e2e.md)
 - [056 extension source key解決](./056-extension-source-resolution.md)
 - [057 匿名化お気に入りfixture](./057-sanitized-favorite-fixtures.md)
+- [071 お気に入りfixtureの取得・承認](./071-capture-sanitized-favorite-fixtures.md)
+- [072 Firefox実機smoke](./072-firefox-extension-smoke.md)
 
 ## 完了条件
 

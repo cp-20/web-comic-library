@@ -4,6 +4,10 @@ title: release eventからアプリ内通知を生成する
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [014, 022, 023]
 umbrella: 024
 ---

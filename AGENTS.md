@@ -14,6 +14,7 @@
 - 配備：[docs/deployment.md](./docs/deployment.md)
 - 運用と復旧：[docs/operations.md](./docs/operations.md)
 - issue管理：[docs/issues.md](./docs/issues.md)
+- issue操作：[docs/issue-tooling.md](./docs/issue-tooling.md)
 
 ## リポジトリ全体の規則
 

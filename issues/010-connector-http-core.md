@@ -4,6 +4,10 @@ title: fetchだけで動くconnector共通基盤を作る
 type: platform
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [003, 009]
 umbrella: 007
 ---

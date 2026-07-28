@@ -4,6 +4,10 @@ title: 品質検査をGitHub Actionsで必須化する
 type: platform
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: []
 umbrella: 001
 ---

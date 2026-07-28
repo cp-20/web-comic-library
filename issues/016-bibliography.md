@@ -4,6 +4,10 @@ title: openBDとNDLから単行本書誌を同期する
 type: feature
 status: done
 priority: P1
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [008, 010, 014]
 umbrella: 007
 ---

@@ -4,6 +4,10 @@ title: 作品、掲載先、話のdomain modelとstorageを作る
 type: feature
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [004]
 umbrella: 007
 ---

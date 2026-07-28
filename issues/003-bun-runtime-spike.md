@@ -4,6 +4,10 @@ title: 採用ライブラリのBun互換性を固定する
 type: platform
 status: done
 priority: P0
+execution: agent
+review_required: true
+review_status: legacy_unrecorded
+reviewed_at: null
 depends_on: [002]
 umbrella: 001
 ---

@@ -4,6 +4,10 @@ title: 実行基盤を公開ベータ対応にする
 type: umbrella
 status: open
 priority: P0
+execution: tracking
+review_required: true
+review_status: approved
+reviewed_at: 2026-07-28T10:52:16.081Z
 depends_on: []
 ---
 
@@ -20,14 +24,14 @@ Bun monorepoを継続的に検証し、Asterionへ安全に配備して復旧で
 - [004 DBとjob基盤](./004-database-job-foundation.md)
 - [005 Asterionへの配備](./005-asterion-deployment.md)
 - [006 バックアップと監視](./006-backup-observability.md)
-- [043 運用baselineと定期drill](./043-operational-baseline-drills.md)
+- [073 local issue browser](./073-local-issue-browser.md)
 - [044 PostgreSQL collation更新](./044-postgresql-collation-refresh.md)
 - [045 database同期Jobの接続待機](./045-database-hook-readiness.md)
 - [046 WAL-G physical backupのmemory上限](./046-walg-backup-memory.md)
 
 ## 完了条件
 
-- 全子issueが`done`である。
+- 上記の初期基盤子issueが`done`である。release後の運用drillは#043で別に追跡する。
 - Web、API、worker、migrationを独立して配備できる。
 - PostgreSQLをクラスタ外のバックアップから復元できる。
 - 通常月の追加インフラ費を1,000円以内に保てる。
