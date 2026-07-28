@@ -20,6 +20,7 @@ depends_on: []
 - [022 掲載先優先順位とfollow方式](./022-source-preferences-follow-modes.md)
 - [023 単行本の既読と所蔵](./023-volume-records-mapping.md)
 - [037 漫画siteのお気に入りimport extension](./037-favorites-import-extension.md)
+- [060 Google OAuth専用のloginへ移行する](./060-google-oauth-only-login.md)
 
 ## 完了条件
 

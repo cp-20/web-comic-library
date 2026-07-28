@@ -35,7 +35,8 @@ jobs:
       BETTER_AUTH_SECRET: ci-only-auth-secret-not-for-production-000
       BETTER_AUTH_URL: http://127.0.0.1:3101
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/web_comic_library
-      MAGIC_LINK_DELIVERY_URL: http://127.0.0.1:3101/test-only-mail-delivery
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
     steps:
       - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
@@ -54,6 +55,5 @@ jobs:
           docker run --rm --network host
           --env ALLOW_DATABASE_INTEGRATION_TESTS
           --env BETTER_AUTH_SECRET --env BETTER_AUTH_URL
-          --env DATABASE_URL
-          --env MAGIC_LINK_DELIVERY_URL
+          --env DATABASE_URL --env GOOGLE_CLIENT_ID --env GOOGLE_CLIENT_SECRET
           web-comic-library-compatibility

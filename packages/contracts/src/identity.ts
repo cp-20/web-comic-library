@@ -1,6 +1,5 @@
 import {
   array,
-  email,
   maxLength,
   minLength,
   nullable,
@@ -17,8 +16,6 @@ const text = pipe(string(), trim(), minLength(1));
 const optionalText = nullable(pipe(string(), trim(), maxLength(1_000)));
 
 export const profileParamsSchema = object({ userId: text });
-
-export const magicLinkRequestSchema = object({ email: pipe(text, email()) });
 
 export const twoFactorEnableRequestSchema = object({
   issuer: optional(pipe(text, maxLength(100))),

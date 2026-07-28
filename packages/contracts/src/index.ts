@@ -7,7 +7,6 @@ export {
   parseAccountDataExportJobPayload,
 } from './account-data';
 export {
-  magicLinkRequestSchema,
   profileParamsSchema,
   twoFactorEnableRequestSchema,
   twoFactorEnableResponseSchema,

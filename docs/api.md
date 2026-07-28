@@ -15,7 +15,7 @@ route変更にはHono RPC clientを通すテストを付ける。
 
 ## 認証とprofile API
 
-Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono RPCの`POST /api/login/magic-link`、`POST /api/login/google`、`POST /api/logout`へ限定する。前者二つは固定された`/settings/profile` callbackだけをauth adapterへ渡し、adapterのrate limitとorigin検証を通す。
+Better Auth handlerは`/api/auth/*`へmountし、Webが開始する操作はHono RPCの`POST /api/login/google`と`POST /api/logout`へ限定する。Google OAuth開始は固定された`/settings/profile` callbackだけをauth adapterへ渡し、adapterのrate limitとorigin検証を通す。
 
 TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enable`、`POST /api/settings/two-factor/verify`だけを通す。verification成功時はauth adapterのsession cookieからtokenをWebへ返さずに読み取り、APIがsession IDに対応するassuranceを保存できた場合だけsuccessを返す。生の`/api/auth/two-factor/enable`と`/api/auth/two-factor/verify-totp`は公開しない。
 

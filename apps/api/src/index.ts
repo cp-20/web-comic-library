@@ -31,16 +31,17 @@ const port = Number(process.env.PORT ?? '3001');
 const databaseUrl = process.env.DATABASE_URL;
 const authSecret = process.env.BETTER_AUTH_SECRET;
 const baseUrl = process.env.BETTER_AUTH_URL;
-const magicLinkDeliveryUrl = process.env.MAGIC_LINK_DELIVERY_URL;
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 const r2AccessKeyId = process.env.R2_ACCESS_KEY_ID;
 const r2Bucket = process.env.R2_BUCKET;
 const r2Endpoint = process.env.R2_ENDPOINT;
 const r2PublicBaseUrl = process.env.R2_PUBLIC_BASE_URL;
 const r2SecretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
 
-if (!databaseUrl || !authSecret || !baseUrl || !magicLinkDeliveryUrl) {
+if (!databaseUrl || !authSecret || !baseUrl || !googleClientId || !googleClientSecret) {
   throw new Error(
-    'DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL, and MAGIC_LINK_DELIVERY_URL are required',
+    'DATABASE_URL, BETTER_AUTH_SECRET, BETTER_AUTH_URL, GOOGLE_CLIENT_ID, and GOOGLE_CLIENT_SECRET are required',
   );
 }
 
@@ -71,26 +72,14 @@ const social = createPostgresSocial(databaseUrl, foundation);
 const moderation = createPostgresModeration(databaseUrl, foundation);
 const accountData = createPostgresAccountData(databaseUrl, foundation);
 const jobs = createPostgresJobQueue(databaseUrl);
-const auth = createAuthAdapter(
-  {
-    baseUrl,
-    databaseUrl,
-    googleClientId: process.env.GOOGLE_CLIENT_ID ?? null,
-    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? null,
-    secret: authSecret,
-    trustedOrigins: [baseUrl],
-  },
-  {
-    async send(message): Promise<void> {
-      const response = await fetch(magicLinkDeliveryUrl, {
-        body: JSON.stringify(message),
-        headers: { 'content-type': 'application/json' },
-        method: 'POST',
-      });
-      if (!response.ok) throw new Error('magic link delivery failed');
-    },
-  },
-);
+const auth = createAuthAdapter({
+  baseUrl,
+  databaseUrl,
+  googleClientId,
+  googleClientSecret,
+  secret: authSecret,
+  trustedOrigins: [baseUrl],
+});
 const profileIconStorage =
   r2AccessKeyId && r2Bucket && r2Endpoint && r2PublicBaseUrl && r2SecretAccessKey
     ? createR2ProfileIconStorage({

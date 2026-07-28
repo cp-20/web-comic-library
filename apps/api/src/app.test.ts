@@ -639,7 +639,7 @@ describe('profile and session RPC', () => {
 });
 
 describe('authentication RPC', () => {
-  test('starts magic-link and Google login through the injected auth adapter, and signs out', async () => {
+  test('starts Google login, rejects the removed magic-link route, and signs out', async () => {
     const requests: Request[] = [];
     const auth: AuthAdapter = {
       async close() {},
@@ -660,11 +660,10 @@ describe('authentication RPC', () => {
     const protectedApp = createApp({ auth });
     const client = hc<typeof protectedApp>('http://api.test', { fetch: protectedApp.request });
 
-    expect(
-      (await client.api.login['magic-link'].$post({ json: { email: 'reader@example.com' } }))
-        .status,
-    ).toBe(200);
     expect((await client.api.login.google.$post()).status).toBe(200);
+    expect((await protectedApp.request('/api/login/magic-link', { method: 'POST' })).status).toBe(
+      404,
+    );
     expect(
       (
         await protectedApp.request('/api/logout', {
@@ -675,19 +674,14 @@ describe('authentication RPC', () => {
     ).toBe(200);
 
     expect(requests.map((request) => new URL(request.url).pathname)).toEqual([
-      '/api/auth/sign-in/magic-link',
       '/api/auth/sign-in/social',
       '/api/auth/sign-out',
     ]);
     expect(await requests[0]?.json()).toEqual({
       callbackURL: '/settings/profile',
-      email: 'reader@example.com',
-    });
-    expect(await requests[1]?.json()).toEqual({
-      callbackURL: '/settings/profile',
       provider: 'google',
     });
-    expect(requests[2]?.headers.get('cookie')).toBe('session=value');
+    expect(requests[1]?.headers.get('cookie')).toBe('session=value');
   });
 
   test('enrolls and verifies TOTP only through the RPC routes, without exposing a session token', async () => {

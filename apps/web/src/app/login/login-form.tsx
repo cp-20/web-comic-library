@@ -11,18 +11,6 @@ export const LoginForm = () => {
 
   return (
     <>
-      <form
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const email = String(new FormData(event.currentTarget).get('email') ?? '');
-          const response = await client.api.login['magic-link'].$post({ json: { email } });
-          setMessage(response.ok ? 'ログインリンクを送信しました。' : '送信できませんでした。');
-        }}
-      >
-        <label htmlFor="email">メールアドレス</label>
-        <input id="email" name="email" required type="email" autoComplete="email" />
-        <button type="submit">ログインリンクを送る</button>
-      </form>
       <button
         onClick={async () => {
           const response = await client.api.login.google.$post();

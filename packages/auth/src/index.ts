@@ -1,5 +1,5 @@
 import { betterAuth } from 'better-auth';
-import { magicLink, twoFactor } from 'better-auth/plugins';
+import { twoFactor } from 'better-auth/plugins';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 
@@ -16,20 +16,11 @@ export {
   createR2ProfileIconStorage,
 } from './profile-icon-storage';
 
-export type MagicLinkMessage = Readonly<{
-  email: string;
-  url: string;
-}>;
-
-export interface MagicLinkSender {
-  send(message: MagicLinkMessage): Promise<void>;
-}
-
 export type AuthConfiguration = Readonly<{
   baseUrl: string;
   databaseUrl: string;
-  googleClientId: string | null;
-  googleClientSecret: string | null;
+  googleClientId: string;
+  googleClientSecret: string;
   secret: string;
   trustedOrigins: readonly string[];
 }>;
@@ -57,27 +48,14 @@ const requireHttpsOrLocalhost = (value: string): string => {
   throw new Error('auth base URL must use HTTPS outside localhost');
 };
 
-export const createAuthAdapter = (
-  configuration: AuthConfiguration,
-  magicLinkSender: MagicLinkSender,
-): AuthAdapter => {
+export const createAuthAdapter = (configuration: AuthConfiguration): AuthAdapter => {
   const baseURL = requireHttpsOrLocalhost(configuration.baseUrl);
   if (configuration.secret.length < 32)
     throw new Error('auth secret must contain at least 32 characters');
-  if ((configuration.googleClientId === null) !== (configuration.googleClientSecret === null)) {
-    throw new Error('Google OAuth client ID and secret must be configured together');
-  }
+  if (!configuration.googleClientId || !configuration.googleClientSecret)
+    throw new Error('Google OAuth client ID and secret are required');
   const pool = new Pool({ connectionString: configuration.databaseUrl });
   const database = new Kysely({ dialect: new PostgresDialect({ pool }) });
-  const socialProviders =
-    configuration.googleClientId && configuration.googleClientSecret
-      ? {
-          google: {
-            clientId: configuration.googleClientId,
-            clientSecret: configuration.googleClientSecret,
-          },
-        }
-      : undefined;
   const auth = betterAuth({
     account: {
       fields: {
@@ -108,11 +86,6 @@ export const createAuthAdapter = (
     baseURL,
     database: { db: database, transaction: true, type: 'postgres' },
     plugins: [
-      magicLink({
-        expiresIn: 300,
-        sendMagicLink: async ({ email, url }) => magicLinkSender.send({ email, url }),
-        storeToken: 'hashed',
-      }),
       twoFactor({
         allowPasswordless: true,
         schema: {
@@ -152,7 +125,12 @@ export const createAuthAdapter = (
       storeSessionInDatabase: true,
     },
     secret: configuration.secret,
-    socialProviders,
+    socialProviders: {
+      google: {
+        clientId: configuration.googleClientId,
+        clientSecret: configuration.googleClientSecret,
+      },
+    },
     telemetry: { enabled: false },
     trustedOrigins: [...configuration.trustedOrigins],
     user: {
