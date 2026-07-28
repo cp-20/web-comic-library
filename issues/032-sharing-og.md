@@ -2,7 +2,7 @@
 id: 032
 title: SNS共有、公開URL、OG画像を実装する
 type: feature
-status: open
+status: done
 priority: P1
 depends_on: [017, 020, 021, 030]
 umbrella: 028
@@ -49,3 +49,10 @@ umbrella: 028
 
 - SNSへの自動投稿。
 - 動画またはanimation付きOG。
+
+## 完了記録
+
+- 公開作品、profile、読書activity（読了記録を含む）、review activityへ安定URLを付与した。
+- 共有用activity APIは現在もpublicな対象だけを404以外で返し、review本文、spoiler、既読位置を含めない。
+- Web Share API、copy fallback、X、Bluesky、LINE link、canonical metadata、作品OG SVGとR2 version-key cacheを実装した。
+- 検証：`bun run check`、権限付き`bun test`（123 pass、20 skip、0 fail）、権限付き`bun run build:web`。

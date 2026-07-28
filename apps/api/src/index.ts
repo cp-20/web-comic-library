@@ -1,6 +1,7 @@
 import {
   createAuthAdapter,
   createR2ObjectClient,
+  createR2OgImageStorage,
   createR2ProfileIconStorage,
 } from '@web-comic-library/auth';
 import {
@@ -98,6 +99,18 @@ const profileIconStorage =
         publicBaseUrl: r2PublicBaseUrl,
       })
     : null;
+const ogImageStorage =
+  r2AccessKeyId && r2Bucket && r2Endpoint && r2PublicBaseUrl && r2SecretAccessKey
+    ? createR2OgImageStorage({
+        client: createR2ObjectClient({
+          accessKeyId: r2AccessKeyId,
+          bucket: r2Bucket,
+          endpoint: r2Endpoint,
+          secretAccessKey: r2SecretAccessKey,
+        }),
+        publicBaseUrl: r2PublicBaseUrl,
+      })
+    : null;
 const app = createApp({
   auth,
   catalog,
@@ -116,6 +129,7 @@ const app = createApp({
   library,
   volumeLibrary,
   profileIconStorage,
+  ogImageStorage,
   sourcePolicies,
   sessionAssurances,
   social,

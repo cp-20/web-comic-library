@@ -1,5 +1,6 @@
 import type {
   FollowTarget,
+  PublicActivityShare,
   ReviewListItem,
   ReviewTarget,
   SocialRepository,
@@ -48,6 +49,8 @@ type ReviewRow = Readonly<{
   volumeEditionId: string | null;
   workId: string;
 }>;
+
+type PublicActivityShareRow = PublicActivityShare;
 
 const decodeCursor = (cursor: string | null): Readonly<{ createdAt: Date; id: string }> | null => {
   if (cursor === null) return null;
@@ -233,6 +236,31 @@ export class PostgresSocial implements SocialRepository {
       group by activity.id
     `;
     return rows[0] ? toReview(rows[0]) : null;
+  }
+
+  async findPublicActivityShare(id: string): Promise<PublicActivityShare | null> {
+    const rows = await this.#client<PublicActivityShareRow[]>`
+      select activity.id::text, activity.kind, activity.status, activity.created_at as "createdAt",
+        profile.public_id as "userId", "user".name as "userName",
+        work.id::text as "workId", work.title as "workTitle"
+      from activities as activity
+      join profiles as profile on profile.user_id = activity.user_id
+      join "user" on "user".id = activity.user_id
+      join works as work on work.id = activity.work_id and work.retired_at is null
+      left join library_entries as entry
+        on entry.user_id = activity.user_id and entry.work_id = activity.work_id
+      where activity.id = ${id}::uuid and activity.hidden_at is null
+        and profile.account_status = 'active'::account_status
+        and (
+          (activity.kind = 'review'::activity_kind and activity.visibility = 'public'::visibility)
+          or (
+            activity.kind <> 'review'::activity_kind
+            and coalesce(entry.visibility, profile.default_visibility, 'private'::visibility)
+              = 'public'::visibility
+          )
+        )
+    `;
+    return rows[0] ?? null;
   }
 
   async findUserUuidByPublicId(

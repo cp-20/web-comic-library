@@ -1,11 +1,22 @@
 import { expect, test } from 'bun:test';
 
-import { createR2ObjectClient, createR2ProfileIconStorage } from './profile-icon-storage';
+import {
+  createR2ObjectClient,
+  createR2OgImageStorage,
+  createR2ProfileIconStorage,
+} from './profile-icon-storage';
 
 test('stores sanitized icon bytes under an owner-scoped R2 object key', async () => {
-  const calls: Array<{ body: Uint8Array; contentType: 'image/png'; key: string }> = [];
+  const calls: Array<{
+    body: Uint8Array;
+    contentType: 'image/png' | 'image/svg+xml';
+    key: string;
+  }> = [];
   const storage = createR2ProfileIconStorage({
     client: {
+      async objectExists() {
+        return false;
+      },
       async putObject(input) {
         calls.push(input);
       },
@@ -46,4 +57,24 @@ test('signs a PNG PUT for the configured R2 bucket without exposing credentials'
   expect(requests[0]?.headers.get('content-type')).toBe('image/png');
   expect(requests[0]?.headers.get('authorization')).toContain('Credential=access-key/');
   expect(requests[0]?.headers.get('authorization')).not.toContain('not-logged-secret');
+});
+
+test('deduplicates an OG image by its content-versioned key', async () => {
+  const calls: string[] = [];
+  const storage = createR2OgImageStorage({
+    client: {
+      async objectExists(key) {
+        calls.push(`head:${key}`);
+        return true;
+      },
+      async putObject() {
+        calls.push('put');
+      },
+    },
+    publicBaseUrl: 'https://assets.example/',
+  });
+  await expect(
+    storage.putIfAbsent('og-images/version-1.svg', 'image/svg+xml', new Uint8Array([1])),
+  ).resolves.toBe('https://assets.example/og-images/version-1.svg');
+  expect(calls).toEqual(['head:og-images/version-1.svg']);
 });

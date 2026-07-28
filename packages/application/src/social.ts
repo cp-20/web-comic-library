@@ -32,6 +32,22 @@ export type ReviewListItem = Readonly<{
   review: ReviewActivity;
 }>;
 
+/**
+ * The deliberately small payload that may be placed in a public URL or an OG
+ * image.  In particular, review bodies and per-entry reading progress never
+ * cross this boundary.
+ */
+export type PublicActivityShare = Readonly<{
+  createdAt: Date;
+  id: string;
+  kind: 'completed' | 'reading_status' | 'review';
+  status: ReadingActivity['status'] | null;
+  userId: string;
+  userName: string;
+  workId: string;
+  workTitle: string;
+}>;
+
 export type FollowTarget = Readonly<{
   accountStatus: 'active' | 'disabled' | 'pending_deletion';
   visibility: Visibility | null;
@@ -59,6 +75,7 @@ export interface SocialRepository {
   findFollow(followerUserUuid: string, followedUserUuid: string): Promise<UserFollow | null>;
   findFollowTarget(userUuid: string): Promise<FollowTarget | null>;
   findReviewActivity(id: string, viewerUserUuid: string | null): Promise<ReviewActivity | null>;
+  findPublicActivityShare(id: string): Promise<PublicActivityShare | null>;
   findUserUuidByPublicId(publicId: string, viewerUserUuid: string | null): Promise<string | null>;
   isBlockedEitherDirection(firstUserUuid: string, secondUserUuid: string): Promise<boolean>;
   listFollowers(userUuid: string): Promise<readonly UserFollow[]>;

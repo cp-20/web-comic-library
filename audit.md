@@ -782,3 +782,13 @@ Secretの値と個人情報は記録しない。
 - **結果**：PR #60をsquash mergeした。main CIとImages workflowはいずれも成功し、Imagesはmigration read-only、service checks、GHCR image pushを完了した。
 - **cleanup**：PR merge時にremote作業branchを削除した。local PostgreSQL統合試験のcontainer、network、test volumeを削除した。production環境、database、外部serviceの永続dataは変更していない。
 - **関連**：issue #030、PR #60、CI run #30237300621、Images run #30237300615。
+
+## 2026-07-28 #032 sharing/OG PR作成
+
+- **対象**：GitHubの`cp-20/web-comic-library`、branch `agent/032-sharing-og`、#032実装commit。
+- **操作**：公開URL、共有UI、OG SVG、R2 cache adapterをGitHubへpushし、PRを作成してCIとImages workflowを開始する。
+- **危険性**：外部GitHubに実装と監査記録が公開され、CIが実行される。R2 cache adapterはproductionでR2設定時に公開OG画像を保存するが、今回の操作ではR2へ接続しない。
+- **保護策**：push前に`bun run check`、権限付き`bun test`、権限付き`bun run build:web`を成功させた。Secret、production database、production deployment、R2 object、永続user dataは変更しない。CI成功確認前にmainへmergeしない。
+- **結果**：PR作成後にPR番号とworkflow結果を追記する。
+- **cleanup**：merge完了時にremote作業branchを削除する。production環境と永続dataは変更しない。
+- **関連**：issue #032。
