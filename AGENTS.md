@@ -5,6 +5,7 @@
 - 構成と依存方向：[docs/architecture.md](./docs/architecture.md)
 - 共通の開発規則：[docs/development.md](./docs/development.md)
 - Web：[docs/web.md](./docs/web.md)
+- フロントエンドデザイン：[docs/frontend-design.md](./docs/frontend-design.md)
 - API：[docs/api.md](./docs/api.md)
 - worker：[docs/worker.md](./docs/worker.md)
 - データベース：[docs/database.md](./docs/database.md)

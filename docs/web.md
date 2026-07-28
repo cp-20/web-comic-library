@@ -1,6 +1,8 @@
 # Web実装規則
 
 対象は`apps/web`と`packages/api-client`とする。
+視覚設計、共通UI、responsive layout、採用libraryは
+[フロントエンドデザイン規則](./frontend-design.md)を正本とする。
 
 - Next.js App RouterをBunで実行する。
 - backendへの呼び出しは`@web-comic-library/api-client`のHono RPC clientへ集約する。
