@@ -1,5 +1,15 @@
 # 操作監査
 
+## 2026-07-29T18:38:29+09:00
+
+- 対象: GitHub Actionsの`Uptime` workflow、およびDiscordへのweb-comic-library endpoint障害通知
+- 操作: お蔵入りに伴い、5分ごとに`comic.cp20.dev`をprobeするworkflow定義を削除するpull requestを作成し、CI成功後にmergeする。
+- 危険性: endpointと通知の自動監視が停止し、停止後の障害通知が届かなくなる。
+- 保護策: production manifestの公開routeを先に削除済みであることを確認し、workflowと監査記録だけを変更対象に限定する。
+- 結果: 実施中。
+- cleanup: 再開時はendpointと通知先の運用方針を確認してからworkflowを再作成する。
+- 関連issueまたはPR: 作成後に追記
+
 ## 2026-07-29T00:00:00+09:00
 
 - 対象: GitHub repository `cp-20/web-comic-library`、UI関連の既存ローカル変更、専用branch、pull request、`main` branch
