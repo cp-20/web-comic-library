@@ -3,7 +3,7 @@
 ## 2026-07-29T18:38:29+09:00
 
 - 対象: GitHub Actionsの`Uptime` workflow、およびDiscordへのweb-comic-library endpoint障害通知
-- 操作: お蔵入りに伴い、5分ごとに`comic.cp20.dev`をprobeするworkflow定義を削除するpull requestを作成し、CI成功後にmergeする。
+- 操作: お蔵入りに伴い、5分ごとに`comic.cp20.dev`をprobeするworkflow定義、monitor実装、test、package scriptを削除するpull requestを作成し、CI成功後にmergeする。
 - 危険性: endpointと通知の自動監視が停止し、停止後の障害通知が届かなくなる。
 - 保護策: production manifestの公開routeを先に削除済みであることを確認し、workflowと監査記録だけを変更対象に限定する。
 - 結果: PR #76の全7 GitHub Actions check成功後、2026-07-29T18:46:52+09:00にsquash mergeした。scheduled uptime probeとDiscord通知は停止した。

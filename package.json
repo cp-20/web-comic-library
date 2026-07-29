@@ -18,7 +18,6 @@
     "issues:cli": "bun run tools/issues/cli/main.ts",
     "lint": "oxlint . --deny-warnings --no-error-on-unmatched-pattern",
     "lint:fix": "oxlint . --fix",
-    "monitor:uptime": "bun run scripts/uptime-monitor.ts",
     "smoke:compatibility": "bun run --cwd apps/worker smoke",
     "test": "bun test apps packages scripts tools",
     "test:e2e": "playwright test",
