@@ -6,9 +6,9 @@
 - 操作: お蔵入りに伴い、5分ごとに`comic.cp20.dev`をprobeするworkflow定義を削除するpull requestを作成し、CI成功後にmergeする。
 - 危険性: endpointと通知の自動監視が停止し、停止後の障害通知が届かなくなる。
 - 保護策: production manifestの公開routeを先に削除済みであることを確認し、workflowと監査記録だけを変更対象に限定する。
-- 結果: 実施中。
-- cleanup: 再開時はendpointと通知先の運用方針を確認してからworkflowを再作成する。
-- 関連issueまたはPR: 作成後に追記
+- 結果: PR #76の全7 GitHub Actions check成功後、2026-07-29T18:46:52+09:00にsquash mergeした。scheduled uptime probeとDiscord通知は停止した。
+- cleanup: 作業branchをlocal/remoteから削除した。再開時はendpointと通知先の運用方針を確認してからworkflowを再作成する。
+- 関連issueまたはPR: [#76](https://github.com/cp-20/web-comic-library/pull/76)
 
 ## 2026-07-29T00:00:00+09:00
 
