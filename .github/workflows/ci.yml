@@ -2,8 +2,16 @@ name: CI
 
 on:
   pull_request:
+    paths-ignore:
+      - audit.md
+      - docs/**
+      - issues/**
   push:
     branches: [main]
+    paths-ignore:
+      - audit.md
+      - docs/**
+      - issues/**
 
 permissions:
   contents: read
@@ -14,6 +22,21 @@ concurrency:
 
 jobs:
   quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - run: bun audit --audit-level=high
+      - run: bun run check
+
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -46,11 +69,49 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
-      - run: bun audit --audit-level=high
-      - run: bun run check
       - run: bun test
-      - run: bun run build:web
+
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
       - run: bun run benchmark:api
+
+  web-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - run: bun run build:web
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+      - run: bun install --frozen-lockfile
+      - run: bun run build:web
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:e2e
       - uses: actions/upload-artifact@v5
@@ -59,6 +120,33 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 14
+
+  compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: web_comic_library
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd "pg_isready -U postgres -d web_comic_library"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+    env:
+      ALLOW_DATABASE_INTEGRATION_TESTS: '1'
+      BETTER_AUTH_SECRET: ci-only-auth-secret-not-for-production-000
+      BETTER_AUTH_URL: http://127.0.0.1:3101
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/web_comic_library
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+    steps:
+      - uses: actions/checkout@v6
       - run: docker build --file Dockerfile.compatibility --tag web-comic-library-compatibility .
       - run: >-
           docker run --rm --network host

@@ -2,8 +2,16 @@ name: Images
 
 on:
   pull_request:
+    paths-ignore:
+      - audit.md
+      - docs/**
+      - issues/**
   push:
     branches: [main]
+    paths-ignore:
+      - audit.md
+      - docs/**
+      - issues/**
 
 permissions:
   contents: read

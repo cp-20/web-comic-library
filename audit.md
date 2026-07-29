@@ -1,5 +1,15 @@
 # 操作監査
 
+## 2026-07-29T13:48:31+09:00
+
+- 対象: GitHub repository `cp-20/web-comic-library`、PR、`main` branch、ローカルcheckout
+- 操作: CI高速化と変更公開手順の変更を専用branchへcommit・pushし、PRを作成して検証成功後に`main`へmergeし、ローカル`main`をfast-forwardする。
+- 危険性: GitHubの永続履歴と共有`main`の状態が変わり、誤った変更の公開、必須検証の失敗、または競合が起こり得る。
+- 保護策: 変更対象を明示してcommitし、PR上の必要なGitHub Actionsの成功を確認してからmergeする。merge後はremote `main`をfetchしてローカルをfast-forwardする。
+- 結果: 実施中。
+- cleanup: merge後に不要なremote branchを削除し、ローカルbranchを`main`へ戻す。
+- 関連issueまたはPR: PR作成後に追記
+
 ## 2026-07-29T13:35:41+09:00
 
 - 対象: GitHub repository `cp-20/web-comic-library` とローカル`main`
