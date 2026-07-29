@@ -57,7 +57,8 @@ bun run issues:cli -- update 073 --priority P2 --json
 revision guardとatomic renameを使う。変更可能なのは`status`、`priority`、`execution`、
 `review_status`だけである。
 
-CLIは矛盾する状態を補完しない。issue本文が書き上がったら`status: review`と
+CLIは矛盾する状態を補完しない。PR reviewなどの粗い所見は`status: unpolished`と
+`review_status: not_requested`で保存できる。この状態は実装対象ではない。issue本文が書き上がったら`status: review`と
 `review_status: pending`にし、人が本文を承認したら`review_status: approved`と着手可能なstatusを
 同じcommandで指定する。成果物のreview結果をこの属性へ記録してはならない。本文、依存、umbrellaの
 変更はCLIでは行わず、Markdownを変更して再びissue本文のreviewを通す。

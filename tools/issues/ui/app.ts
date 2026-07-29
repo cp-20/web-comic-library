@@ -34,6 +34,7 @@ const statusDescriptions: Record<IssueStatus, string> = {
   in_progress: '担当者が作業を進めています。',
   open: 'issue本文が承認済みで、agentが着手できます。',
   review: 'issue本文の人によるレビューを待っています。',
+  unpolished: 'レビュー所見を記録しただけで、実装内容と本文レビューは未整理です。',
 };
 
 const executionLabels: Record<IssueExecution, string> = {
@@ -191,6 +192,7 @@ const showToast = (message: string, tone: 'error' | 'neutral' = 'neutral'): void
 };
 
 const statusTone = (status: IssueStatus): string => {
+  if (status === 'unpolished') return 'attention';
   if (status === 'blocked') return 'danger';
   if (status === 'human_action') return 'attention';
   if (status === 'review') return 'done';
@@ -200,6 +202,7 @@ const statusTone = (status: IssueStatus): string => {
 };
 
 const statusMark = (status: IssueStatus): string => {
+  if (status === 'unpolished') return '○';
   if (status === 'blocked') return '!';
   if (status === 'done') return '✓';
   if (status === 'review') return '…';
@@ -451,6 +454,8 @@ const sameEditable = (left: EditableIssue, right: EditableIssue): boolean =>
   left.status === right.status;
 
 const validateDraft = (draft: EditableIssue): string | null => {
+  if (draft.status === 'unpolished' && draft.reviewStatus !== 'not_requested')
+    return '「要整理」はissue本文のレビューを依頼する前だけに使えます。';
   if (draft.execution === 'human' && draft.status === 'open')
     return 'Humanの着手可能状態には「人の対応待ち」を使ってください。';
   if (draft.execution !== 'human' && draft.status === 'human_action')

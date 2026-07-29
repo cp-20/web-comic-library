@@ -72,6 +72,20 @@ describe('issue store', () => {
     expect(approved.reviewStatus).toBe('approved');
   });
 
+  test('要整理issueは本文reviewをまだ依頼しない', () => {
+    const unpolished = parseIssue(
+      '001-test.md',
+      content
+        .replace('status: review', 'status: unpolished')
+        .replace('review_status: pending', 'review_status: not_requested'),
+    );
+
+    expect(unpolished.status).toBe('unpolished');
+    expect(() =>
+      parseIssue('001-test.md', content.replace('status: review', 'status: unpolished')),
+    ).toThrow('unpolished issue must not have requested issue review');
+  });
+
   test('未承認の着手と理由のないhuman issueを拒否する', () => {
     expect(() =>
       parseIssue('001-test.md', content.replace('status: review', 'status: open')),
