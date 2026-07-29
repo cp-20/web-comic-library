@@ -28,6 +28,12 @@ Prettier、ESLint、Biomeは追加しない。
 
 lint規則を無効化する場合は、対象を最小限にして理由を書く。
 
+## GitHubへの変更公開
+
+repositoryの変更は直接`main`へpushしない。作業ごとに専用branchを作成し、変更対象だけをcommit・pushしてPRを作成する。PRの必要なGitHub Actionsが成功したことを確認してから`main`へmergeし、ローカルの`main`をremote `main`へfast-forwardする。merge後は、PRとmerge commit、実行した検証を作業結果へ記録する。
+
+GitHub、production、外部service、Secret、database、永続dataに影響する操作は、実行前に`audit.md`へ対象、操作、危険性、保護策、cleanup、関連PRを記録し、操作後に結果を追記する。Secretの値と個人情報は記録しない。
+
 ## TypeScript
 
 - `strict`と`noUncheckedIndexedAccess`を有効にする。
