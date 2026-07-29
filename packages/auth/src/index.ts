@@ -40,16 +40,19 @@ const sessionTokenFromResponse = async (response: Response): Promise<string | nu
   return typeof session.token === 'string' ? session.token : null;
 };
 
-const requireHttpsOrLocalhost = (value: string): string => {
+const requireHttpsOrLoopback = (value: string): string => {
   const url = new URL(value);
-  if (url.protocol === 'https:' || (url.protocol === 'http:' && url.hostname === '127.0.0.1')) {
+  if (
+    url.protocol === 'https:' ||
+    (url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1'))
+  ) {
     return url.href.replace(/\/$/u, '');
   }
-  throw new Error('auth base URL must use HTTPS outside localhost');
+  throw new Error('auth base URL must use HTTPS outside the local loopback interface');
 };
 
 export const createAuthAdapter = (configuration: AuthConfiguration): AuthAdapter => {
-  const baseURL = requireHttpsOrLocalhost(configuration.baseUrl);
+  const baseURL = requireHttpsOrLoopback(configuration.baseUrl);
   if (configuration.secret.length < 32)
     throw new Error('auth secret must contain at least 32 characters');
   if (!configuration.googleClientId || !configuration.googleClientSecret)

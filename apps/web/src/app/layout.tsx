@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { cookies } from 'next/headers';
 import type { ReactNode } from 'react';
+
+import { AppShell } from '../components/layout/app-shell';
 
 import './globals.css';
 
@@ -9,18 +11,17 @@ export const metadata: Metadata = {
   title: 'Web Comic Library',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const cookieStore = await cookies();
+  const signedIn = Boolean(
+    cookieStore.get('better-auth.session_token') ??
+    cookieStore.get('__Secure-better-auth.session_token'),
+  );
+
   return (
     <html lang="ja">
       <body>
-        {children}
-        <footer>
-          <nav aria-label="法務と連絡先">
-            <Link href="/terms">利用規約</Link> <Link href="/privacy">privacy policy</Link>{' '}
-            <Link href="/account-deletion">削除依頼</Link>{' '}
-            <Link href="/copyright">著作権侵害の連絡</Link>
-          </nav>
-        </footer>
+        <AppShell signedIn={signedIn}>{children}</AppShell>
       </body>
     </html>
   );

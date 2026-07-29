@@ -238,6 +238,7 @@ export type ApiDependencies = Readonly<{
   accountData: AccountDataRepository | null;
   jobs: JobQueuePort | null;
   transactions: TransactionPort | null;
+  webOrigin: string | null;
   resolveSession(request: Request): Promise<SessionIdentity | null>;
   resolveCatalogAdmin(request: Request): Promise<CatalogAdminActor | null>;
 }>;
@@ -273,6 +274,7 @@ const unauthenticatedDependencies: ApiDependencies = {
   accountData: null,
   jobs: null,
   transactions: null,
+  webOrigin: null,
   async resolveSession(): Promise<SessionIdentity | null> {
     return null;
   },
@@ -495,7 +497,8 @@ export const createApp = (overrides: Partial<ApiDependencies> = {}) => {
       !context.req.path.startsWith('/api/auth/')
     ) {
       const origin = request.headers.get('origin');
-      if (origin !== new URL(request.url).origin) {
+      const expectedOrigin = dependencies.webOrigin ?? new URL(request.url).origin;
+      if (origin !== expectedOrigin) {
         return context.json({ error: 'csrf_rejected' }, 403);
       }
     }

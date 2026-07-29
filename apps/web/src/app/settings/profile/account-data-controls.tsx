@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { Button } from '../../../components/ui/button';
 import { createApiClient } from '../../../lib/api-client';
 
 const client = createApiClient('');
@@ -10,23 +11,28 @@ export const AccountDataControls = () => {
   const [message, setMessage] = useState<string | null>(null);
 
   return (
-    <section aria-labelledby="account-data-heading">
-      <h2 id="account-data-heading">dataのexportとaccount削除</h2>
-      <button
-        type="button"
-        onClick={async () => {
-          const response = await client.api.settings['data-exports'].$post();
-          if (!response.ok) {
-            setMessage('data exportを開始できませんでした。');
-            return;
-          }
-          const payload: Readonly<{ downloadUrl: string }> = await response.json();
-          setMessage('exportを生成しています。しばらくしてから次のURLを開いてください。');
-          window.setTimeout(() => window.location.assign(payload.downloadUrl), 1_000);
-        }}
-      >
-        JSON exportを作成する
-      </button>
+    <section aria-labelledby="account-data-heading" className="grid max-w-lg gap-4">
+      <h2 className="text-lg font-semibold" id="account-data-heading">
+        dataのexportとaccount削除
+      </h2>
+      <div>
+        <Button
+          onClick={async () => {
+            const response = await client.api.settings['data-exports'].$post();
+            if (!response.ok) {
+              setMessage('data exportを開始できませんでした。');
+              return;
+            }
+            const payload: Readonly<{ downloadUrl: string }> = await response.json();
+            setMessage('exportを生成しています。しばらくしてから次のURLを開いてください。');
+            window.setTimeout(() => window.location.assign(payload.downloadUrl), 1_000);
+          }}
+          type="button"
+          variant="secondary"
+        >
+          JSON exportを作成する
+        </Button>
+      </div>
       <form
         onSubmit={async (event) => {
           event.preventDefault();
@@ -44,9 +50,13 @@ export const AccountDataControls = () => {
           );
         }}
       >
-        <button type="submit">accountを削除する</button>
+        <Button type="submit" variant="danger">
+          accountを削除する
+        </Button>
       </form>
-      <p aria-live="polite">{message}</p>
+      <p aria-live="polite" className="text-sm text-text-muted">
+        {message}
+      </p>
     </section>
   );
 };

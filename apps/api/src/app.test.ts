@@ -639,6 +639,37 @@ describe('profile and session RPC', () => {
 });
 
 describe('authentication RPC', () => {
+  test('accepts a cookie-bearing Google login request forwarded from the configured Web origin', async () => {
+    const auth: AuthAdapter = {
+      async close() {},
+      async handler() {
+        return new Response(
+          JSON.stringify({ redirect: true, url: 'https://accounts.example/authorize' }),
+          {
+            headers: { 'content-type': 'application/json' },
+            status: 200,
+          },
+        );
+      },
+      async sessionToken() {
+        return null;
+      },
+    };
+    const protectedApp = createApp({ auth, webOrigin: 'http://web.test' });
+
+    const accepted = await protectedApp.request('http://api.test/api/login/google', {
+      headers: { cookie: 'better-auth.state=value', origin: 'http://web.test' },
+      method: 'POST',
+    });
+    const rejected = await protectedApp.request('http://api.test/api/login/google', {
+      headers: { cookie: 'better-auth.state=value', origin: 'https://attacker.example' },
+      method: 'POST',
+    });
+
+    expect(accepted.status).toBe(200);
+    expect(rejected.status).toBe(403);
+  });
+
   test('starts Google login, rejects the removed magic-link route, and signs out', async () => {
     const requests: Request[] = [];
     const auth: AuthAdapter = {

@@ -12,7 +12,7 @@ test('mobileの公開検索画面は固定fixture条件でLCP目標を満たす'
     Object.defineProperty(window, 'wclLcp', { value: metrics });
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Web Comic Library' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '作品を探す' })).toBeVisible();
   const metric = await page.evaluate(() => {
     const lcp = (window as Window & { wclLcp?: readonly number[] }).wclLcp?.at(-1);
     const navigation = performance.getEntriesByType('navigation')[0];
@@ -31,7 +31,7 @@ test('fixture E2E loadで公開検索のp95が1.5秒以内', async ({ browser, b
     await mockApi(page);
     const startedAt = performance.now();
     await page.goto(baseURL ?? 'http://127.0.0.1:3100');
-    await expect(page.getByRole('heading', { name: 'Web Comic Library' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '作品を探す' })).toBeVisible();
     const duration = performance.now() - startedAt;
     await context.close();
     return [duration, ...(await sample(index + concurrency))];

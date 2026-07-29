@@ -8,10 +8,10 @@
   ],
   "scripts": {
     "benchmark:api": "bun run --cwd apps/api benchmark",
-    "build:web": "bun run --cwd apps/web build",
+    "build:web": "bun --env-file=../../.env.local run --cwd apps/web build",
     "check": "bun run fmt:check && bun run lint && bun run typecheck",
-    "dev:api": "bun run --cwd apps/api dev",
-    "dev:web": "bun run --cwd apps/web dev",
+    "dev:api": "bun --env-file=../../.env.local run --cwd apps/api dev",
+    "dev:web": "bun --env-file=../../.env.local run --cwd apps/web dev",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
     "issues": "bun run tools/issues/main.ts",

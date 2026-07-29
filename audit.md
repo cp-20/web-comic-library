@@ -1,5 +1,15 @@
 # 操作監査
 
+## 2026-07-29T00:00:00+09:00
+
+- 対象: GitHub repository `cp-20/web-comic-library`、UI関連の既存ローカル変更、専用branch、pull request、`main` branch
+- 操作: 既存のWeb UI、関連するAPI/auth互換、CI、開発文書の変更だけを専用branchへcommit・pushし、pull requestを作成して必要なCI成功後にmergeする。
+- 危険性: GitHubの永続履歴と共有`main`が更新され、誤った範囲の変更公開、CI失敗、またはmerge競合が起き得る。
+- 保護策: 変更対象を事前に確認し、#061のconnector実装を含めず、専用branchとPRを介在させる。CI成功とPR差分を確認してからmergeする。
+- 結果: 実施中。
+- cleanup: merge後にPR branchを削除し、ローカル`main`をremote `main`へfast-forwardする。
+- 関連issueまたはPR: UI改善PR（作成後に追記）
+
 ## 2026-07-29T13:48:31+09:00
 
 - 対象: GitHub repository `cp-20/web-comic-library`、PR、`main` branch、ローカルcheckout

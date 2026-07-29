@@ -1,5 +1,6 @@
 'use client';
 
+import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useEffect, useState } from 'react';
 
@@ -41,52 +42,79 @@ export const WorkDetails = ({ workId }: Readonly<{ workId: string }>) => {
       if (!active) return;
       setContent(
         <>
-          <h1>{work.title}</h1>
-          <p>連載状態: {work.serialStatus}</p>
-          <section aria-labelledby="work-creators-heading">
-            <h2 id="work-creators-heading">作者</h2>
-            <ul>
+          <div className="grid gap-1">
+            <h1 className="text-2xl font-semibold">{work.title}</h1>
+            <p className="text-sm text-text-muted">連載状態: {work.serialStatus}</p>
+          </div>
+          <section aria-labelledby="work-creators-heading" className="grid gap-2">
+            <h2 className="text-lg font-semibold" id="work-creators-heading">
+              作者
+            </h2>
+            <ul className="grid gap-1">
               {work.creators.map((creator) => (
                 <li key={creator.id}>
-                  {creator.name}（{creator.role}）
+                  <span className="font-medium">{creator.name}</span>
+                  <span className="text-sm text-text-muted">（{creator.role}）</span>
                 </li>
               ))}
             </ul>
           </section>
-          <section aria-labelledby="work-publications-heading">
-            <h2 id="work-publications-heading">掲載先とWeb話</h2>
-            {work.publications.map((publication) => (
-              <article key={publication.id}>
-                <h3>{publication.title}</h3>
-                <p>
-                  {publication.sourceName} / {publication.kind}
-                </p>
-                <a href={publication.normalizedUrl} rel="noreferrer" target="_blank">
-                  公式の閲覧ページを開く
-                </a>
-                <ul>
-                  {publication.entries.map((entry) => (
-                    <li key={entry.id}>
-                      <a href={entry.normalizedUrl} rel="noreferrer" target="_blank">
-                        {entry.title}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
+          <section aria-labelledby="work-publications-heading" className="grid gap-4">
+            <h2 className="text-lg font-semibold" id="work-publications-heading">
+              掲載先とWeb話
+            </h2>
+            <div className="divide-y divide-border-subtle">
+              {work.publications.map((publication) => (
+                <article className="grid gap-2 py-4 first:pt-0 last:pb-0" key={publication.id}>
+                  <div className="grid gap-0.5">
+                    <h3 className="font-medium">{publication.title}</h3>
+                    <p className="text-sm text-text-muted">
+                      {publication.sourceName} / {publication.kind}
+                    </p>
+                  </div>
+                  <a
+                    className="inline-flex w-fit items-center gap-1 text-accent hover:underline"
+                    href={publication.normalizedUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    公式の閲覧ページを開く
+                    <ExternalLink aria-hidden className="size-4 shrink-0" />
+                  </a>
+                  <ul className="grid gap-1">
+                    {publication.entries.map((entry) => (
+                      <li key={entry.id}>
+                        <a
+                          className="inline-flex items-center gap-1 text-accent hover:underline"
+                          href={entry.normalizedUrl}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          {entry.title}
+                          <ExternalLink aria-hidden className="size-4 shrink-0" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
           </section>
-          <section aria-labelledby="work-volumes-heading">
-            <h2 id="work-volumes-heading">単行本</h2>
+          <section aria-labelledby="work-volumes-heading" className="grid gap-2">
+            <h2 className="text-lg font-semibold" id="work-volumes-heading">
+              単行本
+            </h2>
             <p>
-              <Link href="/library/volumes">単行本ライブラリを開く</Link>
+              <Link className="text-accent hover:underline" href="/library/volumes">
+                単行本ライブラリを開く
+              </Link>
             </p>
             {work.volumes.length === 0 ? (
-              <p>公開中の単行本情報はありません。</p>
+              <p className="text-sm text-text-muted">公開中の単行本情報はありません。</p>
             ) : (
-              <ul>
+              <ul className="divide-y divide-border-subtle">
                 {work.volumes.map((volume) => (
-                  <li key={volume.id}>
+                  <li className="py-3" key={volume.id}>
                     {volume.title}
                     {volume.authors.length > 0 ? ` — ${volume.authors.join('、')}` : ''}
                     {volume.publisher ? ` / ${volume.publisher}` : ''}
@@ -106,5 +134,9 @@ export const WorkDetails = ({ workId }: Readonly<{ workId: string }>) => {
     };
   }, [workId]);
 
-  return <section aria-live="polite">{content}</section>;
+  return (
+    <section aria-live="polite" className="grid gap-8">
+      {content}
+    </section>
+  );
 };

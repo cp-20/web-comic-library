@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { Button } from '../../components/ui/button';
 import { createApiClient } from '../../lib/api-client';
 
 const client = createApiClient('');
@@ -19,9 +20,15 @@ export const PushSettings = () => {
   const [message, setMessage] = useState<string | null>(null);
 
   return (
-    <section aria-live="polite">
-      <h2>Push通知</h2>
-      <button
+    <section aria-labelledby="push-settings-heading" aria-live="polite" className="grid gap-4">
+      <div className="grid gap-1">
+        <h2 className="text-lg font-semibold" id="push-settings-heading">
+          Push通知
+        </h2>
+        <p className="text-sm text-text-muted">この端末で新着更新のPush通知を受け取ります。</p>
+      </div>
+      <Button
+        className="justify-self-start"
         onClick={async () => {
           if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
             setMessage('このbrowserはPush通知に対応していません。');
@@ -57,8 +64,8 @@ export const PushSettings = () => {
         type="button"
       >
         Push通知を有効にする
-      </button>
-      <p>{message}</p>
+      </Button>
+      <p className="text-sm text-text-muted">{message}</p>
     </section>
   );
 };

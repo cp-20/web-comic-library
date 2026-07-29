@@ -34,11 +34,11 @@ export const ActivityDetails = ({ activityId }: Readonly<{ activityId: string }>
       .catch(() => setError(true));
   }, [activityId]);
 
-  if (error) return <p>公開記録が見つかりません。</p>;
-  if (!activity) return <p>公開記録を読み込んでいます。</p>;
+  if (error) return <p className="text-text-muted">公開記録が見つかりません。</p>;
+  if (!activity) return <p className="text-text-muted">公開記録を読み込んでいます。</p>;
   return (
-    <article>
-      <h1>
+    <article className="grid gap-2">
+      <h1 className="text-2xl font-semibold">
         {activity.kind === 'completed'
           ? '読了記録'
           : activity.kind === 'review'
@@ -46,13 +46,17 @@ export const ActivityDetails = ({ activityId }: Readonly<{ activityId: string }>
             : '読書状態変更'}
       </h1>
       <p>
-        <Link href={`/profiles/${activity.userId}`}>{activity.userName}</Link>
+        <Link className="text-accent hover:underline" href={`/profiles/${activity.userId}`}>
+          {activity.userName}
+        </Link>
       </p>
       <p>
-        <Link href={`/works/${activity.workId}`}>{activity.workTitle}</Link>
+        <Link className="text-accent hover:underline" href={`/works/${activity.workId}`}>
+          {activity.workTitle}
+        </Link>
       </p>
       {activity.status ? <p>状態: {activity.status}</p> : null}
-      <time dateTime={activity.createdAt}>
+      <time className="text-sm text-text-muted" dateTime={activity.createdAt}>
         {new Date(activity.createdAt).toLocaleString('ja-JP')}
       </time>
     </article>

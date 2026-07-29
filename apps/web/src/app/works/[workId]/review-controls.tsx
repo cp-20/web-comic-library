@@ -2,6 +2,12 @@
 
 import { useState } from 'react';
 
+import { Button } from '../../../components/ui/button';
+import { Checkbox } from '../../../components/ui/checkbox';
+import { Field } from '../../../components/ui/field';
+import { Input } from '../../../components/ui/input';
+import { Select } from '../../../components/ui/select';
+import { Textarea } from '../../../components/ui/textarea';
 import { createApiClient } from '../../../lib/api-client';
 
 const client = createApiClient('');
@@ -53,24 +59,34 @@ export const ReviewControls = ({ workId }: Readonly<{ workId: string }>) => {
   };
 
   return (
-    <section aria-labelledby="review-controls-heading">
-      <h2 id="review-controls-heading">感想</h2>
+    <section aria-labelledby="review-controls-heading" className="grid gap-6">
+      <h2 className="text-lg font-semibold" id="review-controls-heading">
+        感想
+      </h2>
       <form
+        className="grid gap-4"
         onSubmit={(event) => {
           event.preventDefault();
           void load(event.currentTarget);
         }}
       >
-        <label htmlFor="reviewTargetKind">対象</label>
-        <select defaultValue="content" id="reviewTargetKind" name="targetKind">
-          <option value="content">話</option>
-          <option value="volume">巻</option>
-        </select>
-        <label htmlFor="reviewTargetId">対象ID</label>
-        <input id="reviewTargetId" name="targetId" required />
-        <button type="submit">感想を表示</button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="reviewTargetKind" label="対象">
+            <Select defaultValue="content" id="reviewTargetKind" name="targetKind">
+              <option value="content">話</option>
+              <option value="volume">巻</option>
+            </Select>
+          </Field>
+          <Field id="reviewTargetId" label="対象ID">
+            <Input id="reviewTargetId" name="targetId" required />
+          </Field>
+        </div>
+        <div>
+          <Button type="submit">感想を表示</Button>
+        </div>
       </form>
       <form
+        className="grid gap-4 border-t border-border-subtle pt-6"
         onSubmit={(event) => {
           event.preventDefault();
           const form = event.currentTarget;
@@ -97,75 +113,91 @@ export const ReviewControls = ({ workId }: Readonly<{ workId: string }>) => {
           })();
         }}
       >
-        <label htmlFor="reviewBody">本文（1,000文字まで）</label>
-        <textarea id="reviewBody" maxLength={1_000} name="body" required />
-        <label htmlFor="reviewVisibility">公開範囲</label>
-        <select defaultValue="public" id="reviewVisibility" name="visibility">
-          <option value="public">公開</option>
-          <option value="followers">フォロワー限定</option>
-          <option value="private">非公開</option>
-        </select>
-        <label>
-          <input name="spoiler" type="checkbox" />
-          ネタバレを含む
-        </label>
-        <button type="submit">感想を投稿</button>
+        <Field id="reviewBody" label="本文（1,000文字まで）">
+          <Textarea id="reviewBody" maxLength={1_000} name="body" required />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="reviewVisibility" label="公開範囲">
+            <Select defaultValue="public" id="reviewVisibility" name="visibility">
+              <option value="public">公開</option>
+              <option value="followers">フォロワー限定</option>
+              <option value="private">非公開</option>
+            </Select>
+          </Field>
+          <div className="sm:self-end">
+            <Checkbox label="ネタバレを含む" name="spoiler" />
+          </div>
+        </div>
+        <div>
+          <Button type="submit">感想を投稿</Button>
+        </div>
       </form>
       {reviews.length === 0 ? (
-        <p>対象を指定して感想を表示してください。</p>
+        <p className="text-sm text-text-muted">対象を指定して感想を表示してください。</p>
       ) : (
-        <ul>
+        <ul className="divide-y divide-border-subtle">
           {reviews.map((review) => (
-            <li key={review.id}>
+            <li className="grid gap-3 py-4 first:pt-0 last:pb-0" key={review.id}>
               {review.state === 'visible' ? (
                 <p>{revealedBodies[review.id] ?? review.body}</p>
               ) : (
-                <>
-                  <p>この感想はネタバレを含む可能性があるため伏せられています。</p>
-                  <button
-                    onClick={() => {
-                      void (async () => {
-                        const response = await client.api.reviews[':id'].reveal.$post({
-                          param: { id: review.id },
-                        });
-                        if (!response.ok) {
-                          setMessage('感想を開けませんでした。');
-                          return;
-                        }
-                        const revealed: unknown = await response.json();
-                        if (!isRevealedReview(revealed)) {
-                          setMessage('感想を開けませんでした。');
-                          return;
-                        }
-                        setRevealedBodies((current) => ({
-                          ...current,
-                          [review.id]: revealed.body,
-                        }));
-                        setReviews((current) =>
-                          current.map((item) =>
-                            item.id === review.id
-                              ? { ...item, body: revealed.body, state: 'visible' }
-                              : item,
-                          ),
-                        );
-                      })();
-                    }}
-                    type="button"
-                  >
-                    本文を表示する
-                  </button>
-                </>
+                <div className="grid gap-2 rounded-panel bg-surface-subtle p-4">
+                  <p className="text-sm">
+                    この感想はネタバレを含む可能性があるため伏せられています。
+                  </p>
+                  <div>
+                    <Button
+                      onClick={() => {
+                        void (async () => {
+                          const response = await client.api.reviews[':id'].reveal.$post({
+                            param: { id: review.id },
+                          });
+                          if (!response.ok) {
+                            setMessage('感想を開けませんでした。');
+                            return;
+                          }
+                          const revealed: unknown = await response.json();
+                          if (!isRevealedReview(revealed)) {
+                            setMessage('感想を開けませんでした。');
+                            return;
+                          }
+                          setRevealedBodies((current) => ({
+                            ...current,
+                            [review.id]: revealed.body,
+                          }));
+                          setReviews((current) =>
+                            current.map((item) =>
+                              item.id === review.id
+                                ? { ...item, body: revealed.body, state: 'visible' }
+                                : item,
+                            ),
+                          );
+                        })();
+                      }}
+                      type="button"
+                      variant="secondary"
+                    >
+                      本文を表示する
+                    </Button>
+                  </div>
+                </div>
               )}
-              <p>{review.spoiler ? '投稿者がネタバレを指定' : 'ネタバレ指定なし'}</p>
-              <button
-                onClick={() => {
-                  void client.api.reviews[':id'].reactions.$post({ param: { id: review.id } });
-                }}
-                type="button"
-              >
-                いいね（{review.reactionCount}）
-              </button>
+              <p className="text-sm text-text-muted">
+                {review.spoiler ? '投稿者がネタバレを指定' : 'ネタバレ指定なし'}
+              </p>
+              <div>
+                <Button
+                  onClick={() => {
+                    void client.api.reviews[':id'].reactions.$post({ param: { id: review.id } });
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  いいね（{review.reactionCount}）
+                </Button>
+              </div>
               <form
+                className="grid gap-2 border-t border-border-subtle pt-3"
                 onSubmit={(event) => {
                   event.preventDefault();
                   const reason = String(new FormData(event.currentTarget).get('reason') ?? '');
@@ -179,20 +211,28 @@ export const ReviewControls = ({ workId }: Readonly<{ workId: string }>) => {
                   })();
                 }}
               >
-                <label htmlFor={`review-report-reason-${review.id}`}>通報理由</label>
-                <textarea
-                  id={`review-report-reason-${review.id}`}
-                  maxLength={2_000}
-                  name="reason"
-                  required
-                />
-                <button type="submit">感想を通報する</button>
+                <Field id={`review-report-reason-${review.id}`} label="通報理由">
+                  <Textarea
+                    id={`review-report-reason-${review.id}`}
+                    maxLength={2_000}
+                    name="reason"
+                    required
+                    rows={2}
+                  />
+                </Field>
+                <div>
+                  <Button type="submit" variant="ghost">
+                    感想を通報する
+                  </Button>
+                </div>
               </form>
             </li>
           ))}
         </ul>
       )}
-      <p aria-live="polite">{message}</p>
+      <p aria-live="polite" className="text-sm text-text-muted">
+        {message}
+      </p>
     </section>
   );
 };
