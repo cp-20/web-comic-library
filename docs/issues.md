@@ -156,8 +156,9 @@ blockerを解消する外部操作や判断そのものは、実装者へ暗黙�
 
 ## 状態
 
-`status`は`open`、`in_progress`、`blocked`、`human_action`、`review`、`done`のいずれかとする。
+`status`は`unpolished`、`open`、`in_progress`、`blocked`、`human_action`、`review`、`done`のいずれかとする。
 
+- `unpolished`：PR reviewなどから取り込んだ所見だけを保持する仮置き。`review_status: not_requested`に固定し、実装対象・見積り・依存・受け入れ条件はまだ確定しない。本文を実装可能な指示書へ整えた同じ変更で`review`と`pending`へ進める。
 - `open`：本文が承認済みの`execution: agent`、または未完了の子を持つ`tracking`で、直接依存と外部入力がそろっている。
 - `in_progress`：agentまたはhumanが作業中である。
 - `blocked`：未完了の直接依存または外部判断が必要で、本文に解除条件がある。

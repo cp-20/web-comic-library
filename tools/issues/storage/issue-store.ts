@@ -3,6 +3,7 @@ import { readdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/prom
 import { basename, join } from 'node:path';
 
 export const issueStatuses = [
+  'unpolished',
   'open',
   'in_progress',
   'blocked',
@@ -197,6 +198,12 @@ export const parseIssue = (filename: string, content: string): IssueRecord => {
       'invalid',
     );
   }
+  if (status === 'unpolished' && reviewStatus !== 'not_requested') {
+    throw new IssueStoreError(
+      `${filename}: unpolished issue must not have requested issue review`,
+      'invalid',
+    );
+  }
   if (status === 'done' && reviewStatus !== 'approved' && reviewStatus !== 'legacy_unrecorded') {
     throw new IssueStoreError(`${filename}: done requires approved or migrated review`, 'invalid');
   }
@@ -273,6 +280,9 @@ const validateUpdate = (update: IssueUpdate): void => {
     update.reviewStatus !== 'changes_requested'
   ) {
     throw new IssueStoreError('review status requires an unresolved issue review', 'invalid');
+  }
+  if (update.status === 'unpolished' && update.reviewStatus !== 'not_requested') {
+    throw new IssueStoreError('unpolished issue must not have requested issue review', 'invalid');
   }
   if (update.status === 'done' && update.reviewStatus !== 'approved') {
     throw new IssueStoreError('done requires an approved human review', 'invalid');

@@ -7,4 +7,5 @@ export const issueStatusLabels: Readonly<Record<IssueStatus, string>> = {
   in_progress: '作業中',
   open: '着手可能',
   review: 'レビュー待ち',
+  unpolished: '要整理',
 };
