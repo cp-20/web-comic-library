@@ -8,7 +8,7 @@
 - 保護策: 変更対象を明示してcommitし、PR上の必要なGitHub Actionsの成功を確認してからmergeする。merge後はremote `main`をfetchしてローカルをfast-forwardする。
 - 結果: 実施中。
 - cleanup: merge後に不要なremote branchを削除し、ローカルbranchを`main`へ戻す。
-- 関連issueまたはPR: PR作成後に追記
+- 関連issueまたはPR: #74
 
 ## 2026-07-29T13:35:41+09:00
 
