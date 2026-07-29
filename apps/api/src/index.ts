@@ -129,6 +129,7 @@ const app = createApp({
   sessionAssurances,
   social,
   transactions: foundation,
+  webOrigin: new URL(baseUrl).origin,
   async resolveSession(request) {
     const token = await auth.sessionToken(request);
     return token ? identity.findSessionIdentity(token) : null;

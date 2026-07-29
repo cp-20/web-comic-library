@@ -3,6 +3,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { Button } from '../components/ui/button';
+import { Field } from '../components/ui/field';
+import { Input } from '../components/ui/input';
+import { Select } from '../components/ui/select';
 import { createApiClient } from '../lib/api-client';
 
 const client = createApiClient('');
@@ -19,6 +23,13 @@ type SearchResult = Readonly<{
     title: string;
   }>;
 }>;
+
+const serialStatusLabels: Record<string, string> = {
+  completed: '完結',
+  hiatus: '休載',
+  ongoing: '連載中',
+  unknown: '不明',
+};
 
 const parsePublicationKind = (value: string): PublicationKind => {
   return value === 'official' || value === 'user_submission' ? value : 'all';
@@ -43,9 +54,12 @@ export const CatalogSearch = () => {
   const [results, setResults] = useState<readonly SearchResult[]>([]);
 
   return (
-    <section aria-labelledby="catalog-search-heading">
-      <h2 id="catalog-search-heading">作品を検索</h2>
+    <section aria-labelledby="catalog-search-heading" className="grid gap-6">
+      <h2 className="sr-only" id="catalog-search-heading">
+        作品を検索
+      </h2>
       <form
+        className="grid gap-4 md:grid-cols-2"
         onSubmit={async (event) => {
           event.preventDefault();
           const form = new FormData(event.currentTarget);
@@ -73,44 +87,59 @@ export const CatalogSearch = () => {
           setResults(data.works);
         }}
       >
-        <label htmlFor="catalog-query">作品名・別名・読み仮名・作者名</label>
-        <input id="catalog-query" name="q" />
-        <label htmlFor="catalog-source">掲載先キー</label>
-        <input id="catalog-source" name="source" />
-        <label htmlFor="catalog-status">連載状態</label>
-        <select defaultValue="all" id="catalog-status" name="status">
-          <option value="all">すべて</option>
-          <option value="ongoing">連載中</option>
-          <option value="hiatus">休載</option>
-          <option value="completed">完結</option>
-          <option value="unknown">不明</option>
-        </select>
-        <label htmlFor="catalog-kind">掲載種別</label>
-        <select defaultValue="all" id="catalog-kind" name="kind">
-          <option value="all">すべて</option>
-          <option value="official">公式</option>
-          <option value="user_submission">ユーザー投稿</option>
-        </select>
-        <label htmlFor="catalog-sort">並び順</label>
-        <select defaultValue="recent" id="catalog-sort" name="sort">
-          <option value="recent">最近更新</option>
-          <option value="popular">人気</option>
-          <option value="new">新着</option>
-        </select>
-        <button type="submit">検索</button>
+        <div className="md:col-span-2">
+          <Field id="catalog-query" label="作品名・別名・読み仮名・作者名">
+            <Input id="catalog-query" name="q" />
+          </Field>
+        </div>
+        <Field id="catalog-source" label="掲載先キー">
+          <Input id="catalog-source" name="source" />
+        </Field>
+        <Field id="catalog-status" label="連載状態">
+          <Select defaultValue="all" id="catalog-status" name="status">
+            <option value="all">すべて</option>
+            <option value="ongoing">連載中</option>
+            <option value="hiatus">休載</option>
+            <option value="completed">完結</option>
+            <option value="unknown">不明</option>
+          </Select>
+        </Field>
+        <Field id="catalog-kind" label="掲載種別">
+          <Select defaultValue="all" id="catalog-kind" name="kind">
+            <option value="all">すべて</option>
+            <option value="official">公式</option>
+            <option value="user_submission">ユーザー投稿</option>
+          </Select>
+        </Field>
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <Field id="catalog-sort" label="並び順">
+              <Select defaultValue="recent" id="catalog-sort" name="sort">
+                <option value="recent">最近更新</option>
+                <option value="popular">人気</option>
+                <option value="new">新着</option>
+              </Select>
+            </Field>
+          </div>
+          <Button type="submit">検索</Button>
+        </div>
       </form>
-      <p aria-live="polite">{message}</p>
+      <p aria-live="polite" className="text-sm text-text-muted">
+        {message}
+      </p>
       {results.length === 0 ? null : (
-        <ul>
+        <ul className="divide-y divide-border-subtle">
           {results.map(({ latestUpdatedAt, work }) => (
-            <li key={work.id}>
-              <Link href={`/works/${work.id}`}>{work.title}</Link>
-              <span>（{work.serialStatus}）</span>
-              <span>
-                {' '}
-                — {work.creators.map((creator) => creator.name).join('、') || '作者情報なし'}
-              </span>
-              {latestUpdatedAt ? <span> — 最終更新 {String(latestUpdatedAt)}</span> : null}
+            <li className="grid gap-0.5 py-4" key={work.id}>
+              <Link className="font-medium text-accent hover:underline" href={`/works/${work.id}`}>
+                {work.title}
+              </Link>
+              <p className="text-sm text-text-muted">
+                {serialStatusLabels[work.serialStatus] ?? work.serialStatus}
+                {' ・ '}
+                {work.creators.map((creator) => creator.name).join('、') || '作者情報なし'}
+                {latestUpdatedAt ? ` ・ 最終更新 ${String(latestUpdatedAt)}` : ''}
+              </p>
             </li>
           ))}
         </ul>

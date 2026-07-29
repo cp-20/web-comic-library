@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { Button } from '../../../components/ui/button';
 import { createApiClient } from '../../../lib/api-client';
 
 const client = createApiClient('');
@@ -42,41 +43,63 @@ export const UserFollowList = () => {
   };
 
   return (
-    <section aria-live="polite">
-      <h2>follow申請とfollow一覧</h2>
-      <h3>受け取った申請</h3>
-      <ul>
-        {followers.map((follow) => (
-          <li key={follow.followerUserUuid}>
-            {follow.followerUserUuid} / {follow.status}
-            {follow.status === 'pending' ? (
-              <>
-                <button
-                  onClick={() => void respond(follow.followerUserUuid, 'accepted')}
-                  type="button"
-                >
-                  承認
-                </button>
-                <button
-                  onClick={() => void respond(follow.followerUserUuid, 'rejected')}
-                  type="button"
-                >
-                  拒否
-                </button>
-              </>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-      <h3>自分がfollowしている利用者</h3>
-      <ul>
-        {following.map((follow) => (
-          <li key={follow.followedUserUuid}>
-            {follow.followedUserUuid} / {follow.status}
-          </li>
-        ))}
-      </ul>
-      <p>{message}</p>
+    <section aria-labelledby="follow-list-heading" aria-live="polite" className="grid gap-6">
+      <h2 className="text-lg font-semibold" id="follow-list-heading">
+        follow申請とfollow一覧
+      </h2>
+      <div className="grid gap-3">
+        <h3 className="font-medium">受け取った申請</h3>
+        {followers.length === 0 ? (
+          <p className="text-sm text-text-muted">現在、受け取ったfollow申請はありません。</p>
+        ) : (
+          <ul className="divide-y divide-border-subtle">
+            {followers.map((follow) => (
+              <li className="grid gap-2 py-4" key={follow.followerUserUuid}>
+                <p className="break-all text-sm">
+                  <span className="font-mono">{follow.followerUserUuid}</span>
+                  <span className="text-text-muted"> / {follow.status}</span>
+                </p>
+                {follow.status === 'pending' ? (
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => void respond(follow.followerUserUuid, 'accepted')}
+                      type="button"
+                      variant="secondary"
+                    >
+                      承認
+                    </Button>
+                    <Button
+                      onClick={() => void respond(follow.followerUserUuid, 'rejected')}
+                      type="button"
+                      variant="ghost"
+                    >
+                      拒否
+                    </Button>
+                  </div>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="grid gap-3">
+        <h3 className="font-medium">自分がfollowしている利用者</h3>
+        {following.length === 0 ? (
+          <p className="text-sm text-text-muted">現在、followしている利用者はいません。</p>
+        ) : (
+          <ul className="divide-y divide-border-subtle">
+            {following.map((follow) => (
+              <li className="py-4" key={follow.followedUserUuid}>
+                <p className="break-all text-sm">
+                  <span className="font-mono">{follow.followedUserUuid}</span>
+                  <span className="text-text-muted"> / {follow.status}</span>
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <p className="text-sm text-text-muted">{message}</p>
     </section>
   );
 };

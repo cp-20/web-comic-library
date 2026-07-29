@@ -17,9 +17,9 @@ export default async function ActivityPage({
 }: Readonly<{ params: Promise<{ activityId: string }> }>) {
   const { activityId } = await params;
   return (
-    <main>
+    <div className="grid gap-8">
       <ActivityDetails activityId={activityId} />
       <ShareButton title="公開読書記録 | Web Comic Library" url={`/activities/${activityId}`} />
-    </main>
+    </div>
   );
 }

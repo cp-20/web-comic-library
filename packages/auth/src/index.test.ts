@@ -50,3 +50,21 @@ test('requires both Google OAuth credentials', () => {
     }),
   ).toThrow('Google OAuth client ID and secret are required');
 });
+
+test('permits loopback HTTP auth origins for local development', async () => {
+  await Promise.all(
+    ['http://localhost:3000', 'http://127.0.0.1:3000'].map(async (baseUrl) => {
+      const adapter = createAuthAdapter({
+        baseUrl,
+        databaseUrl: 'postgres://postgres:postgres@localhost:55432/web_comic_library',
+        googleClientId: 'google-client-id',
+        googleClientSecret: 'google-client-secret',
+        secret: 'a'.repeat(32),
+        trustedOrigins: [baseUrl],
+      });
+      const response = await adapter.handler(new Request(`${baseUrl}/api/auth/ok`));
+      expect(response.status).toBe(200);
+      await adapter.close();
+    }),
+  );
+});

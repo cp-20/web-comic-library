@@ -1,10 +1,11 @@
+import { PageHeader } from '../../components/ui/page-header';
 import { NotificationList } from './notification-list';
 
 export default function NotificationsPage() {
   return (
-    <main>
-      <h1>通知</h1>
+    <div className="grid gap-8">
+      <PageHeader description="アプリ内通知と通知の受け取り方を管理します。" title="通知" />
       <NotificationList />
-    </main>
+    </div>
   );
 }

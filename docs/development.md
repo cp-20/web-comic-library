@@ -10,6 +10,14 @@ bun run check
 bun test
 ```
 
+ローカルの接続先と認証設定はrepository rootの`.env.local`に置く。root scriptはこのファイルを
+明示的に読み込んでから各appを起動・buildするため、`bun run --cwd apps/web …`や
+`bun run --cwd apps/api …`を直接実行しない。
+
+ローカルのWebとAPIのoriginは`localhost`に統一し、`BETTER_AUTH_URL=http://localhost:3000`と
+`API_ORIGIN=http://localhost:3001`を設定する。Google OAuthの承認済みリダイレクトURIも
+`http://localhost:3000/api/auth/callback/google`にする。
+
 package操作には`bun add`、一時CLIには`bunx`を使う。
 
 npm、pnpm、Yarn、Node.jsランタイムは併設しない。

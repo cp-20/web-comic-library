@@ -20,11 +20,11 @@ export default async function WorkPage({
   const { workId } = await params;
 
   return (
-    <main>
+    <div className="grid gap-8">
       <WorkDetails workId={workId} />
       <ShareButton title="作品 | Web Comic Library" url={`/works/${workId}`} />
       <ReadingControls workId={workId} />
       <ReviewControls workId={workId} />
-    </main>
+    </div>
   );
 }

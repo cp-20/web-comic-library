@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 
+import { Button } from '../../../components/ui/button';
+import { Field } from '../../../components/ui/field';
+import { Input } from '../../../components/ui/input';
 import { createApiClient } from '../../../lib/api-client';
 
 const client = createApiClient('');
@@ -53,43 +56,57 @@ export const TwoFactorSettings = () => {
   };
 
   return (
-    <section aria-labelledby="two-factor-heading">
-      <h2 id="two-factor-heading">認証アプリ（TOTP）</h2>
-      <button onClick={() => void startEnrollment()} type="button">
-        設定を開始する
-      </button>
+    <section aria-labelledby="two-factor-heading" className="grid max-w-lg gap-4">
+      <h2 className="text-lg font-semibold" id="two-factor-heading">
+        認証アプリ（TOTP）
+      </h2>
+      <div>
+        <Button onClick={() => void startEnrollment()} type="button">
+          設定を開始する
+        </Button>
+      </div>
       {enrollment ? (
-        <>
-          <p>認証アプリに次のURIを登録してください。</p>
-          <output>{enrollment.totpURI}</output>
-          <p>バックアップコードは一度だけ表示されます。安全な場所へ保管してください。</p>
-          <ul>
-            {enrollment.backupCodes.map((code) => (
-              <li key={code}>{code}</li>
-            ))}
-          </ul>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <p>認証アプリに次のURIを登録してください。</p>
+            <output className="break-all font-mono text-sm">{enrollment.totpURI}</output>
+            <p className="text-sm text-text-muted">
+              バックアップコードは一度だけ表示されます。安全な場所へ保管してください。
+            </p>
+            <ul className="grid gap-1 font-mono">
+              {enrollment.backupCodes.map((code) => (
+                <li key={code}>{code}</li>
+              ))}
+            </ul>
+          </div>
           <form
+            className="grid max-w-lg gap-4"
             onSubmit={(event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
               void verify(String(form.get('code') ?? ''));
             }}
           >
-            <label htmlFor="twoFactorCode">認証アプリの6桁コード</label>
-            <input
-              autoComplete="one-time-code"
-              id="twoFactorCode"
-              inputMode="numeric"
-              maxLength={6}
-              name="code"
-              pattern="[0-9]{6}"
-              required
-            />
-            <button type="submit">確認する</button>
+            <Field id="twoFactorCode" label="認証アプリの6桁コード">
+              <Input
+                autoComplete="one-time-code"
+                id="twoFactorCode"
+                inputMode="numeric"
+                maxLength={6}
+                name="code"
+                pattern="[0-9]{6}"
+                required
+              />
+            </Field>
+            <div>
+              <Button type="submit">確認する</Button>
+            </div>
           </form>
-        </>
+        </div>
       ) : null}
-      <p aria-live="polite">{message}</p>
+      <p aria-live="polite" className="text-sm text-text-muted">
+        {message}
+      </p>
     </section>
   );
 };

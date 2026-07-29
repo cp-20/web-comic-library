@@ -23,7 +23,7 @@ TOTP enrollmentとverificationはHono RPCの`POST /api/settings/two-factor/enabl
 
 `POST /api/settings/data-exports`はactive session本人のJSON exportを非同期jobへ投入し、24時間有効なtoken付きdownload URLだけを返す。URLは同じaccountのsessionとtokenを両方必要とし、exportにはsession、account provider token、二要素認証、Web Push subscriptionを含めない。`POST /api/settings/account-deletion`は明示confirmationを要求し、sessionを失効してprofileを`pending_deletion`へ遷移させる。
 
-cookieを伴うstate-changing API requestは同一origin headerを必須とする。感想、いいね、通報はIP単位の短時間rate limitを適用し、超過時は429と`Retry-After`を返す。API responseはCSP、frame拒否、MIME sniffing拒否などのsecurity headerを付ける。
+cookieを伴うstate-changing API requestは、`BETTER_AUTH_URL`で構成する公開Web originと一致する`Origin` headerを必須とする。これにより同一originのWeb proxyを経由しても、内部API originとの差でCSRF判定を誤らない。感想、いいね、通報はIP単位の短時間rate limitを適用し、超過時は429と`Retry-After`を返す。API responseはCSP、frame拒否、MIME sniffing拒否などのsecurity headerを付ける。
 
 ## library API
 

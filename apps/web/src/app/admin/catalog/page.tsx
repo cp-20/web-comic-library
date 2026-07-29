@@ -2,6 +2,12 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { Button } from '../../../components/ui/button';
+import { Field } from '../../../components/ui/field';
+import { Input } from '../../../components/ui/input';
+import { PageHeader } from '../../../components/ui/page-header';
+import { Select } from '../../../components/ui/select';
+import { Textarea } from '../../../components/ui/textarea';
 import { createApiClient } from '../../../lib/api-client';
 
 type Operation = 'contentUnitMerge' | 'contentUnitSplit' | 'workMerge' | 'workSplit';
@@ -91,110 +97,131 @@ export default function CatalogAdminPage() {
   };
 
   return (
-    <main>
-      <h1>カタログ管理</h1>
-      <p aria-live="polite">{message}</p>
+    <div className="grid gap-10">
+      <PageHeader
+        description="作品と話の統合・分割を記録します。すべての操作に理由の入力が必要です。"
+        title="カタログ管理"
+      />
+      <p
+        aria-live="polite"
+        className="rounded-panel border border-border-subtle bg-surface px-4 py-3"
+      >
+        {message}
+      </p>
 
-      <section aria-labelledby="work-merge-title">
-        <h2 id="work-merge-title">作品を統合</h2>
-        <form onSubmit={(event) => submit(event, 'workMerge')}>
-          <label>
-            統合元作品 ID
-            <input name="sourceWorkId" required />
-          </label>
-          <label>
-            正規作品 ID
-            <input name="targetWorkId" required />
-          </label>
-          <label>
-            理由
-            <textarea name="reason" required />
-          </label>
-          <button type="submit">作品を統合する</button>
+      <section aria-labelledby="work-merge-title" className="grid gap-4">
+        <h2 className="text-lg font-semibold" id="work-merge-title">
+          作品を統合
+        </h2>
+        <form className="grid max-w-2xl gap-4" onSubmit={(event) => submit(event, 'workMerge')}>
+          <Field id="work-merge-source" label="統合元作品 ID">
+            <Input id="work-merge-source" name="sourceWorkId" required />
+          </Field>
+          <Field id="work-merge-target" label="正規作品 ID">
+            <Input id="work-merge-target" name="targetWorkId" required />
+          </Field>
+          <Field id="work-merge-reason" label="理由">
+            <Textarea id="work-merge-reason" name="reason" required />
+          </Field>
+          <div>
+            <Button type="submit" variant="danger">
+              作品を統合する
+            </Button>
+          </div>
         </form>
       </section>
 
-      <section aria-labelledby="content-merge-title">
-        <h2 id="content-merge-title">話を統合</h2>
-        <form onSubmit={(event) => submit(event, 'contentUnitMerge')}>
-          <label>
-            統合元話 ID
-            <input name="sourceContentUnitId" required />
-          </label>
-          <label>
-            正規話 ID
-            <input name="targetContentUnitId" required />
-          </label>
-          <label>
-            理由
-            <textarea name="reason" required />
-          </label>
-          <button type="submit">話を統合する</button>
+      <section aria-labelledby="content-merge-title" className="grid gap-4">
+        <h2 className="text-lg font-semibold" id="content-merge-title">
+          話を統合
+        </h2>
+        <form
+          className="grid max-w-2xl gap-4"
+          onSubmit={(event) => submit(event, 'contentUnitMerge')}
+        >
+          <Field id="content-merge-source" label="統合元話 ID">
+            <Input id="content-merge-source" name="sourceContentUnitId" required />
+          </Field>
+          <Field id="content-merge-target" label="正規話 ID">
+            <Input id="content-merge-target" name="targetContentUnitId" required />
+          </Field>
+          <Field id="content-merge-reason" label="理由">
+            <Textarea id="content-merge-reason" name="reason" required />
+          </Field>
+          <div>
+            <Button type="submit" variant="danger">
+              話を統合する
+            </Button>
+          </div>
         </form>
       </section>
 
-      <section aria-labelledby="work-split-title">
-        <h2 id="work-split-title">作品を分割</h2>
-        <form onSubmit={(event) => submit(event, 'workSplit')}>
-          <label>
-            分割元作品 ID
-            <input name="sourceWorkId" required />
-          </label>
-          <label>
-            移動する掲載 ID（カンマ区切り）
-            <input name="publicationIds" required />
-          </label>
-          <label>
-            移動する話 ID（カンマ区切り）
-            <input name="contentUnitIds" required />
-          </label>
-          <label>
-            新しい作品名
-            <input name="title" required />
-          </label>
-          <label>
-            連載状態
-            <select defaultValue="unknown" name="serialStatus">
+      <section aria-labelledby="work-split-title" className="grid gap-4">
+        <h2 className="text-lg font-semibold" id="work-split-title">
+          作品を分割
+        </h2>
+        <form className="grid max-w-2xl gap-4" onSubmit={(event) => submit(event, 'workSplit')}>
+          <Field id="work-split-source" label="分割元作品 ID">
+            <Input id="work-split-source" name="sourceWorkId" required />
+          </Field>
+          <Field id="work-split-publications" label="移動する掲載 ID（カンマ区切り）">
+            <Input id="work-split-publications" name="publicationIds" required />
+          </Field>
+          <Field id="work-split-units" label="移動する話 ID（カンマ区切り）">
+            <Input id="work-split-units" name="contentUnitIds" required />
+          </Field>
+          <Field id="work-split-title" label="新しい作品名">
+            <Input id="work-split-title" name="title" required />
+          </Field>
+          <Field id="work-split-status" label="連載状態">
+            <Select defaultValue="unknown" id="work-split-status" name="serialStatus">
               <option value="ongoing">連載中</option>
               <option value="hiatus">休載</option>
               <option value="completed">完結</option>
               <option value="unknown">不明</option>
-            </select>
-          </label>
-          <label>
-            理由
-            <textarea name="reason" required />
-          </label>
-          <button type="submit">作品を分割する</button>
+            </Select>
+          </Field>
+          <Field id="work-split-reason" label="理由">
+            <Textarea id="work-split-reason" name="reason" required />
+          </Field>
+          <div>
+            <Button type="submit" variant="secondary">
+              作品を分割する
+            </Button>
+          </div>
         </form>
       </section>
 
-      <section aria-labelledby="content-split-title">
-        <h2 id="content-split-title">話と対応付けを分割</h2>
-        <form onSubmit={(event) => submit(event, 'contentUnitSplit')}>
-          <label>
-            分割元話 ID
-            <input name="sourceContentUnitId" required />
-          </label>
-          <label>
-            移動する掲載ページ ID（カンマ区切り）
-            <input name="entryIds" required />
-          </label>
-          <label>
-            新しい話名
-            <input name="title" required />
-          </label>
-          <label>
-            順序
-            <input min="0" name="position" required type="number" />
-          </label>
-          <label>
-            理由
-            <textarea name="reason" required />
-          </label>
-          <button type="submit">話を分割する</button>
+      <section aria-labelledby="content-split-title" className="grid gap-4">
+        <h2 className="text-lg font-semibold" id="content-split-title">
+          話と対応付けを分割
+        </h2>
+        <form
+          className="grid max-w-2xl gap-4"
+          onSubmit={(event) => submit(event, 'contentUnitSplit')}
+        >
+          <Field id="content-split-source" label="分割元話 ID">
+            <Input id="content-split-source" name="sourceContentUnitId" required />
+          </Field>
+          <Field id="content-split-entries" label="移動する掲載ページ ID（カンマ区切り）">
+            <Input id="content-split-entries" name="entryIds" required />
+          </Field>
+          <Field id="content-split-title" label="新しい話名">
+            <Input id="content-split-title" name="title" required />
+          </Field>
+          <Field id="content-split-position" label="順序">
+            <Input id="content-split-position" min="0" name="position" required type="number" />
+          </Field>
+          <Field id="content-split-reason" label="理由">
+            <Textarea id="content-split-reason" name="reason" required />
+          </Field>
+          <div>
+            <Button type="submit" variant="secondary">
+              話を分割する
+            </Button>
+          </div>
         </form>
       </section>
-    </main>
+    </div>
   );
 }

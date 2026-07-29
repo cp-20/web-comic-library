@@ -16,9 +16,9 @@ export default async function ProfilePage({
 }: Readonly<{ params: Promise<{ userId: string }> }>) {
   const { userId } = await params;
   return (
-    <main>
+    <div className="grid gap-8">
       <ProfileFollow userId={userId} />
       <ShareButton title="プロフィール | Web Comic Library" url={`/profiles/${userId}`} />
-    </main>
+    </div>
   );
 }
